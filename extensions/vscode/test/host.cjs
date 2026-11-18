@@ -7,9 +7,9 @@ async function run(){
  const pickedModes=[];
  // Capture real native objects; factory calls are still forwarded to VS Code.
  const targetVscode=require('node:module').createRequire(path.join(extension.extensionPath,'src/extension.cjs'))('vscode');
- let panel,provider;const decorationStyles=[];
+ let panel,provider,receiveMessage;const decorationStyles=[];
  const createPanel=targetVscode.window.createWebviewPanel,createTree=targetVscode.window.createTreeView,createDecoration=targetVscode.window.createTextEditorDecorationType;
- targetVscode.window.createWebviewPanel=(...args)=>{panel=createPanel(...args);return panel;};
+ targetVscode.window.createWebviewPanel=(...args)=>{panel=createPanel(...args);const listen=panel.webview.onDidReceiveMessage;panel.webview.onDidReceiveMessage=(handler,...rest)=>{receiveMessage=handler;return listen.call(panel.webview,handler,...rest);};return panel;};
  targetVscode.window.createTreeView=(id,options)=>{provider=options.treeDataProvider;return createTree(id,options);};
  targetVscode.window.createTextEditorDecorationType=style=>{decorationStyles.push(style);return createDecoration(style);};
  await extension.activate();await vscode.workspace.getConfiguration('changeproof').update('nodePath',process.env.CHANGEPROOF_TEST_NODE,vscode.ConfigurationTarget.Global);
@@ -66,8 +66,38 @@ async function run(){
    for(const [step,line] of [[0,1],[1,1],[2,1],[3,1],[4,0],[5,0],[6,0]]){assert.equal(await vscode.commands.executeCommand('changeproof.openEvidenceStep',presentedBefore,step),true);assert.equal(vscode.window.activeTextEditor.document.uri.fsPath,plainFile);assert.equal(vscode.window.activeTextEditor.selection.start.line,line);}
    await vscode.commands.executeCommand('changeproof.rerunReview');assert.equal(latest('review_presented').review_mode,'current');assert.equal(pickedModes.length,1,'rerun retains mode without another prompt');
    assert.deepEqual(snapshot(plainProject),plainBefore,'normal review made no project changes');assert.equal(records().filter(r=>r.phase==='demo_opened').length,demoCount,'normal review created no demo');
- }finally{targetVscode.window.showQuickPick=savedQuickPick;targetVscode.window.showWorkspaceFolderPick=originalPicker;vscode.workspace.updateWorkspaceFolders(originalFolders,1);}
- const result={mode:process.env.CHANGEPROOF_EXPECT_INSTALLED?'packaged_install':'development_host',vscode:vscode.version,extension_version:extension.packageJSON.version,vsix_sha256:process.env.CHANGEPROOF_VSIX_SHA256||null,visual_observation:false,demo_verification:{selected_folder:demo.selected_folder,exit_code:completed.exit_code,coverage:presented.coverage,details_webview_created:true,workspace_unchanged:true},checks:['installed activation and real CLI','native sidebar groups and finding command','native details webview creation and CSP','native source/assignment/log navigation and selections','decoration API creation and text labels','native unsaved-edit stale event and diagnostic clearing','explicit rerun and old-ID rejection','empty/CP001/parse-error states','one-command Run Demo with details and source selection','actual workspace and Git bytes unchanged','Review Project current files without Git or baseline','same-file helper argument/call/parameter navigation','current-files newness not applicable and mode-preserving rerun'],limitations:['No manual visual, mouse-click, screen-reader or webview-paint observation. Webview button message wiring is covered by mocked tests; native tests call the same registered navigation handler. Cursor untested.']};
+ }finally{targetVscode.window.showQuickPick=savedQuickPick;targetVscode.window.showWorkspaceFolderPick=originalPicker;/* Keep the second test folder until this isolated window closes: removal restarts its extension host. */}
+ // Installed AI command, real loopback Fastify service, synthetic mock provider only.
+ await new Promise(resolve=>setTimeout(resolve,100));
+ targetVscode.window.showWorkspaceFolderPick=async()=>folder;
+ fs.writeFileSync(file,baseline.replace('"public"','req.headers.authorization'));
+ await vscode.commands.executeCommand('changeproof.reviewLocalChanges');
+ const {pathToFileURL}=require('node:url');
+ const {createServer}=await import(pathToFileURL(path.resolve(__dirname,'../../../services/review-api/src/server.mjs')).href);
+ const {mockProvider}=await import(pathToFileURL(path.resolve(__dirname,'../../../services/review-api/src/providers.mjs')).href);
+ const {assessmentFixture}=await import(pathToFileURL(path.resolve(__dirname,'../../../packages/ai/test/fixtures.mjs')).href);
+ let aiCalls=0;
+ const mockService=createServer({accessToken:'synthetic-native-host-token-1234567890',provider:mockProvider(request=>{aiCalls++;return assessmentFixture(request,'sensitive_data_exposure');})});
+ const mockUrl=await mockService.listen({host:'127.0.0.1',port:0});
+ const savedInput=targetVscode.window.showInputBox;
+ try{
+   targetVscode.window.showInputBox=async()=> 'synthetic-native-host-token-1234567890';
+   await vscode.workspace.getConfiguration('changeproof').update('aiBackendUrl',mockUrl,vscode.ConfigurationTarget.Global);
+   await vscode.commands.executeCommand('changeproof.setAiAccessToken');
+   const panelBeforeAI=panel;
+   await vscode.commands.executeCommand('changeproof.aiReviewChanges');
+   assert.equal(aiCalls,0,'preview must not send');assert.equal(panel,panelBeforeAI,'AI reuses existing details panel');
+   assert.match(panel.webview.html,/Exact JSON request body/);assert.match(panel.webview.html,/Approve and send/);
+   const aiToken=panel.webview.html.match(/token:"([a-f0-9]+)"/)[1];
+   await receiveMessage({type:'ai_approve',token:aiToken});
+   assert.equal(aiCalls,1);assert.match(panel.webview.html,/AI assessment — not runtime verified/);
+   const roots=provider.getChildren();const aiGroup=roots.find(g=>g.label==='AI review — separate from deterministic checks');assert.ok(aiGroup);
+   const aiItem=aiGroup.children.find(g=>g.label==='AI assessments (1)').children[0];
+   await vscode.commands.executeCommand(aiItem.command.command,...aiItem.command.arguments);
+   assert.match(panel.webview.html,/MOCK PROVIDER/);assert.match(panel.webview.html,/HEAD reference only/);
+   assert.equal(await vscode.commands.executeCommand('changeproof.openAiEvidence',aiToken,1),true);assert.equal(vscode.window.activeTextEditor.document.uri.fsPath,file);
+ }finally{targetVscode.window.showInputBox=savedInput;targetVscode.window.showWorkspaceFolderPick=originalPicker;await mockService.close();}
+ const result={mode:process.env.CHANGEPROOF_EXPECT_INSTALLED?'packaged_install':'development_host',vscode:vscode.version,extension_version:extension.packageJSON.version,vsix_sha256:process.env.CHANGEPROOF_VSIX_SHA256||null,visual_observation:false,demo_verification:{selected_folder:demo.selected_folder,exit_code:completed.exit_code,coverage:presented.coverage,details_webview_created:true,workspace_unchanged:true},checks:['installed activation and real CLI','native sidebar groups and finding command','native details webview creation and CSP','native source/assignment/log navigation and selections','decoration API creation and text labels','native unsaved-edit stale event and diagnostic clearing','explicit rerun and old-ID rejection','empty/CP001/parse-error states','one-command Run Demo with details and source selection','actual workspace and Git bytes unchanged','Review Project current files without Git or baseline','same-file helper argument/call/parameter navigation','current-files newness not applicable and mode-preserving rerun','installed AI command exact preview with zero pre-approval transmissions','native SecretStorage and real HTTP mock backend assessment','AI and deterministic sidebar separation, reusable panel, current reference navigation'],limitations:['No manual visual, mouse-click, screen-reader or webview-paint observation. Webview button message wiring is covered by mocked tests; native tests call the same registered navigation handler. Cursor untested.']};
  fs.writeFileSync(process.env.CHANGEPROOF_HOST_RESULT,JSON.stringify(result));
 }
-module.exports={run};
+module.exports={run:async()=>{try{await run();}catch(error){fs.writeFileSync(process.env.CHANGEPROOF_HOST_RESULT+'.failure.json',JSON.stringify({name:error.name,message:error.message.slice(0,500)}));throw error;}}};

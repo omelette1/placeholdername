@@ -32,10 +32,10 @@ function sidebar(state) {
   if (!state) return [{label:'No review yet. Run Changeproof: Review Project.'}];
   const review = group('Review', [{label:`${state.demo ? 'Synthetic demo' : state.selection === 'explicit_folder_picker' ? 'Explicit folder review' : 'Workspace review'}: ${state.folder || 'No local folder'}`},
     {label:'Mode: '+(state.mode==='current'?'Current files (no baseline)':'Changes since HEAD')},
-    {label:state.stale ? 'STALE — files changed; rerun explicitly.' : state.loading ? 'Review running…' : state.error || state.report?.analysis_errors?.length ? 'Processing incomplete; see errors.' : state.report?.coverage?.status === 'partial' ? 'Processing finished with partial analysis coverage.' : 'Processing finished; coverage is separate.'}]);
+    {label:state.stale ? 'STALE — files changed; rerun explicitly.' : state.loading ? 'Review running…' : state.error || state.report?.analysis_errors?.length ? 'Processing incomplete; see errors.' : state.report?.coverage?.status === 'partial' ? 'Processing finished with partial analysis coverage.' : !state.report ? 'No deterministic review yet; AI progress and results are separate.' : 'Processing finished; coverage is separate.'}]);
   if (state.loading) return [review,group('Findings', [{label:'Waiting for actual results…'}])];
   const r = state.report;
-  if (!r) return [review,group('Setup / processing errors',[{label:state.error || 'No review result is available.'}])];
+  if (!r) return [review,group(state.error?'Setup / processing errors':'Deterministic checks', [{label:state.error || 'No deterministic review in this folder yet. Run Review Project; AI results are separate.'}])];
   const findings = r.findings.map((f,index) => ({label:`${f.rule_id} · ${f.title}`,description:`${f.location.file}:${f.location.start.line}`,tooltip:f.explanation,
     command:{command:'changeproof.openFinding',title:'Open finding details',arguments:[state.id,index]}}));
   if (!findings.length) findings.push({label:r.analysis_errors.length ? 'No findings produced; processing is incomplete.' : 'No potential exposures found within processed checks; this does not establish safety.'});

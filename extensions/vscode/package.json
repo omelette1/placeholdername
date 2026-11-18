@@ -1,8 +1,8 @@
 {
   "name": "changeproof-local",
   "displayName": "Changeproof Local Review",
-  "description": "Initial local static-analysis prototype. Potential sensitive logging only; no AI or runtime verification.",
-  "version": "0.7.0",
+  "description": "Local static checks and opt-in hosted AI change assessment; no runtime verification.",
+  "version": "0.8.0",
   "publisher": "changeproof-local",
   "license": "UNLICENSED",
   "engines": {
@@ -19,7 +19,8 @@
     "onCommand:changeproof.reviewLocalChanges",
     "onView:changeproof.findings",
     "onCommand:changeproof.runDemo",
-    "onCommand:changeproof.reviewProject"
+    "onCommand:changeproof.reviewProject",
+    "onCommand:changeproof.aiReviewChanges"
   ],
   "capabilities": {
     "untrustedWorkspaces": {
@@ -60,6 +61,17 @@
         "command": "changeproof.rerunReview",
         "title": "Rerun Reviewed Folder",
         "category": "Changeproof"
+      },
+      {
+        "command": "changeproof.aiReviewChanges",
+        "title": "AI Review Changes",
+        "category": "Changeproof",
+        "icon": "$(sparkle)"
+      },
+      {
+        "command": "changeproof.setAiAccessToken",
+        "title": "Set AI Review Access Token",
+        "category": "Changeproof"
       }
     ],
     "views": {
@@ -78,8 +90,23 @@
           "default": "",
           "scope": "machine",
           "description": "Optional absolute path to a trusted Node.js 20.19+ executable. Empty uses Node from the extension host PATH. Never select a project-provided executable."
+        },
+        "changeproof.aiBackendUrl": {
+          "type": "string",
+          "default": "http://127.0.0.1:4318",
+          "scope": "application",
+          "description": "User-level AI review backend origin. HTTPS required except loopback development. Workspace settings are ignored. Source is sent only after preview approval."
         }
       }
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "changeproof.aiReviewChanges",
+          "when": "view == changeproof.findings",
+          "group": "navigation"
+        }
+      ]
     }
   },
   "scripts": {

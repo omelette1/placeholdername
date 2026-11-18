@@ -1,0 +1,70 @@
+{
+  "version": "0.8.0",
+  "base_commit": "daffa783daee9e3340bdd7ede8b9a7a779abd28b",
+  "checked_remote_for_newer_commits": true,
+  "local_changes_at_start": false,
+  "automated": {
+    "command": "npm test",
+    "tests": 99,
+    "passed": 99,
+    "failed": 0,
+    "coverage": [
+      "existing deterministic CP001/CP002 and same-file helper checks",
+      "context staged/unstaged/ignore/exclusion/bounds/redaction/snapshot behavior",
+      "AI response schema and before/after reference grounding",
+      "scripted disclosure/ownership/safe/insufficient-context mock fixtures (not model accuracy)",
+      "real HTTP mock backend, auth, quotas, concurrency, provider timeout/cancellation",
+      "extension explicit preview/approval, no pre-approval send, stale edits/results, safe rendering and selection-message isolation"
+    ]
+  },
+  "build": {
+    "extension": "passed",
+    "review_api": "passed",
+    "compiled_api_startup_and_health": "passed (mock)"
+  },
+  "package": {
+    "path": "artifacts/changeproof-local-0.8.0.vsix",
+    "sha256": "44946f71d18f119fcc67a893c4effd5fd3e00a77853649cdc1edaff9798ece58"
+  },
+  "native_editor": {
+    "status": "passed",
+    "mode": "installed VSIX in clean VS Code 1.142.0 profile",
+    "record": "artifacts/packaged-install-verification-0.8.0.json",
+    "provider": "mock",
+    "current_user_window_modified": false,
+    "final_artifact_verified": true
+  },
+  "development_host": "Not separately rerun for 0.8.0; native checks used installed VSIX, not a development-host target.",
+  "live_provider": {
+    "status": "unverified",
+    "reason": "No GROQ_API_KEY in the environment and no service .env present; no live request attempted."
+  },
+  "visual_verification": false,
+  "cursor": "untested",
+  "preservation": {
+    "legacy_python_and_deterministic_schema_unchanged": true,
+    "commits_created": false,
+    "pushed": false,
+    "deployed": false,
+    "marketplace_published": false,
+    "local_backups_created": false
+  },
+  "verification_issues_resolved": [
+    "Loopback integration tests required sandbox escalation; the initial EPERM failures were not counted passing.",
+    "AI navigation canonical-path alias mismatch fixed and retested.",
+    "Incompatible optional Fastify logging configuration removed; logger remains false.",
+    "Synthetic Git fixture automatic maintenance caused a transient lock-file snapshot mismatch; maintenance disabled in that fixture without weakening its byte-preservation assertion.",
+    "Two initial native harness attempts produced no passing record around a workspace transition/picker. Keeping the temporary second folder until test-window shutdown and selecting the fixture explicitly allowed the final installed-host run to pass.",
+    "Final UI status-label correction keeps an AI-only preview distinct from deterministic setup errors; all 99 tests and final installed VSIX checks passed afterward."
+  ],
+  "limitations": [
+    "Mock findings validate orchestration and grounding only, not model accuracy or security detection quality.",
+    "Redaction is best effort; all transmitted code and file names require user inspection.",
+    "Bounded contexts omit surrounding files/policy/callers; no general application understanding.",
+    "Reference validity does not prove model claims.",
+    "In-memory shared development-token quotas are not distributed login/billing or a hard cost guarantee.",
+    "Remote HTTPS termination, deployment, public-user identity and retention controls at Groq remain operator responsibilities.",
+    "Concurrent reads are not an atomic filesystem transaction; results require explicit refresh after edits.",
+    "No target-code execution, automatic corrections, AI tools or runtime verification."
+  ]
+}

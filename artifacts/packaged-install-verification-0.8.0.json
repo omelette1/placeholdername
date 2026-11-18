@@ -1,0 +1,35 @@
+{
+  "mode": "packaged_install",
+  "vscode": "1.142.0",
+  "extension_version": "0.8.0",
+  "vsix_sha256": "44946f71d18f119fcc67a893c4effd5fd3e00a77853649cdc1edaff9798ece58",
+  "visual_observation": false,
+  "demo_verification": {
+    "selected_folder": "/private/tmp/cp-vsc-kI94G2/user-data/User/globalStorage/changeproof-local.changeproof-local/demos/authorization-18VQWt",
+    "exit_code": 0,
+    "coverage": "analyzed",
+    "details_webview_created": true,
+    "workspace_unchanged": true
+  },
+  "checks": [
+    "installed activation and real CLI",
+    "native sidebar groups and finding command",
+    "native details webview creation and CSP",
+    "native source/assignment/log navigation and selections",
+    "decoration API creation and text labels",
+    "native unsaved-edit stale event and diagnostic clearing",
+    "explicit rerun and old-ID rejection",
+    "empty/CP001/parse-error states",
+    "one-command Run Demo with details and source selection",
+    "actual workspace and Git bytes unchanged",
+    "Review Project current files without Git or baseline",
+    "same-file helper argument/call/parameter navigation",
+    "current-files newness not applicable and mode-preserving rerun",
+    "installed AI command exact preview with zero pre-approval transmissions",
+    "native SecretStorage and real HTTP mock backend assessment",
+    "AI and deterministic sidebar separation, reusable panel, current reference navigation"
+  ],
+  "limitations": [
+    "No manual visual, mouse-click, screen-reader or webview-paint observation. Webview button message wiring is covered by mocked tests; native tests call the same registered navigation handler. Cursor untested."
+  ]
+}

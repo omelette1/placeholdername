@@ -15,3 +15,9 @@ Changes mark results STALE and clear diagnostics/highlights. Save and explicitly
 Install artifacts/changeproof-local-0.7.0.vsix locally, reload VS Code once if prompted, then run Review Project. Trusted Node 20.19+ is required at runtime; Git with --no-lazy-fetch is required only for changes mode/full Git integration. Without usable Git, current-files mode parses nested .gitignore rules locally. Development/build uses Node 22+.
 
 No AI, cloud uploads, telemetry, live-infrastructure access, target execution or automatic fixes. HTML is escaped, the webview uses a restrictive nonce CSP, and targets are validated against the selected project. Cursor and remote hosts remain untested; native host assertions are not visual observation. Nothing is published to a marketplace.
+
+## Optional hosted AI review (0.8.0)
+
+**Changeproof: AI Review Changes** prepares saved tracked JS/TS changes against HEAD and opens an exact redacted JSON preview in the existing details panel. Nothing is sent until **Approve and send this exact payload**. Backend/model transmissions are optional; local Review Project remains independent. AI assessments are separately labeled, not runtime verified. HEAD references display submitted text only; current references navigate and highlight. Edits mark results stale; rerun and approve explicitly.
+
+Start/configure the development service using `services/review-api/README.md`. Set `changeproof.aiBackendUrl` in **user** settings (HTTP loopback or remote HTTPS origin), then run **Changeproof: Set AI Review Access Token**. It uses VS Code SecretStorage; never enter a Groq API key. Provider credentials stay server-side. This is development authentication, not public login. Exclusions and best-effort redaction do not guarantee all secrets are removed; review the entire payload. Cursor remains untested. See `docs/hosted-ai-0.8.0.md` for limits and verification distinctions.

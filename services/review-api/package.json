@@ -1,0 +1,12 @@
+{
+  "name":"changeproof-review-api",
+  "version":"0.8.0",
+  "private":true,
+  "type":"module",
+  "scripts":{
+    "start":"node --env-file=.env src/start.mjs",
+    "build":"node ../../scripts/build-review-api.mjs",
+    "test":"node --test test/*.test.mjs"
+  },
+  "engines":{"node":">=22"}
+}

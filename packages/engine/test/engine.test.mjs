@@ -6,7 +6,7 @@ import path from 'node:path';
 import {execFileSync} from 'node:child_process';
 import {analyze,lineRanges} from '../src/engine.mjs';
 import {inspect} from '../src/rule.mjs';
-const git=(root,...args)=>execFileSync('git',['-c','core.fsmonitor=false','-C',root,...args],{stdio:['ignore','pipe','pipe']}).toString();
+const git=(root,...args)=>execFileSync('git',['-c','core.fsmonitor=false','-c','maintenance.auto=false','-c','gc.auto=0','-C',root,...args],{stdio:['ignore','pipe','pipe']}).toString();
 function repo(t,initial={'app.ts':'const status = 1;\n'}){
  const root=fs.mkdtempSync(path.join(os.tmpdir(),'changeproof-engine-'));
  t.after(()=>fs.rmSync(root,{recursive:true,force:true}));

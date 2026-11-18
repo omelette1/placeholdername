@@ -2,6 +2,7 @@ const vscode = require('vscode');
 const path = require('node:path');
 const fs = require('node:fs');
 const {runEngine} = require('./client.cjs');
+const {createAiController}=require('./ai-client.cjs');
 const {createDemo} = require('./demo.cjs');
 const {createFindingsView} = require('./findings-view.cjs');
 function activate(context) {
@@ -13,7 +14,9 @@ function activate(context) {
     const line=JSON.stringify(entry);output.appendLine(line);
     try{fs.mkdirSync(context.logUri.fsPath,{recursive:true});fs.appendFileSync(path.join(context.logUri.fsPath,'reviews.jsonl'),line+'\n',{mode:0o600});}catch{output.appendLine('Could not persist review details; this Output channel still contains them.');}
   }
-  const ui=createFindingsView(vscode,context,{record,rerun:review});
+  let ai;
+  const ui=createFindingsView(vscode,context,{record,rerun:review,aiAction:(...args)=>ai.action(...args)});
+  ai=createAiController(vscode,context,ui,{otherBusy:()=>running||demoRunning});
   function showDetails(){output.show(true);}
   async function selectFolder(){
     const chosen=await vscode.window.showOpenDialog({title:'Select the exact folder to review',openLabel:'Review This Folder',canSelectFolders:true,canSelectFiles:false,canSelectMany:false});
@@ -24,7 +27,7 @@ function activate(context) {
     void notify(message,'Show Details','Select Folder…').then(choice=>{if(choice==='Show Details')showDetails();else if(choice==='Select Folder…')void selectFolder();});
   }
   async function review(explicitFolder,{demo=false,mode='changes',selection:selectionOverride}={}) {
-    if(running||(demoRunning&&!demo)){vscode.window.showInformationMessage('A local review is already running.');return;}
+    if(ai?.isBusy()||running||(demoRunning&&!demo)){vscode.window.showInformationMessage('A local review is already running.');return;}
     const folders=(vscode.workspace.workspaceFolders||[]).filter(f=>f.uri.scheme==='file');
     if(!folders.length&&!explicitFolder){
       const reason='No local workspace folder is open.';const id=ui.begin(null);ui.fail(id,reason);
@@ -53,7 +56,7 @@ function activate(context) {
     finally{running=false;}
   }
   async function reviewProject(){
-    if(running||demoRunning){vscode.window.showInformationMessage('A local review is already running.');return;}
+    if(ai?.isBusy()||running||demoRunning){vscode.window.showInformationMessage('A local review is already running.');return;}
     const folders=(vscode.workspace.workspaceFolders||[]).filter(f=>f.uri.scheme==='file');
     let folder;
     if(folders.length===1)folder=folders[0].uri;
@@ -64,7 +67,7 @@ function activate(context) {
     if(mode)await review(folder.fsPath,{mode:mode.mode,selection:folders.length?'workspace':'explicit_folder_picker'});
   }
   async function runDemo(){
-    if(running||demoRunning){vscode.window.showInformationMessage('A local review is already running.');return;}
+    if(ai?.isBusy()||running||demoRunning){vscode.window.showInformationMessage('A local review is already running.');return;}
     demoRunning=true;
     try{
       const protectedFolders=(vscode.workspace.workspaceFolders||[]).filter(f=>f.uri.scheme==='file').map(f=>f.uri.fsPath);

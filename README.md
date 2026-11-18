@@ -1,3 +1,9 @@
+# Changeproof 0.8.0 — optional hosted AI review
+
+Local deterministic review remains available without a server. The opt-in **AI Review Changes** command previews bounded, redacted tracked JS/TS changes against HEAD, asks for explicit approval, and displays separately labeled AI assessments in the existing sidebar/details interface. No runtime verification or automatic edits.
+
+See [setup and scope](docs/hosted-ai-0.8.0.md) and [review API](services/review-api/README.md). Installable package: `artifacts/changeproof-local-0.8.0.vsix`. Earlier milestone notes below are historical; schema 4.0.0 remains the deterministic contract, while AI uses a separate 1.0.0 contract.
+
 # Changeproof — local change review
 
 An **initial local static-analysis prototype** for reviewing code changes, including AI-generated changes in private repositories. The same command-line engine powers a thin VS Code extension. No GitHub account, repository upload, network calls, telemetry, models or AI assistant integration is used by the tool. AI-powered reasoning is future work; the engine cannot tell whether a change was AI-generated.

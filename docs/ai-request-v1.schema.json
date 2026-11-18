@@ -1,0 +1,108 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Changeproof AI request 1.0.0",
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "const": "1.0.0"
+    },
+    "request_id": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{32}$"
+    },
+    "baseline": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{40,64}$"
+    },
+    "files": {
+      "type": "array",
+      "maxItems": 8,
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "properties": {
+          "file": {
+            "type": "string",
+            "maxLength": 400
+          },
+          "before_id": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "after_id": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "chunks": {
+            "type": "array",
+            "maxItems": 32,
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "properties": {
+                "revision": {
+                  "enum": [
+                    "before",
+                    "after"
+                  ]
+                },
+                "revision_id": {
+                  "type": "string",
+                  "maxLength": 100
+                },
+                "start_line": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "end_line": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "text": {
+                  "type": "string",
+                  "maxLength": 24000
+                }
+              },
+              "required": [
+                "revision",
+                "revision_id",
+                "start_line",
+                "end_line",
+                "text"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "file",
+          "before_id",
+          "after_id",
+          "chunks"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "omissions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 600
+      },
+      "maxItems": 100
+    },
+    "privacy_notice": {
+      "type": "string",
+      "maxLength": 1000
+    }
+  },
+  "required": [
+    "schema_version",
+    "request_id",
+    "baseline",
+    "files",
+    "omissions",
+    "privacy_notice"
+  ],
+  "additionalProperties": false
+}

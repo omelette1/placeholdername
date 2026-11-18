@@ -1,0 +1,12 @@
+{
+  "build": "passed",
+  "startup": "passed",
+  "health": {
+    "status": "ok",
+    "contract_version": "1.0.0",
+    "provider": "mock",
+    "model": "synthetic-test-fixture"
+  },
+  "provider": "mock",
+  "live_inference": false
+}

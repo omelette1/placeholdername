@@ -8,3 +8,6 @@ playwright-report/
 test-results/
 extensions/vscode/out/
 *.vsix
+.env
+.env.*
+!.env.example
