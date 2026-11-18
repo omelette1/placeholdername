@@ -1,0 +1,593 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Changeproof local analysis report",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "2.0.0"
+    },
+    "tool": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "const": "changeproof"
+        },
+        "version": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "version"
+      ]
+    },
+    "repository": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "compared_revision": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "comparison": {
+      "const": "HEAD_to_tracked_working_tree"
+    },
+    "runtime_verification": {
+      "const": false
+    },
+    "analysis_complete": {
+      "type": "boolean"
+    },
+    "files_inspected": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/file"
+      }
+    },
+    "untracked_files": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "file": {
+            "type": "string"
+          },
+          "excluded": {
+            "type": "boolean"
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "file",
+          "excluded",
+          "reason"
+        ]
+      }
+    },
+    "skipped_files": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "file": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "file",
+          "reason"
+        ]
+      }
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/finding"
+      }
+    },
+    "analysis_errors": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "file": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "file",
+          "message"
+        ]
+      }
+    },
+    "default_exclusions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "analysis_limitations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "rule_id": {
+            "const": "CP002"
+          },
+          "code": {
+            "type": "string"
+          },
+          "location": {
+            "$ref": "#/$defs/location"
+          },
+          "message": {
+            "type": "string"
+          },
+          "revision": {
+            "enum": [
+              "HEAD",
+              "working_tree"
+            ]
+          }
+        },
+        "required": [
+          "rule_id",
+          "code",
+          "location",
+          "message",
+          "revision"
+        ]
+      }
+    }
+  },
+  "required": [
+    "schema_version",
+    "tool",
+    "repository",
+    "compared_revision",
+    "comparison",
+    "runtime_verification",
+    "analysis_complete",
+    "files_inspected",
+    "untracked_files",
+    "skipped_files",
+    "findings",
+    "analysis_errors",
+    "default_exclusions",
+    "limitations",
+    "analysis_limitations"
+  ],
+  "$defs": {
+    "position": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "line": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "column": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "required": [
+        "line",
+        "column"
+      ]
+    },
+    "range": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "old_start": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "old_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "new_start": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "new_count": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "old_start",
+        "old_count",
+        "new_start",
+        "new_count"
+      ]
+    },
+    "file": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "file": {
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "added",
+            "modified",
+            "deleted",
+            "unchanged"
+          ]
+        },
+        "changed_line_ranges": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/range"
+          }
+        }
+      },
+      "required": [
+        "file",
+        "status",
+        "changed_line_ranges"
+      ]
+    },
+    "finding": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "rule_id": {
+              "const": "CP001"
+            },
+            "title": {
+              "const": "Potential sensitive logging"
+            },
+            "severity": {
+              "const": "warning"
+            },
+            "explanation": {
+              "type": "string"
+            },
+            "location": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "file": {
+                  "type": "string"
+                },
+                "start": {
+                  "$ref": "#/$defs/position"
+                },
+                "end": {
+                  "$ref": "#/$defs/position"
+                }
+              },
+              "required": [
+                "file",
+                "start",
+                "end"
+              ]
+            },
+            "evidence": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "kind": {
+                  "const": "syntax"
+                },
+                "console_method": {
+                  "enum": [
+                    "log",
+                    "info",
+                    "warn",
+                    "error",
+                    "debug",
+                    "trace"
+                  ]
+                },
+                "sensitive_names": {
+                  "type": "array",
+                  "items": {
+                    "enum": [
+                      "accesstoken",
+                      "refreshtoken",
+                      "password",
+                      "authorization"
+                    ]
+                  }
+                },
+                "source_values_included": {
+                  "const": false
+                }
+              },
+              "required": [
+                "kind",
+                "console_method",
+                "sensitive_names",
+                "source_values_included"
+              ]
+            },
+            "limitations": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "newly_introduced": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "runtime_verification": {
+              "const": false
+            }
+          },
+          "required": [
+            "rule_id",
+            "title",
+            "severity",
+            "explanation",
+            "location",
+            "evidence",
+            "limitations",
+            "newly_introduced",
+            "runtime_verification"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "rule_id": {
+              "const": "CP002"
+            },
+            "title": {
+              "const": "Potential authorization-header logging"
+            },
+            "severity": {
+              "const": "warning"
+            },
+            "explanation": {
+              "type": "string"
+            },
+            "location": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "file": {
+                  "type": "string"
+                },
+                "start": {
+                  "$ref": "#/$defs/position"
+                },
+                "end": {
+                  "$ref": "#/$defs/position"
+                }
+              },
+              "required": [
+                "file",
+                "start",
+                "end"
+              ]
+            },
+            "evidence": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "kind": {
+                  "const": "function_local_data_flow"
+                },
+                "paths": {
+                  "type": "array",
+                  "minItems": 1,
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "source": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "properties": {
+                          "kind": {
+                            "const": "authorization_header_read"
+                          },
+                          "location": {
+                            "$ref": "#/$defs/location"
+                          }
+                        },
+                        "required": [
+                          "kind",
+                          "location"
+                        ]
+                      },
+                      "assignments": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "properties": {
+                            "kind": {
+                              "enum": [
+                                "declaration",
+                                "assignment"
+                              ]
+                            },
+                            "variable": {
+                              "type": "string"
+                            },
+                            "location": {
+                              "$ref": "#/$defs/location"
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "variable",
+                            "location"
+                          ]
+                        }
+                      },
+                      "logging": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "properties": {
+                          "console_method": {
+                            "enum": [
+                              "log",
+                              "info",
+                              "warn",
+                              "error",
+                              "debug",
+                              "trace"
+                            ]
+                          },
+                          "argument_index": {
+                            "type": "integer",
+                            "minimum": 0
+                          },
+                          "location": {
+                            "$ref": "#/$defs/location"
+                          }
+                        },
+                        "required": [
+                          "console_method",
+                          "argument_index",
+                          "location"
+                        ]
+                      },
+                      "newly_introduced": {
+                        "type": [
+                          "boolean",
+                          "null"
+                        ]
+                      },
+                      "comparison": {
+                        "enum": [
+                          "matched_in_HEAD",
+                          "not_matched_in_HEAD",
+                          "unknown_baseline_limitations",
+                          "unknown_function_identity"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "source",
+                      "assignments",
+                      "logging",
+                      "newly_introduced",
+                      "comparison"
+                    ]
+                  }
+                },
+                "source_values_included": {
+                  "const": false
+                },
+                "related_rules": {
+                  "type": "array",
+                  "items": {
+                    "const": "CP001"
+                  }
+                },
+                "sensitive_names": {
+                  "type": "array",
+                  "items": {
+                    "enum": [
+                      "accesstoken",
+                      "refreshtoken",
+                      "password",
+                      "authorization"
+                    ]
+                  }
+                }
+              },
+              "required": [
+                "kind",
+                "paths",
+                "source_values_included"
+              ]
+            },
+            "limitations": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "newly_introduced": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "runtime_verification": {
+              "const": false
+            }
+          },
+          "required": [
+            "rule_id",
+            "title",
+            "severity",
+            "explanation",
+            "location",
+            "evidence",
+            "limitations",
+            "newly_introduced",
+            "runtime_verification"
+          ]
+        }
+      ]
+    },
+    "location": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "file": {
+          "type": "string"
+        },
+        "start": {
+          "$ref": "#/$defs/position"
+        },
+        "end": {
+          "$ref": "#/$defs/position"
+        }
+      },
+      "required": [
+        "file",
+        "start",
+        "end"
+      ]
+    }
+  }
+}

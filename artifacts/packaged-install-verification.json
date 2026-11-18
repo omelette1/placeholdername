@@ -1,0 +1,32 @@
+{
+  "mode": "packaged_install",
+  "vscode": "1.142.0",
+  "extension_version": "0.7.0",
+  "vsix_sha256": "c03a566599bcf6079fc2ac31806270f04b27df29ff38718d8fc9c805eb496300",
+  "visual_observation": false,
+  "demo_verification": {
+    "selected_folder": "/private/tmp/cp-vsc-ck0hfx/user-data/User/globalStorage/changeproof-local.changeproof-local/demos/authorization-wtz3wC",
+    "exit_code": 0,
+    "coverage": "analyzed",
+    "details_webview_created": true,
+    "workspace_unchanged": true
+  },
+  "checks": [
+    "installed activation and real CLI",
+    "native sidebar groups and finding command",
+    "native details webview creation and CSP",
+    "native source/assignment/log navigation and selections",
+    "decoration API creation and text labels",
+    "native unsaved-edit stale event and diagnostic clearing",
+    "explicit rerun and old-ID rejection",
+    "empty/CP001/parse-error states",
+    "one-command Run Demo with details and source selection",
+    "actual workspace and Git bytes unchanged",
+    "Review Project current files without Git or baseline",
+    "same-file helper argument/call/parameter navigation",
+    "current-files newness not applicable and mode-preserving rerun"
+  ],
+  "limitations": [
+    "No manual visual, mouse-click, screen-reader or webview-paint observation. Webview button message wiring is covered by mocked tests; native tests call the same registered navigation handler. Cursor untested."
+  ]
+}

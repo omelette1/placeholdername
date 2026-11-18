@@ -1,0 +1,58 @@
+{
+  "verification_scope": "Separate installed-CLI and mocked panel-model checks against the exact existing demo directory from the user window. This does not establish visual label visibility in the user window.",
+  "extension_version": "0.5.0",
+  "demo_directory": "/Users/owen/Library/Application Support/Code/User/globalStorage/changeproof-local.changeproof-local/demos/authorization-lJQ65j",
+  "cli_execution": {
+    "executable": "/opt/homebrew/Cellar/node/26.5.0/bin/node",
+    "arguments": [
+      "/Users/owen/.vscode/extensions/changeproof-local.changeproof-local-0.5.0/out/cli.cjs",
+      "/Users/owen/Library/Application Support/Code/User/globalStorage/changeproof-local.changeproof-local/demos/authorization-lJQ65j"
+    ],
+    "cwd": "/Users/owen/.vscode/extensions/changeproof-local.changeproof-local-0.5.0/out",
+    "phase": "completed",
+    "exit_code": 0,
+    "process_error": null,
+    "signal": null,
+    "returned_errors": [],
+    "analysis_complete": true
+  },
+  "processing_complete": true,
+  "coverage": {
+    "status": "analyzed",
+    "scope": "CP002 on changed tracked JS/TS files only",
+    "analyzed_scopes": 1,
+    "partial_scopes": 0,
+    "unsupported_scopes": 0,
+    "unassessed_files": 0
+  },
+  "file_coverage": {
+    "status": "analyzed",
+    "scopes": [
+      {
+        "kind": "function",
+        "location": {
+          "file": "app.ts",
+          "start": {
+            "line": 2,
+            "column": 1
+          },
+          "end": {
+            "line": 6,
+            "column": 2
+          }
+        },
+        "status": "analyzed",
+        "supported_steps": 3
+      }
+    ]
+  },
+  "panel_labels": [
+    "Potential authorization-header logging — app.ts:5 (new: true)",
+    "Coverage: analyzed (CP002, changed files)",
+    "Coverage: app.ts — analyzed"
+  ],
+  "panel_message": "/Users/owen/Library/Application Support/Code/User/globalStorage/changeproof-local.changeproof-local/demos/authorization-lJQ65j · 1 potential sensitive logging finding(s). Coverage: analyzed · 0 skipped · 0 untracked · 0 limitations · static only",
+  "target_unchanged": true,
+  "visual_label_visibility": "not independently observed",
+  "runtime_verification": false
+}

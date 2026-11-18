@@ -1,0 +1,17 @@
+const {test}=require('node:test');const assert=require('node:assert/strict');const fs=require('node:fs');const path=require('node:path');const os=require('node:os');const {execFileSync}=require('node:child_process');const {createDemo,demoEvidence}=require('../src/demo.cjs');const {runEngine}=require('../src/client.cjs');
+const cli=path.resolve(__dirname,'../out/cli.cjs');
+const git=(root,...args)=>execFileSync('git',['-c','core.fsmonitor=false','-c','core.hooksPath='+os.devNull,'-C',root,...args],{encoding:'utf8'});
+function snapshot(root){const entries=[];function visit(dir){for(const item of fs.readdirSync(dir,{withFileTypes:true})){const file=path.join(dir,item.name);if(item.isDirectory())visit(file);else entries.push([path.relative(root,file),fs.readFileSync(file).toString('hex')]);}}visit(root);return entries.sort();}
+test('demo creates its own baseline, reviews its exact path, and leaves actual project byte-for-byte unchanged',async t=>{
+ const base=fs.mkdtempSync(path.join(os.tmpdir(),'changeproof-demo-test-'));t.after(()=>fs.rmSync(base,{recursive:true,force:true}));
+ const project=path.join(base,'actual-project');fs.mkdirSync(project);git(project,'init','-q');fs.writeFileSync(path.join(project,'work.ts'),'const original=1;\n');git(project,'add','.');git(project,'-c','user.name=Synthetic','-c','user.email=test@example.invalid','-c','commit.gpgSign=false','commit','-qm','actual project baseline');fs.appendFileSync(path.join(project,'work.ts'),'// preserve this unstaged work\n');fs.writeFileSync(path.join(project,'untracked.txt'),'preserve me');
+ const before=snapshot(project);const storage=path.join(base,'extension-profile','demos');const directory=await createDemo(storage,[project]);
+ assert.ok(directory.startsWith(fs.realpathSync(storage)+path.sep));assert.equal(git(directory,'rev-list','--count','HEAD').trim(),'1');assert.equal(git(directory,'status','--porcelain').trim(),'M app.ts');assert.match(git(directory,'show','HEAD:app.ts'),/public diagnostic value/);
+ const trace=[];const report=await runEngine(process.execPath,cli,directory,e=>trace.push(e));assert.equal(trace[1].arguments[1],directory);assert.equal(trace[1].exit_code,0);assert.equal(report.analysis_complete,true);assert.equal(report.findings.length,1);const finding=report.findings[0];assert.equal(finding.rule_id,'CP002');assert.equal(finding.location.start.line,5);assert.equal(finding.newly_introduced,true);assert.equal(finding.runtime_verification,false);
+ const evidence=demoEvidence(directory,finding);assert.ok(evidence.includes('Reviewed folder: '+directory));assert.match(evidence,/SOURCE → ASSIGNMENT → LOGGING/);assert.match(evidence,/declaration raw at app.ts:3/);assert.match(evidence,/declaration payload at app.ts:4/);assert.match(evidence,/console.log at app.ts:5/);
+ const again=await createDemo(storage,[project]);assert.notEqual(directory,again);assert.deepEqual(snapshot(project),before);
+});
+test('demo refuses storage inside an actual project before writing anything',async t=>{
+ const project=fs.mkdtempSync(path.join(os.tmpdir(),'changeproof-protected-'));t.after(()=>fs.rmSync(project,{recursive:true,force:true}));fs.writeFileSync(path.join(project,'keep.txt'),'unchanged');const before=snapshot(project);
+ await assert.rejects(createDemo(path.join(project,'profile','demos'),[project]),/inside the current workspace/);assert.deepEqual(snapshot(project),before);
+});

@@ -1,0 +1,44 @@
+{
+  "version": "0.6.0",
+  "tests_passed": 64,
+  "build_and_package": "passed",
+  "installed_host": {
+    "mode": "packaged_install",
+    "vscode": "1.142.0",
+    "extension_version": "0.6.0",
+    "vsix_sha256": "9f5c4d3b18db397547fe3a7224e07024f527308d0f24e25c148e7ced99ac1450",
+    "visual_observation": false,
+    "demo_verification": {
+      "selected_folder": "/private/tmp/cp-vsc-cWcTlS/user-data/User/globalStorage/changeproof-local.changeproof-local/demos/authorization-pYMEyi",
+      "exit_code": 0,
+      "coverage": "analyzed",
+      "details_webview_created": true,
+      "workspace_unchanged": true
+    },
+    "checks": [
+      "installed activation and real CLI",
+      "native sidebar groups and finding command",
+      "native details webview creation and CSP",
+      "native source/assignment/log navigation and selections",
+      "decoration API creation and text labels",
+      "native unsaved-edit stale event and diagnostic clearing",
+      "explicit rerun and old-ID rejection",
+      "empty/CP001/parse-error states",
+      "one-command Run Demo with details and source selection",
+      "actual workspace and Git bytes unchanged"
+    ],
+    "limitations": [
+      "No manual visual, mouse-click, screen-reader or webview-paint observation. Webview button message wiring is covered by mocked tests; native tests call the same registered navigation handler. Cursor untested."
+    ]
+  },
+  "normal_profile_installed": true,
+  "installed_files_match": true,
+  "user_settings_unchanged": true,
+  "engine_detection_unchanged": true,
+  "visual_verification": false,
+  "cursor_tested": false,
+  "backups": "/Users/owen/Downloads/changeproof-ui-backup-0.5.0",
+  "remaining_limitations": [
+    "No manual visual, mouse-click, screen-reader or webview-paint observation. Webview button message wiring is covered by mocked tests; native tests call the same registered navigation handler. Cursor untested."
+  ]
+}

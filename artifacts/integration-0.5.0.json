@@ -1,0 +1,98 @@
+{
+  "archive_sha256": "9a450b5c7a126d2eb2732af1c33a7cd42c207dda01bb50955fab4364f31da214",
+  "backup": "/Users/owen/Downloads/changeproof-integration-backups/20261118-013613",
+  "source_conflicts": [],
+  "documentation_resolutions": [
+    "Preserved 0.4.0 demo history separately",
+    "Reconciled old stopping-rule text with 0.5.0 continuation semantics",
+    "Corrected schema version documentation; preserved v2 schema"
+  ],
+  "git_preserved": true,
+  "protected_files_preserved": 60,
+  "tests_passed": 51,
+  "vsix_sha256": "caf9b7874efd87947238d2e66c65c5d3789d6f7ea496772f9723e474cd59a064",
+  "normal_user_settings_sha256_before_install": "e6054bdc8f47e991946fb4abc3341208891f366536f2fec3fa950b5eac2cffd1",
+  "same_window_verification": {
+    "window": "20261116T024709/window6",
+    "extension_host_pid": 41443,
+    "selected_demo": "/Users/owen/Library/Application Support/Code/User/globalStorage/changeproof-local.changeproof-local/demos/authorization-lJQ65j",
+    "records": [
+      {
+        "timestamp": "2026-11-18T09:39:31.239Z",
+        "session_id": "118d3cb7-04a5-49eb-9e6f-64c5fa6299921794994718509",
+        "extension_host_pid": 41443,
+        "extension_version": "0.5.0",
+        "workspace_name": "Downloads",
+        "workspace_file": null,
+        "workspace_folders": [
+          "/Users/owen/Downloads"
+        ],
+        "invocation_id": "mwlxjhnr-d4rbhc",
+        "selected_folder": "/Users/owen/Library/Application Support/Code/User/globalStorage/changeproof-local.changeproof-local/demos/authorization-lJQ65j",
+        "selection": "synthetic_demo",
+        "executable": "node",
+        "arguments": [
+          "/Users/owen/.vscode/extensions/changeproof-local.changeproof-local-0.5.0/out/cli.cjs",
+          "/Users/owen/Library/Application Support/Code/User/globalStorage/changeproof-local.changeproof-local/demos/authorization-lJQ65j"
+        ],
+        "cwd": "/Users/owen/.vscode/extensions/changeproof-local.changeproof-local-0.5.0/out",
+        "phase": "started",
+        "exit_code": null
+      },
+      {
+        "timestamp": "2026-11-18T09:39:31.661Z",
+        "session_id": "118d3cb7-04a5-49eb-9e6f-64c5fa6299921794994718509",
+        "extension_host_pid": 41443,
+        "extension_version": "0.5.0",
+        "workspace_name": "Downloads",
+        "workspace_file": null,
+        "workspace_folders": [
+          "/Users/owen/Downloads"
+        ],
+        "invocation_id": "mwlxjhnr-d4rbhc",
+        "selected_folder": "/Users/owen/Library/Application Support/Code/User/globalStorage/changeproof-local.changeproof-local/demos/authorization-lJQ65j",
+        "selection": "synthetic_demo",
+        "executable": "node",
+        "arguments": [
+          "/Users/owen/.vscode/extensions/changeproof-local.changeproof-local-0.5.0/out/cli.cjs",
+          "/Users/owen/Library/Application Support/Code/User/globalStorage/changeproof-local.changeproof-local/demos/authorization-lJQ65j"
+        ],
+        "cwd": "/Users/owen/.vscode/extensions/changeproof-local.changeproof-local-0.5.0/out",
+        "phase": "completed",
+        "exit_code": 0,
+        "process_error": null,
+        "signal": null,
+        "returned_errors": [],
+        "analysis_complete": true
+      },
+      {
+        "timestamp": "2026-11-18T09:39:31.998Z",
+        "session_id": "118d3cb7-04a5-49eb-9e6f-64c5fa6299921794994718509",
+        "extension_host_pid": 41443,
+        "extension_version": "0.5.0",
+        "workspace_name": "Downloads",
+        "workspace_file": null,
+        "workspace_folders": [
+          "/Users/owen/Downloads"
+        ],
+        "phase": "demo_opened",
+        "selected_folder": "/Users/owen/Library/Application Support/Code/User/globalStorage/changeproof-local.changeproof-local/demos/authorization-lJQ65j",
+        "selection": "synthetic_demo",
+        "finding_rule": "CP002",
+        "finding_line": 5,
+        "evidence_visible": true,
+        "runtime_verification": false
+      }
+    ],
+    "user_confirmed_finding_and_evidence": true,
+    "coverage_data_and_panel_model": "separately checked using installed files against same demo directory",
+    "coverage_status": "analyzed",
+    "coverage_visual_visibility": "not independently observed; user screenshot did not show label"
+  },
+  "cursor_verification": "not performed",
+  "installed_version": "0.5.0",
+  "installed_files_match": true,
+  "normal_user_settings_unchanged": true,
+  "git_preserved_after_verification": true,
+  "protected_files_preserved_after_verification": 60
+}

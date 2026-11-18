@@ -1,0 +1,11 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import {execFileSync} from 'node:child_process';
+import {fileURLToPath} from 'node:url';
+const root=fileURLToPath(new URL('../../',import.meta.url));
+const ext=path.join(root,'extensions/vscode');
+const version=JSON.parse(fs.readFileSync(path.join(ext,'package.json'))).version;
+fs.mkdirSync(path.join(ext,'licenses'),{recursive:true});
+for(const [source,destination] of [['typescript/LICENSE.txt','TypeScript.txt'],['diff/LICENSE','diff.txt'],['ignore/LICENSE-MIT','ignore.txt']])fs.copyFileSync(path.join(root,'node_modules',source),path.join(ext,'licenses',destination));
+fs.mkdirSync(path.join(root,'artifacts'),{recursive:true});
+execFileSync(process.execPath,[path.join(root,'node_modules/@vscode/vsce/vsce'),'package','--no-dependencies','--allow-missing-repository','--skip-license','--out',path.join(root,`artifacts/changeproof-local-${version}.vsix`)],{cwd:ext,stdio:'inherit'});

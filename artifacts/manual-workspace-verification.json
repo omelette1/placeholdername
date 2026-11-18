@@ -1,0 +1,64 @@
+{
+  "cause": "Manual command ran in a non-Git workspace instead of the synthetic sample. Correcting workspace selection resolves the warning; no product code changed.",
+  "checks": [
+    {
+      "case": "wrong_workspace",
+      "vscode": "1.142.0",
+      "extension_version": "0.3.0",
+      "installed_extension": "/private/tmp/cp-manual-uGssrI/extensions/changeproof-local.changeproof-local-0.3.0",
+      "workspace": "/Users/owen/Downloads",
+      "analysis_complete": false,
+      "analysis_errors": [
+        {
+          "code": "not_git",
+          "file": null,
+          "message": "The path is not a readable Git working tree."
+        }
+      ],
+      "findings": [],
+      "diagnostics": []
+    },
+    {
+      "case": "source_without_HEAD",
+      "vscode": "1.142.0",
+      "extension_version": "0.3.0",
+      "installed_extension": "/private/tmp/cp-manual-uGssrI/extensions/changeproof-local.changeproof-local-0.3.0",
+      "workspace": "/Users/owen/Downloads/changeproof",
+      "analysis_complete": false,
+      "analysis_errors": [
+        {
+          "code": "missing_head",
+          "file": null,
+          "message": "HEAD is missing or unreadable; commit an initial baseline before reviewing."
+        }
+      ],
+      "findings": [],
+      "diagnostics": []
+    },
+    {
+      "case": "corrected_sample",
+      "vscode": "1.142.0",
+      "extension_version": "0.3.0",
+      "installed_extension": "/private/tmp/cp-manual-uGssrI/extensions/changeproof-local.changeproof-local-0.3.0",
+      "workspace": "/var/folders/ss/05rpymqd76799l1khxk8ym2c0000gn/T/changeproof-authorization-sample-hEClCA",
+      "analysis_complete": true,
+      "analysis_errors": [],
+      "findings": [
+        {
+          "rule_id": "CP002",
+          "line": 5,
+          "newly_introduced": true,
+          "runtime_verification": false
+        }
+      ],
+      "diagnostics": [
+        {
+          "file": "/var/folders/ss/05rpymqd76799l1khxk8ym2c0000gn/T/changeproof-authorization-sample-hEClCA/app.ts",
+          "rule": "CP002",
+          "line": 5,
+          "related": 3
+        }
+      ]
+    }
+  ]
+}

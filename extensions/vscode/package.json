@@ -1,0 +1,88 @@
+{
+  "name": "changeproof-local",
+  "displayName": "Changeproof Local Review",
+  "description": "Initial local static-analysis prototype. Potential sensitive logging only; no AI or runtime verification.",
+  "version": "0.7.0",
+  "publisher": "changeproof-local",
+  "license": "UNLICENSED",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Linters"
+  ],
+  "main": "./src/extension.cjs",
+  "extensionKind": [
+    "workspace"
+  ],
+  "activationEvents": [
+    "onCommand:changeproof.reviewLocalChanges",
+    "onView:changeproof.findings",
+    "onCommand:changeproof.runDemo",
+    "onCommand:changeproof.reviewProject"
+  ],
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": true
+    },
+    "virtualWorkspaces": {
+      "supported": false
+    }
+  },
+  "contributes": {
+    "commands": [
+      {
+        "command": "changeproof.reviewProject",
+        "title": "Review Project",
+        "category": "Changeproof"
+      },
+      {
+        "command": "changeproof.runDemo",
+        "title": "Run Demo",
+        "category": "Changeproof"
+      },
+      {
+        "command": "changeproof.reviewLocalChanges",
+        "title": "Review Local Changes",
+        "category": "Changeproof"
+      },
+      {
+        "command": "changeproof.showReviewDetails",
+        "title": "Show Review Details",
+        "category": "Changeproof"
+      },
+      {
+        "command": "changeproof.selectFolderToReview",
+        "title": "Select Folder to Review",
+        "category": "Changeproof"
+      },
+      {
+        "command": "changeproof.rerunReview",
+        "title": "Rerun Reviewed Folder",
+        "category": "Changeproof"
+      }
+    ],
+    "views": {
+      "explorer": [
+        {
+          "id": "changeproof.findings",
+          "name": "Changeproof Local Review"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Changeproof",
+      "properties": {
+        "changeproof.nodePath": {
+          "type": "string",
+          "default": "",
+          "scope": "machine",
+          "description": "Optional absolute path to a trusted Node.js 20.19+ executable. Empty uses Node from the extension host PATH. Never select a project-provided executable."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "build": "node build.mjs"
+  }
+}

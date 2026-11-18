@@ -1,0 +1,10 @@
+.venv/
+node_modules/
+dist/
+__pycache__/
+.pytest_cache/
+*.sqlite3
+playwright-report/
+test-results/
+extensions/vscode/out/
+*.vsix

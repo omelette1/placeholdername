@@ -1,0 +1,2 @@
+import {defineConfig} from '@playwright/test';
+export default defineConfig({testDir:'../../tests/browser',workers:1,use:{baseURL:'http://127.0.0.1:5173'},webServer:[{command:'.venv/bin/python -m uvicorn services.api.main:app --host 127.0.0.1 --port 8000',cwd:'../..',url:'http://127.0.0.1:8000/api/project',env:{CHANGEPROOF_DB:'/tmp/changeproof-browser-tests.sqlite3'},reuseExistingServer:false},{command:'npm run dev -- --strictPort',url:'http://127.0.0.1:5173',reuseExistingServer:false}]});

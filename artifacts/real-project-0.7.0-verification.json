@@ -1,0 +1,70 @@
+{
+  "version": "0.7.0",
+  "schema_version": "4.0.0",
+  "automated_checks": {
+    "command": "npm test",
+    "passed": 80,
+    "failed": 0
+  },
+  "build_and_package": "passed",
+  "packaged_install": {
+    "mode": "packaged_install",
+    "vscode": "1.142.0",
+    "extension_version": "0.7.0",
+    "vsix_sha256": "c03a566599bcf6079fc2ac31806270f04b27df29ff38718d8fc9c805eb496300",
+    "visual_observation": false,
+    "demo_verification": {
+      "selected_folder": "/private/tmp/cp-vsc-ck0hfx/user-data/User/globalStorage/changeproof-local.changeproof-local/demos/authorization-wtz3wC",
+      "exit_code": 0,
+      "coverage": "analyzed",
+      "details_webview_created": true,
+      "workspace_unchanged": true
+    },
+    "checks": [
+      "installed activation and real CLI",
+      "native sidebar groups and finding command",
+      "native details webview creation and CSP",
+      "native source/assignment/log navigation and selections",
+      "decoration API creation and text labels",
+      "native unsaved-edit stale event and diagnostic clearing",
+      "explicit rerun and old-ID rejection",
+      "empty/CP001/parse-error states",
+      "one-command Run Demo with details and source selection",
+      "actual workspace and Git bytes unchanged",
+      "Review Project current files without Git or baseline",
+      "same-file helper argument/call/parameter navigation",
+      "current-files newness not applicable and mode-preserving rerun"
+    ],
+    "limitations": [
+      "No manual visual, mouse-click, screen-reader or webview-paint observation. Webview button message wiring is covered by mocked tests; native tests call the same registered navigation handler. Cursor untested."
+    ]
+  },
+  "normal_profile_install": {
+    "version": "0.7.0",
+    "installed_path": "/Users/owen/.vscode/extensions/changeproof-local.changeproof-local-0.7.0",
+    "files_match": true,
+    "user_settings_unchanged": true,
+    "output": "Installing extensions...\nExtension 'changeproof-local-0.7.0.vsix' was successfully installed.",
+    "visual_observation": false
+  },
+  "preservation": {
+    "backup": "/Users/owen/Downloads/changeproof-backups/before-real-project-20261118-022104",
+    "git_metadata_unchanged": true,
+    "no_commits_created": true
+  },
+  "verification_failures_resolved": [
+    "First installed-host attempt used a just-moved Git directory; replaced that test with a genuine non-Git workspace.",
+    "Installed demo review exposed a stale-state race from initial filesystem events; file read snapshots now distinguish those events from post-read edits. Regression test and installed-host checks passed afterward."
+  ],
+  "limitations": [
+    "No manual visual observation or verification in the existing user window.",
+    "Cursor untested.",
+    "Same-file helper tracing only; no imports, returned-value propagation, dynamic dispatch or general workflow analysis.",
+    "Runtime verification of reviewed code is false.",
+    "Four high-severity development-only packaging dependency audit entries remain; production dependency audit reports zero."
+  ],
+  "artifacts": {
+    "vsix": "artifacts/changeproof-local-0.7.0.vsix",
+    "sha256": "c03a566599bcf6079fc2ac31806270f04b27df29ff38718d8fc9c805eb496300"
+  }
+}

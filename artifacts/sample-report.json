@@ -1,0 +1,163 @@
+{
+  "schema_version": "2.0.0",
+  "tool": {
+    "name": "changeproof",
+    "version": "0.3.0"
+  },
+  "repository": "/private/var/folders/ss/05rpymqd76799l1khxk8ym2c0000gn/T/changeproof-authorization-sample-DZdT5h",
+  "compared_revision": "37763db8d488326b0a6b54b360923875b1579292",
+  "comparison": "HEAD_to_tracked_working_tree",
+  "runtime_verification": false,
+  "analysis_complete": true,
+  "files_inspected": [
+    {
+      "file": "app.ts",
+      "status": "modified",
+      "changed_line_ranges": [
+        {
+          "old_start": 3,
+          "old_count": 1,
+          "new_start": 3,
+          "new_count": 1
+        }
+      ]
+    }
+  ],
+  "untracked_files": [],
+  "skipped_files": [],
+  "findings": [
+    {
+      "rule_id": "CP002",
+      "title": "Potential authorization-header logging",
+      "severity": "warning",
+      "explanation": "An authorization-header-shaped read reaches a direct console call through supported function-local assignments. This is a potential exposure, not a verified runtime leak.",
+      "location": {
+        "file": "app.ts",
+        "start": {
+          "line": 5,
+          "column": 3
+        },
+        "end": {
+          "line": 5,
+          "column": 23
+        }
+      },
+      "newly_introduced": true,
+      "runtime_verification": false,
+      "evidence": {
+        "kind": "function_local_data_flow",
+        "paths": [
+          {
+            "source": {
+              "kind": "authorization_header_read",
+              "location": {
+                "file": "app.ts",
+                "start": {
+                  "line": 3,
+                  "column": 15
+                },
+                "end": {
+                  "line": 3,
+                  "column": 40
+                }
+              }
+            },
+            "assignments": [
+              {
+                "kind": "declaration",
+                "variable": "raw",
+                "location": {
+                  "file": "app.ts",
+                  "start": {
+                    "line": 3,
+                    "column": 9
+                  },
+                  "end": {
+                    "line": 3,
+                    "column": 40
+                  }
+                }
+              },
+              {
+                "kind": "declaration",
+                "variable": "payload",
+                "location": {
+                  "file": "app.ts",
+                  "start": {
+                    "line": 4,
+                    "column": 9
+                  },
+                  "end": {
+                    "line": 4,
+                    "column": 22
+                  }
+                }
+              }
+            ],
+            "logging": {
+              "console_method": "log",
+              "argument_index": 0,
+              "location": {
+                "file": "app.ts",
+                "start": {
+                  "line": 5,
+                  "column": 3
+                },
+                "end": {
+                  "line": 5,
+                  "column": 23
+                }
+              }
+            },
+            "newly_introduced": true,
+            "comparison": "not_matched_in_HEAD"
+          }
+        ],
+        "source_values_included": false
+      },
+      "limitations": [
+        "Deterministic, function-local, straight-line syntax analysis only; no runtime verification.",
+        "Header-shaped reads are treated as potential authorization values; receiver types and actual sensitive contents are not proven.",
+        "No cross-function, closure, control-flow, alias-object, mutation, or general workflow understanding.",
+        "Console is assumed to be the standard logger; custom implementations and runtime reachability are not verified.",
+        "HEAD comparison uses function identity and source/sink signatures, not semantic equivalence or proof of exploitability."
+      ]
+    }
+  ],
+  "analysis_errors": [],
+  "analysis_limitations": [],
+  "default_exclusions": [
+    ".git",
+    "node_modules",
+    "vendor",
+    "bower_components",
+    ".venv",
+    "venv",
+    "__pycache__",
+    "dist",
+    "build",
+    "out",
+    "coverage",
+    ".next",
+    ".nuxt",
+    ".cache",
+    "target",
+    ".env*",
+    "*.pem",
+    "*.key",
+    "*.p12",
+    "*.pfx",
+    ".npmrc",
+    ".netrc",
+    "credentials*",
+    "secrets*",
+    "id_rsa*",
+    "id_ed25519*"
+  ],
+  "limitations": [
+    "Initial local static-analysis prototype; no AI reasoning or general access-control analysis.",
+    "Only saved working-tree content is read; untracked and ignored files are not analyzed.",
+    "Git-ignored untracked files are excluded by Git. Concurrent edits are not an atomic snapshot.",
+    "Names and file paths are metadata; literal source values and source snippets are omitted."
+  ]
+}

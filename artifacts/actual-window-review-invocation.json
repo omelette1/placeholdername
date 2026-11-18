@@ -1,0 +1,61 @@
+{
+  "verification_scope": "Actual next command in the user's failing chat window; not a test window or substitute CLI run.",
+  "window_log_directory": "/Users/owen/Library/Application Support/Code/logs/20261116T024709/window6/exthost",
+  "records": [
+    {
+      "timestamp": "2026-11-17T10:24:40.291Z",
+      "session_id": "713a7bd8-c750-4c55-b2a4-c951f21641411794911070691",
+      "extension_host_pid": 7423,
+      "extension_version": "0.3.1",
+      "workspace_name": "Downloads",
+      "workspace_file": null,
+      "workspace_folders": [
+        "/Users/owen/Downloads"
+      ],
+      "invocation_id": "mwkjppb6-eolu81",
+      "selected_folder": "/Users/owen/Downloads",
+      "selection": "workspace",
+      "executable": "node",
+      "arguments": [
+        "/Users/owen/.vscode/extensions/changeproof-local.changeproof-local-0.3.1/out/cli.cjs",
+        "/Users/owen/Downloads"
+      ],
+      "cwd": "/Users/owen/.vscode/extensions/changeproof-local.changeproof-local-0.3.1/out",
+      "phase": "started",
+      "exit_code": null
+    },
+    {
+      "timestamp": "2026-11-17T10:24:40.642Z",
+      "session_id": "713a7bd8-c750-4c55-b2a4-c951f21641411794911070691",
+      "extension_host_pid": 7423,
+      "extension_version": "0.3.1",
+      "workspace_name": "Downloads",
+      "workspace_file": null,
+      "workspace_folders": [
+        "/Users/owen/Downloads"
+      ],
+      "invocation_id": "mwkjppb6-eolu81",
+      "selected_folder": "/Users/owen/Downloads",
+      "selection": "workspace",
+      "executable": "node",
+      "arguments": [
+        "/Users/owen/.vscode/extensions/changeproof-local.changeproof-local-0.3.1/out/cli.cjs",
+        "/Users/owen/Downloads"
+      ],
+      "cwd": "/Users/owen/.vscode/extensions/changeproof-local.changeproof-local-0.3.1/out",
+      "phase": "completed",
+      "exit_code": 2,
+      "process_error": null,
+      "signal": null,
+      "returned_errors": [
+        {
+          "code": "not_git",
+          "file": null,
+          "message": "The path is not a readable Git working tree."
+        }
+      ],
+      "analysis_complete": false
+    }
+  ],
+  "outcome": "Correctly rejected the non-Git Downloads workspace. Folder-specific notification and details are available; explicit folder selection is offered. No successful review of another folder is claimed for this invocation."
+}

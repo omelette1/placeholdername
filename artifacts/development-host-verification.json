@@ -1,0 +1,17 @@
+{
+  "mode": "development_host",
+  "vscode": "1.142.0",
+  "extension_version": "0.3.0",
+  "vsix_sha256": null,
+  "checks": [
+    "activation",
+    "real command and bundled CLI",
+    "CP002 unchanged-sink diagnostic",
+    "source and assignment related locations",
+    "HEAD newness and runtime status",
+    "native sink and source navigation",
+    "safe-change diagnostic clearing",
+    "CP001 preserved",
+    "parse-error handling"
+  ]
+}
