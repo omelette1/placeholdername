@@ -1,6 +1,6 @@
 const {test}=require('node:test');const assert=require('node:assert/strict');const fs=require('node:fs');const path=require('node:path');const os=require('node:os');const {execFileSync}=require('node:child_process');const {createDemo,demoEvidence}=require('../src/demo.cjs');const {runEngine}=require('../src/client.cjs');
 const cli=path.resolve(__dirname,'../out/cli.cjs');
-const git=(root,...args)=>execFileSync('git',['-c','core.fsmonitor=false','-c','core.hooksPath='+os.devNull,'-C',root,...args],{encoding:'utf8'});
+const git=(root,...args)=>execFileSync('git',['-c','maintenance.auto=false','-c','gc.auto=0','-c','core.fsmonitor=false','-c','core.hooksPath='+os.devNull,'-C',root,...args],{encoding:'utf8'});
 function snapshot(root){const entries=[];function visit(dir){for(const item of fs.readdirSync(dir,{withFileTypes:true})){const file=path.join(dir,item.name);if(item.isDirectory())visit(file);else entries.push([path.relative(root,file),fs.readFileSync(file).toString('hex')]);}}visit(root);return entries.sort();}
 test('demo creates its own baseline, reviews its exact path, and leaves actual project byte-for-byte unchanged',async t=>{
  const base=fs.mkdtempSync(path.join(os.tmpdir(),'changeproof-demo-test-'));t.after(()=>fs.rmSync(base,{recursive:true,force:true}));

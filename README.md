@@ -1,3 +1,18 @@
+# Changeproof 0.10.0
+
+Current-files review now includes optional local Checkov configuration checks
+for Terraform, Kubernetes, Dockerfiles and GitHub Actions. CP003/CP004 add narrow
+TLS-disablement and dynamic-evaluation warnings. The AI demo profile reduces
+context and generation budgets; full review remains available.
+
+Run `npm run setup:local` to preserve an existing server-side Groq key and fill
+matching development tokens. Install Checkov 3.4.5 outside reviewed projects
+and configure the user-level `changeproof.checkovPath`. No installation happens
+during a review. Setup, policies, limits and unsupported behavior are documented
+in `docs/feature-scope-0.10.0.md`. Earlier sections below describe older releases.
+
+---
+
 # Changeproof 0.9.0 — live AI readiness and synthetic evaluation
 
 The existing sidebar now distinguishes backend health, provider configuration, explicitly approved synthetic inference checks, and detection-quality proxies. [Setup and evaluation guide](docs/live-ai-readiness-0.9.0.md). Package: `artifacts/changeproof-local-0.9.0.vsix`. No live result is implied by mock tests or health. Earlier milestone notes below are historical.

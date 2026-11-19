@@ -1,2 +1,2 @@
 import {collectContext} from './context.mjs';
-try{if(process.argv.length!==3)throw new Error('Expected one local project path.');console.log(JSON.stringify(collectContext(process.argv[2])));}catch(error){console.log(JSON.stringify({error:error.message}));process.exitCode=2;}
+try{if(![3,5].includes(process.argv.length)||process.argv.length===5&&process.argv[3]!=='--profile')throw new Error('Expected a project path and optional --profile demo|full.');console.log(JSON.stringify(collectContext(process.argv[2],{profile:process.argv[4]||'full'})));}catch(error){console.log(JSON.stringify({error:error.message}));process.exitCode=2;}

@@ -60,7 +60,7 @@ function createFindingsView(vscode, context, {record,rerun,aiAction=()=>{}}) {
   }
   function ensureDecorations(roles) {
     if (!decorations)decorations={};
-    const styles={reference:{borderWidth:'0 0 1px 0',borderStyle:'solid',borderColor:new vscode.ThemeColor('editorInfo.foreground')},source:{backgroundColor:new vscode.ThemeColor('editor.wordHighlightStrongBackground')},assignment:{borderWidth:'0 0 1px 0',borderStyle:'dashed',borderColor:new vscode.ThemeColor('editorInfo.foreground')},argument:{borderWidth:'0 0 1px 0',borderStyle:'dotted',borderColor:new vscode.ThemeColor('editorInfo.foreground')},function_call:{backgroundColor:new vscode.ThemeColor('editor.wordHighlightBackground')},parameter:{borderWidth:'0 0 1px 0',borderStyle:'dashed',borderColor:new vscode.ThemeColor('editorInfo.foreground')},logging:{borderWidth:'0 0 2px 0',borderStyle:'solid',borderColor:new vscode.ThemeColor('editorWarning.foreground')}};
+    const styles={configuration:{borderWidth:'0 0 2px 0',borderStyle:'solid',borderColor:new vscode.ThemeColor('editorWarning.foreground')},syntax:{borderWidth:'0 0 1px 0',borderStyle:'dashed',borderColor:new vscode.ThemeColor('editorWarning.foreground')},reference:{borderWidth:'0 0 1px 0',borderStyle:'solid',borderColor:new vscode.ThemeColor('editorInfo.foreground')},source:{backgroundColor:new vscode.ThemeColor('editor.wordHighlightStrongBackground')},assignment:{borderWidth:'0 0 1px 0',borderStyle:'dashed',borderColor:new vscode.ThemeColor('editorInfo.foreground')},argument:{borderWidth:'0 0 1px 0',borderStyle:'dotted',borderColor:new vscode.ThemeColor('editorInfo.foreground')},function_call:{backgroundColor:new vscode.ThemeColor('editor.wordHighlightBackground')},parameter:{borderWidth:'0 0 1px 0',borderStyle:'dashed',borderColor:new vscode.ThemeColor('editorInfo.foreground')},logging:{borderWidth:'0 0 2px 0',borderStyle:'solid',borderColor:new vscode.ThemeColor('editorWarning.foreground')}};
     for (const role of roles) {
       if(decorations[role]||!styles[role])continue;
       decorations[role]=vscode.window.createTextEditorDecorationType({...styles[role],rangeBehavior:vscode.DecorationRangeBehavior.ClosedClosed,after:{contentText:' ['+role.toUpperCase()+']',color:new vscode.ThemeColor('editorCodeLens.foreground'),margin:'0 0 0 0.5em'}});
@@ -163,7 +163,7 @@ function createFindingsView(vscode, context, {record,rerun,aiAction=()=>{}}) {
     if (id!==state?.id) return;
     state.report=report;state.mode=report.review_mode||state.mode;state.loading=false;
     if(report.repository){
-      for(const entry of [...report.files_inspected,...report.untracked_files,...report.skipped_files]){
+      for(const entry of [...report.files_inspected,...(report.infrastructure?.files_inspected||[]),...report.untracked_files,...report.skipped_files]){
         const file=metadataKey(path.join(report.repository,entry.file));
         const captured=entry.snapshot!==undefined?entry.snapshot:fingerprint(file);
         metadata.set(file,captured);

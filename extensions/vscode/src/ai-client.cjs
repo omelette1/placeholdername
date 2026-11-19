@@ -1,8 +1,8 @@
 const {execFile}=require('node:child_process');
 const path=require('node:path');
-function collect(node,cli,folder,signal){return new Promise((resolve,reject)=>{
+function collect(node,cli,folder,signal,profile='full'){return new Promise((resolve,reject)=>{
  const env={...process.env};for(const key of Object.keys(env))if(['NODE_OPTIONS','NODE_PATH','GROQ_API_KEY','REVIEW_ACCESS_TOKEN'].includes(key))delete env[key];
- execFile(node,[cli,folder],{cwd:path.dirname(cli),env,signal,windowsHide:true,timeout:60000,maxBuffer:2*1024*1024},(error,stdout)=>{
+ execFile(node,[cli,folder,'--profile',profile],{cwd:path.dirname(cli),env,signal,windowsHide:true,timeout:60000,maxBuffer:2*1024*1024},(error,stdout)=>{
   let value;try{value=JSON.parse(stdout);}catch{}
   if(signal?.aborted)return reject(new Error('AI review cancelled.'));
   if(error||!value?.request)return reject(new Error(value?.error||'Could not safely collect AI context. Check Git baseline and trusted Node configuration.'));
@@ -50,7 +50,9 @@ function createAiController(vscode,context,ui,{otherBusy=()=>false}={}){
   const token=ui.aiBegin(folder);busy=true;
   try{
    const url=shared().backendUrl(vscode.workspace.getConfiguration('changeproof').inspect('aiBackendUrl')?.globalValue||'http://127.0.0.1:4318');
-   const envelope=await progress('Changeproof: preparing local AI transmission preview',signal=>collect(nodePath(),context.asAbsolutePath('out/ai-context.cjs'),folder,signal));
+   const configuredProfile=vscode.workspace.getConfiguration('changeproof').inspect('aiProfile')?.globalValue;
+   const profile=['demo','full'].includes(configuredProfile)?configuredProfile:'demo';
+   const envelope=await progress('Changeproof: preparing local AI transmission preview',signal=>collect(nodePath(),context.asAbsolutePath('out/ai-context.cjs'),folder,signal,profile));
    if(!envelope.request.files.length){ui.aiUpdate(token,{phase:'empty',error:'No eligible saved tracked JS/TS changes against HEAD. Nothing was sent.'});await ui.selectAi(token);return;}
    shared().checkRequest(envelope.request);ui.aiUpdate(token,{phase:'preview',envelope,url});await ui.selectAi(token);
   }catch{ui.aiUpdate(token,{phase:'error',error:'AI preview could not be collected. A readable Git HEAD baseline and trusted Node are required; check excluded, oversized or unsupported input. Local Current files review still works without Git. Nothing was sent.'});await ui.selectAi(token);}
@@ -65,13 +67,13 @@ function createAiController(vscode,context,ui,{otherBusy=()=>false}={}){
    const node=nodePath();const folder=ui.getState().folder;
    ui.aiUpdate(ai.token,{phase:'checking'});
    await progress('Changeproof: checking approved snapshot and requesting AI assessment',async signal=>{
-    const refreshed=await collect(node,context.asAbsolutePath('out/ai-context.cjs'),folder,signal);
+    const refreshed=await collect(node,context.asAbsolutePath('out/ai-context.cjs'),folder,signal,ai.envelope.profile||'full');
     if(dirty(folder)||!sameSnapshot(ai.envelope,refreshed)||ui.getState()?.ai?.token!==ai.token||signal.aborted)throw new Error('Project or saved inputs changed. Run AI Review Changes again and approve a refreshed preview. Nothing was sent.');
     // The exact approved object is serialized; refreshed content is never substituted.
     ui.aiUpdate(ai.token,{phase:'sending',stale:false});
-    const response=await shared().postReview(ai.url,access,ai.envelope.request,{signal});
+    const response=await shared().postReview(ai.url,access,ai.envelope.request,{signal,profile:ai.envelope.profile||'full'});
     shared().checkResponse(response,ai.envelope.request);
-    const after=await collect(node,context.asAbsolutePath('out/ai-context.cjs'),folder,signal);
+    const after=await collect(node,context.asAbsolutePath('out/ai-context.cjs'),folder,signal,ai.envelope.profile||'full');
     const stale=dirty(folder)||!sameSnapshot(ai.envelope,after)||ui.getState()?.ai?.stale===true;
     ui.aiUpdate(ai.token,{phase:'completed',response,stale});
    });

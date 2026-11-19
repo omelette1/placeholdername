@@ -45,7 +45,8 @@ function activate(context) {
     }
     running=true;
     try{
-      const result=await vscode.window.withProgress({location:vscode.ProgressLocation.Notification,title:'Changeproof: '+(mode==='current'?'current files':'changes since HEAD')+' — '+selectedFolder,cancellable:false},()=>runEngine(node,context.asAbsolutePath('out/cli.cjs'),selectedFolder,trace,{mode}));
+      const checkovPath=vscode.workspace.getConfiguration('changeproof').inspect('checkovPath')?.globalValue||undefined;
+      const result=await vscode.window.withProgress({location:vscode.ProgressLocation.Notification,title:'Changeproof: '+(mode==='current'?'current files':'changes since HEAD')+' — '+selectedFolder,cancellable:false},()=>runEngine(node,context.asAbsolutePath('out/cli.cjs'),selectedFolder,trace,{mode,checkovPath}));
       ui.finish(id,result);
       if(result.analysis_errors.length){
         const reason=result.analysis_errors.map(e=>`${e.code}${e.file?' ('+e.file+')':''}: ${e.message}`).join(' ');

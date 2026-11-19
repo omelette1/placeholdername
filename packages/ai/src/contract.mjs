@@ -1,4 +1,4 @@
-// Independent from deterministic engine schema 4.0.0.
+// Independent from deterministic engine schema 5.0.0.
 export const AI_VERSION='1.0.0';
 export const LIMITS=Object.freeze({requestBytes:160000,outputBytes:48000,files:8,chunks:32,chunkLines:120,contextBytes:100000,findings:12,timeoutMs:45000});
 const str=(max=2000)=>({type:'string',maxLength:max});

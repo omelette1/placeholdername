@@ -1,0 +1,110 @@
+{
+  "version": "0.10.0",
+  "base_commit": "9e4891c8ebf080886725d4c135769339b332567a",
+  "date": "2026-11-19T07:31:31.738Z",
+  "automated": {
+    "tests": 130,
+    "passed": 130,
+    "failed": 0,
+    "skipped": 0,
+    "real_checkov_positive_and_safe_controls": true,
+    "additional_status_ui_checks_after_setup_text_change": 4
+  },
+  "build": {
+    "extension": true,
+    "review_api": true,
+    "fixture_validation": {
+      "cases": 12,
+      "external_inference_requests": 0
+    }
+  },
+  "packaged": {
+    "source_matches": true,
+    "schema_valid": true,
+    "report_schema": "5.0.0",
+    "code_findings": [
+      "CP002",
+      "CP003",
+      "CP004"
+    ],
+    "infrastructure_findings": [
+      "CKV_AWS_24",
+      "CKV_AWS_20",
+      "CKV_K8S_17",
+      "CKV_K8S_16",
+      "CKV_DOCKER_3",
+      "CKV_GHA_1",
+      "CKV2_GHA_1"
+    ],
+    "frameworks": [
+      {
+        "framework": "terraform",
+        "files": 1,
+        "checks": 3,
+        "failed": 2,
+        "skipped": 0,
+        "status": "assessed"
+      },
+      {
+        "framework": "kubernetes",
+        "files": 1,
+        "checks": 2,
+        "failed": 2,
+        "skipped": 0,
+        "status": "assessed"
+      },
+      {
+        "framework": "dockerfile",
+        "files": 1,
+        "checks": 1,
+        "failed": 1,
+        "skipped": 0,
+        "status": "assessed"
+      },
+      {
+        "framework": "github_actions",
+        "files": 1,
+        "checks": 5,
+        "failed": 2,
+        "skipped": 0,
+        "status": "assessed"
+      }
+    ],
+    "guard": {
+      "active": true,
+      "network": 0,
+      "subprocess": 0,
+      "outside_read": 0,
+      "outside_write": 0,
+      "metadata_probes": 3
+    },
+    "vsix_sha256": "e7932c0b5bc106bf3951478e53c40ab972985236faea86ca5f25ae2c64979c8f"
+  },
+  "live_groq": {
+    "status": "not_run",
+    "reason": "User key is in the Mac checkout. That checkout and its local .env are not accessible from this execution environment; no key requested or copied."
+  },
+  "native_editor": "not_run: VS Code is unavailable here",
+  "visual": "not_run",
+  "cursor": "not_run",
+  "local_env_modified": false,
+  "target_code_executed": false,
+  "deployed": false,
+  "published": false,
+  "remote_push": {
+    "status": "unavailable",
+    "reason": "GitHub read works; dry-run push failed with unable to get password from user. No remote update made."
+  },
+  "issues_resolved": [
+    "Async CLI entry wrapped for CJS packaging.",
+    "Checkov update checks and fork workers disabled; audit guard retains network/process/filesystem boundaries with fixed trusted metadata probes.",
+    "Pinned GitHub Actions EOF ranges mapped only for one-line EOF shape with explicit finding limitation.",
+    "New syntax/configuration decoration styles and CKV K8S rule validation integrated."
+  ],
+  "limitations": [
+    "Curated static configuration policies, not deployed infrastructure or exploit verification.",
+    "CLI code-processing completion is separate from optional infrastructure assessment status.",
+    "Python guard is defense in depth for a pinned trusted tool, not an OS security sandbox.",
+    "AI token estimates are approximate; inference accuracy is unmeasured here."
+  ]
+}

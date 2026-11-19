@@ -1,0 +1,2 @@
+# Trusted optional developer tool. Install outside the reviewed project.
+checkov==3.4.5

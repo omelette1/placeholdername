@@ -11,7 +11,7 @@ test('extension client invokes bundled real CLI and receives finding and locatio
 test('structured CLI error is returned; missing executable rejects',async t=>{const root=fs.mkdtempSync(path.join(os.tmpdir(),'changeproof-client-'));t.after(()=>fs.rmSync(root,{recursive:true,force:true}));const r=await runEngine(process.execPath,cli,root);assert.equal(r.analysis_errors[0].code,'not_git');await assert.rejects(runEngine('/no/such/node',cli,root),/Node.js was not found/);});
 test('invalid schema and escaped locations rejected',()=>{
  assert.throws(()=>validateReport({schema_version:'future'},'/tmp'));
- const report={schema_version:'4.0.0',runtime_verification:false,analysis_complete:true,repository:'/tmp',analysis_errors:[],files_inspected:[],skipped_files:[],untracked_files:[],findings:[{rule_id:'CP001',explanation:'test',limitations:[],location:{file:'../outside.ts',start:{line:1,column:1},end:{line:1,column:2}}}]};assert.throws(()=>validateReport(report,'/tmp'));
+ const report={schema_version:'5.0.0',runtime_verification:false,analysis_complete:true,repository:'/tmp',analysis_errors:[],files_inspected:[],skipped_files:[],untracked_files:[],findings:[{rule_id:'CP001',explanation:'test',limitations:[],location:{file:'../outside.ts',start:{line:1,column:1},end:{line:1,column:2}}}]};assert.throws(()=>validateReport(report,'/tmp'));
 });
 test('bundled adapter transports CP002 paths and rejects escaped source evidence',async t=>{
  const root=fs.mkdtempSync(path.join(os.tmpdir(),'changeproof-flow-client-'));t.after(()=>fs.rmSync(root,{recursive:true,force:true}));
@@ -19,7 +19,7 @@ test('bundled adapter transports CP002 paths and rejects escaped source evidence
  git('init','-q');git('config','user.email','test@example.invalid');git('config','user.name','Synthetic');
  fs.writeFileSync(path.join(root,'app.ts'),'const n=1;\n');git('add','.');git('-c','core.hooksPath=/dev/null','commit','-qm','baseline');
  fs.writeFileSync(path.join(root,'app.ts'),'function review(req) { const raw=req.headers.authorization; const payload=raw; console.log(payload); }');
- const r=await runEngine(process.execPath,cli,root);assert.equal(r.schema_version,'4.0.0');assert.equal(r.findings[0].rule_id,'CP002');assert.equal(r.findings[0].evidence.paths[0].assignments.length,2);assert.equal(r.findings[0].runtime_verification,false);
+ const r=await runEngine(process.execPath,cli,root);assert.equal(r.schema_version,'5.0.0');assert.equal(r.findings[0].rule_id,'CP002');assert.equal(r.findings[0].evidence.paths[0].assignments.length,2);assert.equal(r.findings[0].runtime_verification,false);
  const bad=structuredClone(r);bad.findings[0].evidence.paths[0].source.location.file='../outside.ts';assert.throws(()=>validateReport(bad,root),/Invalid evidence file/);
 });
 test('actual CLI invocation trace retains selected arguments, exit 2 and specific errors',async t=>{

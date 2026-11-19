@@ -2,7 +2,7 @@
   "name": "changeproof-local",
   "displayName": "Changeproof Local Review",
   "description": "Local static checks and opt-in hosted AI change assessment; no runtime verification.",
-  "version": "0.9.0",
+  "version": "0.10.0",
   "publisher": "changeproof-local",
   "license": "UNLICENSED",
   "engines": {
@@ -112,6 +112,22 @@
           "default": "http://127.0.0.1:4318",
           "scope": "application",
           "description": "User-level AI review backend origin. HTTPS required except loopback development. Workspace settings are ignored. Source is sent only after preview approval."
+        },
+        "changeproof.checkovPath": {
+          "type": "string",
+          "default": "",
+          "scope": "machine",
+          "description": "User-level absolute path to trusted Checkov 3.4.5 outside reviewed projects. Empty searches the extension host PATH. No installation during reviews."
+        },
+        "changeproof.aiProfile": {
+          "type": "string",
+          "enum": [
+            "demo",
+            "full"
+          ],
+          "default": "demo",
+          "scope": "application",
+          "description": "Explicit AI context/generation profile. Demo uses smaller contexts and a 3000 completion-token cap; estimates do not guarantee provider quota availability."
         }
       }
     },

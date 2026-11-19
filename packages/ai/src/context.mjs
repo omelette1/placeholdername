@@ -7,8 +7,9 @@ import {lineRanges} from '../../engine/src/engine.mjs';
 import {LIMITS,AI_VERSION} from './contract.mjs';
 import {redact,PRIVACY_NOTICE} from './redact.mjs';
 import {checkRequest} from './validate.mjs';
+import {profileFor,estimateTokens,validateProfileRequest} from './profiles.mjs';
 const digest=value=>crypto.createHash('sha256').update(value).digest('hex');
-function contexts(file,content,ranges,revision,revision_id,omit){
+function contexts(file,content,ranges,revision,revision_id,omit,limits=LIMITS){
  if(!content)return [];
  const lines=content.split('\n');const source=ts.createSourceFile(file,content,ts.ScriptTarget.Latest,true);
  if(source.parseDiagnostics.length){omit('Syntax could not be parsed; only bounded changed-line windows are included.');}
@@ -21,16 +22,17 @@ function contexts(file,content,ranges,revision,revision_id,omit){
   const end=Math.min(lines.length,start+Math.max(count,1)-1);
   const enclosing=functions.filter(f=>f.start<=start&&f.end>=end).sort((a,b)=>(a.end-a.start)-(b.end-b.start))[0];
   let a,b;
-  if(enclosing&&enclosing.end-enclosing.start+1<=LIMITS.chunkLines){a=enclosing.start;b=enclosing.end;}
-  else {a=Math.max(1,start-8);b=Math.min(lines.length,end+8);if(enclosing)omit('An enclosing function exceeds 120 lines; only a bounded changed-line window is included.');else omit('Changed code is outside a resolved enclosing function; only a local line window is included.');}
-  if(b-a+1>LIMITS.chunkLines){b=a+LIMITS.chunkLines-1;omit('Changed-line window truncated to 120 lines.');}
+  if(enclosing&&enclosing.end-enclosing.start+1<=limits.chunkLines){a=enclosing.start;b=enclosing.end;}
+  else {a=Math.max(1,start-8);b=Math.min(lines.length,end+8);if(enclosing)omit('An enclosing function exceeds '+limits.chunkLines+' lines; only a bounded changed-line window is included.');else omit('Changed code is outside a resolved enclosing function; only a local line window is included.');}
+  if(b-a+1>limits.chunkLines){b=a+limits.chunkLines-1;omit('Changed-line window truncated to '+limits.chunkLines+' lines.');}
   if(a>lines.length)continue;
   if(windows.some(w=>w.start_line<=a&&w.end_line>=b))continue;
   windows.push({revision,revision_id,start_line:a,end_line:b,text:lines.slice(a-1,b).join('\n')});
  }
  return windows;
 }
-export function collectContext(project){
+export function collectContext(project,{profile='full'}={}){
+ const limits=profileFor(profile);
  let root,gitRoot,baseline;
  try{root=fs.realpathSync(project);gitRoot=fs.realpathSync(git(root,['rev-parse','--show-toplevel']).toString().trimEnd());baseline=git(root,['rev-parse','--verify','HEAD^{commit}']).toString().trim();}catch{throw new Error('AI review needs a readable Git working tree with a HEAD baseline commit. Local Current files review still works without Git.');}
  const prefix=path.relative(gitRoot,root).split(path.sep).join('/');
@@ -66,21 +68,27 @@ export function collectContext(project){
   }catch{omit(`Could not safely include ${file}: unreadable, symbolic link, oversized, binary, invalid UTF-8 or concurrent edit.`);continue;}
   snapshots.push({file,snapshot:bytes?.snapshot??null,hash:digest(after)});
   if(before===after)continue;
-  if(files.length>=LIMITS.files){omit('Changed-file limit reached (8); additional eligible files omitted.');continue;}
+  if(files.length>=limits.files){omit('Changed-file limit reached for '+profile+' profile; additional eligible files omitted.');continue;}
   const before_id=old?.oid||'absent',after_id='sha256:'+digest(after),ranges=lineRanges(before,after);
-  const chunks=contexts(file,before,ranges,'before',before_id,omit).concat(contexts(file,after,ranges,'after',after_id,omit));
+  const chunks=contexts(file,before,ranges,'before',before_id,omit,limits).concat(contexts(file,after,ranges,'after',after_id,omit,limits));
   const accepted=[];
   for(const chunk of chunks){
    const redacted=redact(chunk.text);redactions+=redacted.count;chunk.text=redacted.text;
    const size=Buffer.byteLength(chunk.text);
-   if(totalChunks>=LIMITS.chunks||contextBytes+size>LIMITS.contextBytes||chunk.text.length>24000){omit('Context chunk/byte limit reached; additional context omitted.');continue;}
+   if(totalChunks>=limits.chunks||contextBytes+size>limits.contextBytes||chunk.text.length>24000){omit('Context chunk/byte limit reached; additional context omitted.');continue;}
    totalChunks++;contextBytes+=size;accepted.push(chunk);
   }
   if(accepted.length)files.push({file,before_id,after_id,chunks:accepted});
  }
  const request={schema_version:AI_VERSION,request_id:crypto.randomBytes(16).toString('hex'),baseline,files,omissions:[...omissions],privacy_notice:PRIVACY_NOTICE};
- const envelope={folder:root,request,snapshots,redactions,changed_paths_hash:digest(JSON.stringify(selected)),index_hash:digest(index.join('\0'))};
+ const envelope={profile,folder:root,request,snapshots,redactions,changed_paths_hash:digest(JSON.stringify(selected)),index_hash:digest(index.join('\0'))};
  while(files.length&&Buffer.byteLength(JSON.stringify(request))>LIMITS.requestBytes){const f=files.at(-1);f.chunks.pop();if(!f.chunks.length)files.pop();omit('JSON encoding size limit reached; additional context omitted.');request.omissions=[...omissions];}
+ if(profile==='demo'){
+  omit('Demo profile: at most 3 files, 8 chunks, 3 findings and 3000 completion tokens; context may be omitted.');request.omissions=[...omissions];
+  while(files.length&&estimateTokens(request,profile).total_estimate>limits.approximateTotalBudget){const f=files.at(-1);f.chunks.pop();if(!f.chunks.length)files.pop();omit('Approximate demo token budget reached; additional context omitted.');request.omissions=[...omissions];}
+ }
+ envelope.token_estimate=estimateTokens(request,profile);
+ if(files.length)validateProfileRequest(request,profile);
  if(git(gitRoot,['rev-parse','--verify','HEAD^{commit}']).toString().trim()!==baseline)throw new Error('HEAD changed during collection. Refresh the AI preview explicitly.');
  if(files.length)checkRequest(request);
  return envelope;

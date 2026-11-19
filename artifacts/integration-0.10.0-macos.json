@@ -1,0 +1,102 @@
+{
+  "version": "0.10.0",
+  "date": "2026-11-19T07:49:57.162Z",
+  "base_commit": "42780115210e3522c0c40497de658e2163821a3c",
+  "patch": {
+    "file": "changeproof-0.10.0-update.patch",
+    "sha256": "01d96870f3bdec3e7ba3abd040e19a0caf87a2bc447639623b1d6c53d1ae9026",
+    "applied_cleanly": true,
+    "merge_conflicts": 0,
+    "imported_verification_artifact": "artifacts/feature-scope-0.10.0-verification.json is supplied patch provenance, not local/editor verification"
+  },
+  "local_adjustments": [
+    "macOS platform.mac_ver may read only the canonical SystemVersion.plist metadata file. Neighboring files remain denied.",
+    "macOS platform.architecture derives interpreter pointer size via its fallback without launching file. Networking, arbitrary processes and outside writes stay blocked.",
+    "Synthetic demo test fixture disables background Git maintenance; strict byte-preservation assertions remain unchanged."
+  ],
+  "checkov": {
+    "version": "3.4.5",
+    "python": "3.11",
+    "path": "/Users/owen/.local/share/changeproof/checkov/bin/checkov",
+    "outside_project": true,
+    "user_setting_configured": true,
+    "unrelated_user_settings_preserved": true,
+    "dependency_check": "passed",
+    "resolved_dependencies": "artifacts/checkov-3.4.5-macos-freeze.txt"
+  },
+  "checks": {
+    "tests": 130,
+    "passed": 130,
+    "failed": 0,
+    "skipped": 0,
+    "real_scanner_positive_and_safe_controls": true,
+    "guard_denials_and_mac_metadata": true,
+    "build_extension": "passed",
+    "build_review_api": "passed",
+    "synthetic_fixture_validation": {
+      "cases": 12,
+      "live_requests": 0
+    },
+    "installed_cli": {
+      "version": "0.10.0",
+      "installed_path": "/Users/owen/.vscode/extensions/changeproof-local.changeproof-local-0.10.0",
+      "installed_source_and_bundles_match": true,
+      "installed_manifest_matches_excluding_vscode_metadata": true,
+      "vsix_sha256": "da5a1f628ec360f36c13540694fe89d8296b081d9e089abeb4944c3bcec7a34e",
+      "report_schema": "5.0.0",
+      "installed_cli_infrastructure": "assessed",
+      "checkov_version": "3.4.5",
+      "guard": {
+        "active": true,
+        "network": 0,
+        "subprocess": 0,
+        "outside_read": 0,
+        "outside_write": 0,
+        "metadata_probes": 3
+      },
+      "rule_ids": [
+        "CP002",
+        "CP003",
+        "CP004",
+        "CKV_AWS_24",
+        "CKV_AWS_20",
+        "CKV_K8S_16",
+        "CKV_K8S_17",
+        "CKV_DOCKER_3",
+        "CKV_GHA_1",
+        "CKV2_GHA_1"
+      ],
+      "live_ai_requests": 0,
+      "native_visual_verification": false,
+      "reload_status": "pending manual Developer: Reload Window; macOS denied assistive access"
+    }
+  },
+  "preservation": {
+    "all_three_env_files_byte_identical": true,
+    "groq_key_preserved": true,
+    "development_tokens_preserved": true,
+    "prior_live_reports_unchanged": true,
+    "local_backups_created": false,
+    "whole_folder_replacement": false
+  },
+  "verification_failures_resolved": [
+    "First real scanner checks failed closed on Mac system metadata and an architecture metadata subprocess; resolved with narrow platform handling, not a disabled guard.",
+    "A synthetic demo test was affected by asynchronous Git maintenance; disabled only in test fixture setup.",
+    "Initial installed manifest hash differed solely because VS Code adds __metadata; all executable source/bundles match byte-for-byte and the remaining manifest matches."
+  ],
+  "editor": {
+    "installed_version": "0.10.0",
+    "additional_windows_launched": 0,
+    "reload_attempts": 0,
+    "reload_status": "Manual Developer: Reload Window still required. macOS denied assistive access while identifying existing window, so no reload keystrokes were sent.",
+    "native_visual_verification": false,
+    "native_extension_host_test": "not launched to preserve existing window"
+  },
+  "live_ai_evaluation": "not repeated; zero live AI requests",
+  "publication": "none",
+  "limitations": [
+    "Checkov guard is defense in depth for a trusted pinned tool, not an OS sandbox for arbitrary binaries.",
+    "Infrastructure is a curated static current snapshot, not deployed-state or HEAD differential verification.",
+    "UI behavior is tested with mocks and installed engine execution; the reloaded native editor UI was not observed."
+  ]
+}

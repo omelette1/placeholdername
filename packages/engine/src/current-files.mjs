@@ -3,19 +3,19 @@ import path from 'node:path';
 import ignore from 'ignore';
 import {git,exclusion,safeRead,text,eligible} from './io.mjs';
 const MAX_FILES=2000, MAX_ENTRIES=100000;
-export function currentInputs(root) {
+export function currentInputs(root,{accept=eligible,maxFiles=MAX_FILES}={}) {
   const result={files:[],untracked:[],skipped:[],errors:[],limitations:[],gitRoot:null};
   const skip=(file,reason)=>result.skipped.push({file,reason});
   const error=(file,code)=>result.errors.push({code,file,message:'Current-files enumeration could not be completed within its safety boundaries.'});
   let entries=0,limited=false;
   function admit(file) {
-    if(++entries>MAX_ENTRIES || result.files.length>=MAX_FILES){if(!limited){error(null,'project_file_limit');limited=true;}return;}
+    if(++entries>MAX_ENTRIES || result.files.length>=maxFiles){if(!limited){error(null,'project_file_limit');limited=true;}return;}
     const excluded=exclusion(file);if(excluded){skip(file,excluded);return;}
     const absolute=path.join(root,file);
     let stat;try{stat=fs.lstatSync(absolute);}catch(e){if(e.code==='ENOENT'){skip(file,'missing_current_file');return;}skip(file,'read_failed');error(file,'read_failed');return;}
     if(stat.isSymbolicLink()){skip(file,'symlink');return;}
     if(stat.isDirectory()){skip(file,'nested_repository');return;}
-    if(stat.isFile()&&eligible(file))result.files.push(file);
+    if(stat.isFile()&&accept(file))result.files.push(file);
   }
   // Git is optional here; neither HEAD nor a commit is required for ls-files.
   try{result.gitRoot=fs.realpathSync(git(root,['rev-parse','--show-toplevel']).toString().replace(/\n$/,''));}catch{}
@@ -50,7 +50,7 @@ export function currentInputs(root) {
       if(child.isSymbolicLink()){skip(file,'symlink');continue;}
       if(ignored(file,child.isDirectory(),rules)){skip(file,'gitignored');continue;}
       if(child.isDirectory())walk(path.join(directory,child.name),rules);
-      else if(child.isFile()&&eligible(file))admit(file);
+      else if(child.isFile()&&accept(file))admit(file);
     }
   }
   walk(root);return result;

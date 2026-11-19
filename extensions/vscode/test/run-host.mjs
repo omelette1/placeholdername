@@ -40,7 +40,7 @@ child.on('error',()=>{clearTimeout(timer);console.error('Could not launch VS Cod
 child.on('exit',code=>{
  clearTimeout(timer);let passed=false;
  try{const result=JSON.parse(fs.readFileSync(resultPath,'utf8'));passed=true;console.log('Verified VS Code '+(vsix?'packaged-install':'development-host')+' checks:',JSON.stringify(result));
- const root=fileURLToPath(new URL('../../../',import.meta.url));fs.mkdirSync(path.join(root,'artifacts'),{recursive:true});fs.writeFileSync(path.join(root,`artifacts/${vsix?'packaged-install':'development-host'}-verification-0.9.0.json`),JSON.stringify(result,null,2)+'\n');
+ const root=fileURLToPath(new URL('../../../',import.meta.url));fs.mkdirSync(path.join(root,'artifacts'),{recursive:true});fs.writeFileSync(path.join(root,`artifacts/${vsix?'packaged-install':'development-host'}-verification-${JSON.parse(fs.readFileSync(path.join(extension,'package.json'))).version}.json`),JSON.stringify(result,null,2)+'\n');
  }catch{console.error('VS Code host did not produce a passing test record.');}
  if(passed)fs.rmSync(temp,{recursive:true,force:true});else console.error('Failure logs retained at '+temp);
  process.exitCode=code===0&&passed?0:1;

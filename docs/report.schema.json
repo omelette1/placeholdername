@@ -5,7 +5,7 @@
   "additionalProperties": false,
   "properties": {
     "schema_version": {
-      "const": "4.0.0"
+      "const": "5.0.0"
     },
     "tool": {
       "type": "object",
@@ -239,6 +239,206 @@
       "items": {
         "type": "string"
       }
+    },
+    "infrastructure": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "status": {
+          "enum": [
+            "not_assessed",
+            "assessed",
+            "partial",
+            "not_applicable"
+          ]
+        },
+        "reason": {
+          "type": "string"
+        },
+        "scanner": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "name": {
+              "const": "Checkov"
+            },
+            "version": {
+              "const": "3.4.5"
+            }
+          },
+          "required": [
+            "name",
+            "version"
+          ]
+        },
+        "frameworks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "framework": {
+                "enum": [
+                  "terraform",
+                  "kubernetes",
+                  "dockerfile",
+                  "github_actions"
+                ]
+              },
+              "files": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "checks": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "failed": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "skipped": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "status": {
+                "enum": [
+                  "not_assessed",
+                  "assessed",
+                  "partial",
+                  "not_applicable"
+                ]
+              }
+            },
+            "required": [
+              "framework",
+              "files",
+              "checks",
+              "failed",
+              "skipped",
+              "status"
+            ]
+          }
+        },
+        "files_inspected": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "file": {
+                "type": "string"
+              },
+              "snapshot": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "file",
+              "snapshot"
+            ]
+          }
+        },
+        "findings": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/finding"
+          }
+        },
+        "skipped_files": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "file": {
+                "type": "string"
+              },
+              "reason": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "file",
+              "reason"
+            ]
+          }
+        },
+        "errors": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "code",
+              "message"
+            ]
+          }
+        },
+        "guard": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "active": {
+              "type": "boolean"
+            },
+            "network": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "subprocess": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "outside_read": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "outside_write": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "metadata_probes": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "active",
+            "network",
+            "subprocess",
+            "outside_read",
+            "outside_write",
+            "metadata_probes"
+          ]
+        },
+        "limitations": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "status",
+        "reason",
+        "scanner",
+        "frameworks",
+        "files_inspected",
+        "findings",
+        "skipped_files",
+        "errors",
+        "guard",
+        "limitations"
+      ]
     }
   },
   "required": [
@@ -260,7 +460,8 @@
     "coverage",
     "review_mode",
     "git_repository",
-    "input_limitations"
+    "input_limitations",
+    "infrastructure"
   ],
   "$defs": {
     "position": {
@@ -743,6 +944,184 @@
             "limitations",
             "newly_introduced",
             "runtime_verification"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "rule_id": {
+              "enum": [
+                "CP003",
+                "CP004"
+              ]
+            },
+            "title": {
+              "type": "string"
+            },
+            "severity": {
+              "const": "warning"
+            },
+            "explanation": {
+              "type": "string"
+            },
+            "location": {
+              "$ref": "#/$defs/location"
+            },
+            "newly_introduced": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "runtime_verification": {
+              "const": false
+            },
+            "limitations": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "evidence": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "kind": {
+                  "const": "risky_syntax"
+                },
+                "pattern": {
+                  "enum": [
+                    "direct_eval",
+                    "function_constructor",
+                    "node_tls_environment_disabled",
+                    "https_certificate_verification_disabled"
+                  ]
+                },
+                "source_values_included": {
+                  "const": false
+                }
+              },
+              "required": [
+                "kind",
+                "pattern",
+                "source_values_included"
+              ]
+            }
+          },
+          "required": [
+            "rule_id",
+            "title",
+            "severity",
+            "explanation",
+            "location",
+            "newly_introduced",
+            "runtime_verification",
+            "limitations",
+            "evidence"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "rule_id": {
+              "enum": [
+                "CKV_AWS_24",
+                "CKV_AWS_25",
+                "CKV_AWS_20",
+                "CKV_AWS_1",
+                "CKV_K8S_16",
+                "CKV_K8S_17",
+                "CKV_DOCKER_3",
+                "CKV2_GHA_1",
+                "CKV_GHA_1",
+                "CKV_GHA_2"
+              ]
+            },
+            "title": {
+              "type": "string"
+            },
+            "severity": {
+              "const": "warning"
+            },
+            "explanation": {
+              "type": "string"
+            },
+            "location": {
+              "$ref": "#/$defs/location"
+            },
+            "newly_introduced": {
+              "const": null
+            },
+            "runtime_verification": {
+              "const": false
+            },
+            "limitations": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "evidence": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "kind": {
+                  "const": "infrastructure_policy"
+                },
+                "scanner": {
+                  "const": "Checkov"
+                },
+                "scanner_version": {
+                  "const": "3.4.5"
+                },
+                "framework": {
+                  "enum": [
+                    "terraform",
+                    "kubernetes",
+                    "dockerfile",
+                    "github_actions"
+                  ]
+                },
+                "policy_id": {
+                  "enum": [
+                    "CKV_AWS_24",
+                    "CKV_AWS_25",
+                    "CKV_AWS_20",
+                    "CKV_AWS_1",
+                    "CKV_K8S_16",
+                    "CKV_K8S_17",
+                    "CKV_DOCKER_3",
+                    "CKV2_GHA_1",
+                    "CKV_GHA_1",
+                    "CKV_GHA_2"
+                  ]
+                },
+                "source_values_included": {
+                  "const": false
+                }
+              },
+              "required": [
+                "kind",
+                "scanner",
+                "scanner_version",
+                "framework",
+                "policy_id",
+                "source_values_included"
+              ]
+            }
+          },
+          "required": [
+            "rule_id",
+            "title",
+            "severity",
+            "explanation",
+            "location",
+            "newly_introduced",
+            "runtime_verification",
+            "limitations",
+            "evidence"
           ]
         }
       ]

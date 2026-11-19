@@ -1,0 +1,11 @@
+# This nested fixture is not an active workflow in Changeproof's repository.
+name: Synthetic workflow only
+on: [workflow_dispatch]
+permissions: write-all
+jobs:
+  example:
+    runs-on: ubuntu-latest
+    env:
+      ACTIONS_ALLOW_UNSECURE_COMMANDS: true
+    steps:
+      - run: echo "Synthetic static fixture only"

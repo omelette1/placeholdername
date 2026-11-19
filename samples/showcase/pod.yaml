@@ -1,0 +1,12 @@
+# Synthetic workload only. Do not deploy.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: synthetic-only
+spec:
+  hostPID: true
+  containers:
+    - name: demo
+      image: example.invalid/synthetic:1
+      securityContext:
+        privileged: true

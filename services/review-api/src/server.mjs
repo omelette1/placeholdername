@@ -4,6 +4,7 @@ import {AI_VERSION,LIMITS} from '../../../packages/ai/src/contract.mjs';
 import {checkRequest,checkAssessment} from '../../../packages/ai/src/validate.mjs';
 import {redact} from '../../../packages/ai/src/redact.mjs';
 import {ProviderError} from './providers.mjs';
+import {profileFor,validateProfileRequest} from '../../../packages/ai/src/profiles.mjs';
 const digest=value=>crypto.createHash('sha256').update(value).digest();
 export function createServer({accessToken,provider,concurrency=2,requestsPerHour=20,bytesPerHour=2000000,timeoutMs=LIMITS.timeoutMs}={}){
  if(typeof accessToken!=='string'||accessToken.length<32||/[\s]/.test(accessToken))throw new Error('REVIEW_ACCESS_TOKEN must contain at least 32 non-whitespace characters.');
@@ -24,7 +25,7 @@ export function createServer({accessToken,provider,concurrency=2,requestsPerHour
   if(active>=concurrency)return reply.header('Retry-After','5').code(429).send({error:'concurrency_limit'});
  });
  app.post('/v1/reviews',async(request,reply)=>{
-  try{checkRequest(request.body);}catch{return reply.code(400).send({error:'invalid_request'});}
+  let profile;try{profile=request.headers['x-changeproof-profile']||'full';profileFor(profile);checkRequest(request.body);validateProfileRequest(request.body,profile);}catch{return reply.code(400).send({error:'invalid_request'});}
   const size=Buffer.byteLength(JSON.stringify(request.body));
   // Recheck atomically after asynchronous body parsing.
   if(active>=concurrency)return reply.code(429).send({error:'concurrency_limit'});
@@ -36,8 +37,8 @@ export function createServer({accessToken,provider,concurrency=2,requestsPerHour
   const aborted=new Promise((_,reject)=>controller.signal.addEventListener('abort',()=>reject(new ProviderError(timedOut?'provider_timeout':'cancelled',timedOut?504:499)),{once:true}));
   timer=setTimeout(()=>{timedOut=true;controller.abort();},timeoutMs);
   try{
-   const raw=await Promise.race([provider.review(request.body,{signal:controller.signal}),aborted]);
-   checkAssessment(raw,request.body);
+   const raw=await Promise.race([provider.review(request.body,{signal:controller.signal,profile}),aborted]);
+   checkAssessment(raw,request.body);if(raw.findings.length>profileFor(profile).findings)throw new ProviderError('invalid_model_output',502);
    // Redact provider prose too, then revalidate identity/ranges (never silently repair references).
    const clean=value=>typeof value==='string'?redact(value).text:Array.isArray(value)?value.map(clean):value&&typeof value==='object'?Object.fromEntries(Object.entries(value).map(([key,v])=>[key,clean(v)])):value;
    const assessment=clean(raw);checkAssessment(assessment,request.body);
