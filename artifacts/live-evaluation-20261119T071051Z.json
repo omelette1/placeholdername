@@ -1,0 +1,76 @@
+{
+  "report_version": "1.0.0",
+  "evaluation_date": "2026-11-19T07:11:02.844Z",
+  "mode": "live",
+  "provider": "groq",
+  "model": "openai/gpt-oss-120b",
+  "fixture_set_sha256": "67090f25cbc3952c57a22149938c95056122d0e883c2540ba89d0cd9d1f58dd7",
+  "fixture_commit": "9e4891c8ebf080886725d4c135769339b332567a",
+  "max_requests": 12,
+  "requests_attempted": 5,
+  "cases_total": 12,
+  "cases_not_attempted": 7,
+  "stop_reason": "provider_throttled",
+  "counts": {
+    "request_or_provider_failures": 2,
+    "schema_failures": 0,
+    "invalid_references": 0,
+    "provider_throttles": 1,
+    "collector_failures": 0,
+    "expected_regressions_detected": 2,
+    "expected_regressions_missed": 0,
+    "safe_control_cases_with_findings": 0,
+    "findings_on_safe_controls": 0,
+    "safe_controls_without_findings": 0,
+    "appropriate_uncertainty_proxies": 0,
+    "uncertainty_requires_judgment": 0,
+    "cases_requiring_human_judgment": 5
+  },
+  "cases": [
+    {
+      "id": "R01-header-logging",
+      "expected": "regression",
+      "status": "request_or_provider_failure",
+      "human_judgment_required": true
+    },
+    {
+      "id": "R02-private-response",
+      "expected": "regression",
+      "status": "valid_response",
+      "outcome": "expected_regression_detected",
+      "finding_count": 1,
+      "uncertainty_acknowledged": true,
+      "human_judgment_required": true,
+      "scoring_proxy_only": true
+    },
+    {
+      "id": "R03-owner-check",
+      "expected": "regression",
+      "status": "valid_response",
+      "outcome": "expected_regression_detected",
+      "finding_count": 1,
+      "uncertainty_acknowledged": true,
+      "human_judgment_required": true,
+      "scoring_proxy_only": true
+    },
+    {
+      "id": "R04-tenant-check",
+      "expected": "regression",
+      "status": "request_or_provider_failure",
+      "human_judgment_required": true
+    },
+    {
+      "id": "S01-safe-redaction",
+      "expected": "safe",
+      "status": "provider_throttled",
+      "human_judgment_required": true
+    }
+  ],
+  "limitations": [
+    "Category/reference overlap is a scoring proxy, not a judge of reasoning or security.",
+    "Expected answers and ambiguity notes are authored, not LLM judged, and excluded from model input.",
+    "Insufficient-context cases require human judgment; no binary accuracy percentage is computed.",
+    "Failures/unattempted cases are not silently converted to detection misses.",
+    "No source, prompts, model prose, responses or credentials are persisted."
+  ]
+}

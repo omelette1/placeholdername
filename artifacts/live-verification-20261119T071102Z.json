@@ -1,0 +1,180 @@
+{
+  "report_version": "1.0.0",
+  "verification_date": "2026-11-19T07:13:18.637Z",
+  "checkout": "9e4891c8ebf080886725d4c135769339b332567a",
+  "provider": "groq",
+  "model": "openai/gpt-oss-120b",
+  "scope": "Built-in synthetic smoke and committed synthetic evaluation fixtures only; no workspace/private code.",
+  "credential_setup": {
+    "root_variable_renamed_and_moved": "GROQ_KEY → server-side GROQ_API_KEY",
+    "server_env_gitignored": true,
+    "evaluation_env_gitignored": true,
+    "matching_development_tokens_configured": true,
+    "owner_only_env_permissions": true,
+    "credential_values_logged": false,
+    "credentials_in_report": false
+  },
+  "initial_smoke": {
+    "status": "failed",
+    "connection_contract": "not verified",
+    "detection_accuracy": "not measured",
+    "code": "provider_configuration",
+    "message": "Check backend health, access token, provider/model and schema compatibility. No retry or fallback was attempted.",
+    "timestamp": "2026-11-19T07:08:38.538Z"
+  },
+  "diagnostic": {
+    "provider_requests": 1,
+    "input": "same built-in synthetic smoke example",
+    "outcome": "Provider returned parseable JSON with stop finish reason. Full schema/reference validation was not part of this direct diagnostic; no provider contents persisted.",
+    "initial_failure_reproduced": false,
+    "original_rejection_cause": "unknown; upstream error body was intentionally not retained"
+  },
+  "confirmed_smoke": {
+    "provider": "groq",
+    "model": "openai/gpt-oss-120b",
+    "instance_id": "7b1c665386ce04e3aaeaddf979eef6b6",
+    "timestamp": "2026-11-19T07:10:03.121Z",
+    "status": "passed",
+    "contract_valid": true,
+    "reference_validation": true,
+    "detection_proxy": "expected_category_and_ranges_observed",
+    "accuracy": "not_measured",
+    "runtime_verification": false
+  },
+  "evaluation_report": "artifacts/live-evaluation-20261119T071051Z.json",
+  "evaluation": {
+    "report_version": "1.0.0",
+    "evaluation_date": "2026-11-19T07:11:02.844Z",
+    "mode": "live",
+    "provider": "groq",
+    "model": "openai/gpt-oss-120b",
+    "fixture_set_sha256": "67090f25cbc3952c57a22149938c95056122d0e883c2540ba89d0cd9d1f58dd7",
+    "fixture_commit": "9e4891c8ebf080886725d4c135769339b332567a",
+    "max_requests": 12,
+    "requests_attempted": 5,
+    "cases_total": 12,
+    "cases_not_attempted": 7,
+    "stop_reason": "provider_throttled",
+    "counts": {
+      "request_or_provider_failures": 2,
+      "schema_failures": 0,
+      "invalid_references": 0,
+      "provider_throttles": 1,
+      "collector_failures": 0,
+      "expected_regressions_detected": 2,
+      "expected_regressions_missed": 0,
+      "safe_control_cases_with_findings": 0,
+      "findings_on_safe_controls": 0,
+      "safe_controls_without_findings": 0,
+      "appropriate_uncertainty_proxies": 0,
+      "uncertainty_requires_judgment": 0,
+      "cases_requiring_human_judgment": 5
+    },
+    "cases": [
+      {
+        "id": "R01-header-logging",
+        "expected": "regression",
+        "status": "request_or_provider_failure",
+        "human_judgment_required": true
+      },
+      {
+        "id": "R02-private-response",
+        "expected": "regression",
+        "status": "valid_response",
+        "outcome": "expected_regression_detected",
+        "finding_count": 1,
+        "uncertainty_acknowledged": true,
+        "human_judgment_required": true,
+        "scoring_proxy_only": true
+      },
+      {
+        "id": "R03-owner-check",
+        "expected": "regression",
+        "status": "valid_response",
+        "outcome": "expected_regression_detected",
+        "finding_count": 1,
+        "uncertainty_acknowledged": true,
+        "human_judgment_required": true,
+        "scoring_proxy_only": true
+      },
+      {
+        "id": "R04-tenant-check",
+        "expected": "regression",
+        "status": "request_or_provider_failure",
+        "human_judgment_required": true
+      },
+      {
+        "id": "S01-safe-redaction",
+        "expected": "safe",
+        "status": "provider_throttled",
+        "human_judgment_required": true
+      }
+    ],
+    "limitations": [
+      "Category/reference overlap is a scoring proxy, not a judge of reasoning or security.",
+      "Expected answers and ambiguity notes are authored, not LLM judged, and excluded from model input.",
+      "Insufficient-context cases require human judgment; no binary accuracy percentage is computed.",
+      "Failures/unattempted cases are not silently converted to detection misses.",
+      "No source, prompts, model prose, responses or credentials are persisted."
+    ]
+  },
+  "coverage_of_evaluation": {
+    "clear_regressions": {
+      "attempted": 4,
+      "valid_responses": 2,
+      "category_range_proxy_hits": 2,
+      "proxy_misses": 0,
+      "request_or_provider_failures": 2
+    },
+    "safe_controls": {
+      "attempted": 1,
+      "valid_responses": 0,
+      "throttled": 1,
+      "not_attempted": 3,
+      "outcomes": "not measured"
+    },
+    "insufficient_context": {
+      "attempted": 0,
+      "valid_responses": 0,
+      "not_attempted": 4,
+      "outcomes": "not measured"
+    }
+  },
+  "outbound_provider_requests": {
+    "initial_smoke": 1,
+    "direct_synthetic_diagnostic": 1,
+    "confirmed_smoke": 1,
+    "evaluation": 5,
+    "total": 8,
+    "automatic_retries": 0,
+    "model_fallbacks": 0,
+    "extra_calls_after_evaluation_throttle": 0
+  },
+  "regression_checks": {
+    "command": "npm test",
+    "tests": 114,
+    "passed": 114,
+    "failed": 0,
+    "external_fetch_guard": true
+  },
+  "preservation": {
+    "implementation_changed": false,
+    "fixtures_changed": false,
+    "fixture_expectations_changed": false,
+    "vsix_rebuilt": false,
+    "additional_vscode_windows": 0,
+    "backups_created": false,
+    "deployed": false,
+    "published": false,
+    "target_code_executed": false
+  },
+  "limitations": [
+    "Evaluation is incomplete: stopped immediately on the first 429; seven fixtures remain unattempted.",
+    "Two evaluation calls failed before a valid assessment; they are not detection misses. The existing report stores their failure category, not the underlying provider error body/code.",
+    "The initial provider_configuration rejection was not reproduced; its precise upstream cause remains unknown. No automatic retry logic was added.",
+    "Only two regression cases have valid scored responses. Safe-control behavior and insufficient-context quality were not measured.",
+    "Category/reference matches are a scoring proxy, not proof of correct reasoning or production security.",
+    "Connection compatibility passed, not runtime verification of an application.",
+    "No fixture expectations, prompts or model settings were changed to improve scores."
+  ]
+}
