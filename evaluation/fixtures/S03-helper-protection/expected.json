@@ -1,0 +1,38 @@
+{
+  "id": "S03-helper-protection",
+  "fixture_version": "1.0.0",
+  "expected_outcome": "safe",
+  "expected_category": null,
+  "assumptions": [
+    "assertOwner throws synchronously on mismatch and is not reassigned.",
+    "Both changed functions are intentionally included by the collector."
+  ],
+  "relevant_evidence": {
+    "file": "app.ts",
+    "before": [
+      3,
+      3
+    ],
+    "after": [
+      3,
+      3
+    ]
+  },
+  "ambiguity_review": {
+    "method": "Authored code/policy review during implementation; no independent human adjudication and no model judging of responses.",
+    "notes": "Protection preserved through a directly visible helper; assess before/after not helper naming alone.",
+    "scored_binary": true,
+    "human_judgment_required": false
+  },
+  "uncertainty_proxy": null,
+  "supporting_evidence": {
+    "before": [
+      7,
+      8
+    ],
+    "after": [
+      7,
+      9
+    ]
+  }
+}

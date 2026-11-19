@@ -1,0 +1,27 @@
+{
+  "id": "S02-equivalent-owner",
+  "fixture_version": "1.0.0",
+  "expected_outcome": "safe",
+  "expected_category": null,
+  "assumptions": [
+    "Both identities are stable primitive strings; no getters or side effects."
+  ],
+  "relevant_evidence": {
+    "file": "app.ts",
+    "before": [
+      3,
+      3
+    ],
+    "after": [
+      3,
+      3
+    ]
+  },
+  "ambiguity_review": {
+    "method": "Authored code/policy review during implementation; no independent human adjudication and no model judging of responses.",
+    "notes": "Strict inequality and negated strict equality are equivalent here.",
+    "scored_binary": true,
+    "human_judgment_required": false
+  },
+  "uncertainty_proxy": null
+}

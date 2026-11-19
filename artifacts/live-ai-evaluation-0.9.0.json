@@ -1,0 +1,24 @@
+{
+  "report_version": "1.0.0",
+  "evaluation_date": "2026-11-19T00:33:54.917Z",
+  "status": "not_run",
+  "reason": "No GROQ_API_KEY in the environment or server .env; no development access token available. Checked only after credential-independent verification.",
+  "provider": null,
+  "model": null,
+  "documented_default_model": "openai/gpt-oss-120b",
+  "fixture_set_sha256": "67090f25cbc3952c57a22149938c95056122d0e883c2540ba89d0cd9d1f58dd7",
+  "fixture_inventory": {
+    "regressions": 4,
+    "safe_controls": 4,
+    "insufficient_context": 4
+  },
+  "live_requests": 0,
+  "connection_contract_result": "not run",
+  "detection_results": null,
+  "accuracy": "not measured",
+  "limitations": [
+    "No live detection/uncertainty outcomes can be inferred from mocks or fixture validation.",
+    "Authored fixture rubric has not been independently human-adjudicated.",
+    "Category/reference matching is only a scoring proxy, not proof of reasoning or security."
+  ]
+}

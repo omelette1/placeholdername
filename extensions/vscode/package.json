@@ -2,7 +2,7 @@
   "name": "changeproof-local",
   "displayName": "Changeproof Local Review",
   "description": "Local static checks and opt-in hosted AI change assessment; no runtime verification.",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "publisher": "changeproof-local",
   "license": "UNLICENSED",
   "engines": {
@@ -20,7 +20,8 @@
     "onView:changeproof.findings",
     "onCommand:changeproof.runDemo",
     "onCommand:changeproof.reviewProject",
-    "onCommand:changeproof.aiReviewChanges"
+    "onCommand:changeproof.aiReviewChanges",
+    "onCommand:changeproof.checkAiConnection"
   ],
   "capabilities": {
     "untrustedWorkspaces": {
@@ -71,6 +72,21 @@
       {
         "command": "changeproof.setAiAccessToken",
         "title": "Set AI Review Access Token",
+        "category": "Changeproof"
+      },
+      {
+        "command": "changeproof.checkAiConnection",
+        "title": "Check AI Connection",
+        "category": "Changeproof"
+      },
+      {
+        "command": "changeproof.refreshAiStatus",
+        "title": "Refresh AI Status",
+        "category": "Changeproof"
+      },
+      {
+        "command": "changeproof.showAiSetup",
+        "title": "AI Setup Guide",
         "category": "Changeproof"
       }
     ],

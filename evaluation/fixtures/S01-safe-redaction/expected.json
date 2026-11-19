@@ -1,0 +1,27 @@
+{
+  "id": "S01-safe-redaction",
+  "fixture_version": "1.0.0",
+  "expected_outcome": "safe",
+  "expected_category": null,
+  "assumptions": [
+    "safeLabel is a constant unrelated to credential content."
+  ],
+  "relevant_evidence": {
+    "file": "app.ts",
+    "before": [
+      3,
+      3
+    ],
+    "after": [
+      3,
+      4
+    ]
+  },
+  "ambiguity_review": {
+    "method": "Authored code/policy review during implementation; no independent human adjudication and no model judging of responses.",
+    "notes": "Added logging is harmless under this bounded constant-value example.",
+    "scored_binary": true,
+    "human_judgment_required": false
+  },
+  "uncertainty_proxy": null
+}

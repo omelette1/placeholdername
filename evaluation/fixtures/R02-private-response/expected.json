@@ -1,0 +1,28 @@
+{
+  "id": "R02-private-response",
+  "fixture_version": "1.0.0",
+  "expected_outcome": "regression",
+  "expected_category": "sensitive_data_exposure",
+  "assumptions": [
+    "res.json sends the supplied object to a public response.",
+    "record includes the privateSecret field as stated in submitted code."
+  ],
+  "relevant_evidence": {
+    "file": "app.ts",
+    "before": [
+      4,
+      4
+    ],
+    "after": [
+      4,
+      4
+    ]
+  },
+  "ambiguity_review": {
+    "method": "Authored code/policy review during implementation; no independent human adjudication and no model judging of responses.",
+    "notes": "Clear projection-to-record disclosure under explicit field policy.",
+    "scored_binary": true,
+    "human_judgment_required": false
+  },
+  "uncertainty_proxy": null
+}

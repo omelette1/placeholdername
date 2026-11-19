@@ -1,0 +1,37 @@
+{
+  "mode": "packaged_install",
+  "vscode": "1.142.0",
+  "extension_version": "0.9.0",
+  "vsix_sha256": "1820a76ad993331cba8fd8a955b2c4098ec9abf326a1bbf391315c8c0bcdb366",
+  "visual_observation": false,
+  "demo_verification": {
+    "selected_folder": "/private/tmp/cp-vsc-yk9bTM/user-data/User/globalStorage/changeproof-local.changeproof-local/demos/authorization-NrJKlp",
+    "exit_code": 0,
+    "coverage": "analyzed",
+    "details_webview_created": true,
+    "workspace_unchanged": true
+  },
+  "checks": [
+    "installed activation and real CLI",
+    "native sidebar groups and finding command",
+    "native details webview creation and CSP",
+    "native source/assignment/log navigation and selections",
+    "decoration API creation and text labels",
+    "native unsaved-edit stale event and diagnostic clearing",
+    "explicit rerun and old-ID rejection",
+    "empty/CP001/parse-error states",
+    "one-command Run Demo with details and source selection",
+    "actual workspace and Git bytes unchanged",
+    "Review Project current files without Git or baseline",
+    "same-file helper argument/call/parameter navigation",
+    "current-files newness not applicable and mode-preserving rerun",
+    "installed AI command exact preview with zero pre-approval transmissions",
+    "native SecretStorage and real HTTP mock backend assessment",
+    "AI and deterministic sidebar separation, reusable panel, current reference navigation",
+    "native health-only status and explicitly confirmed synthetic mock contract check",
+    "existing details panel reused for AI setup guide"
+  ],
+  "limitations": [
+    "No manual visual, mouse-click, screen-reader or webview-paint observation. Webview button message wiring is covered by mocked tests; native tests call the same registered navigation handler. Cursor untested."
+  ]
+}

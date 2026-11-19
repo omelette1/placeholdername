@@ -1,0 +1,28 @@
+{
+  "id": "R04-tenant-check",
+  "fixture_version": "1.0.0",
+  "expected_outcome": "regression",
+  "expected_category": "weakened_access_check",
+  "assumptions": [
+    "req.user is truthy for authenticated requests, as stated.",
+    "Tenant equality is mandatory even for authenticated users."
+  ],
+  "relevant_evidence": {
+    "file": "app.ts",
+    "before": [
+      4,
+      4
+    ],
+    "after": [
+      4,
+      4
+    ]
+  },
+  "ambiguity_review": {
+    "method": "Authored code/policy review during implementation; no independent human adjudication and no model judging of responses.",
+    "notes": "Clear weakened conjunction; non-matching tenants now reach the return.",
+    "scored_binary": true,
+    "human_judgment_required": false
+  },
+  "uncertainty_proxy": null
+}

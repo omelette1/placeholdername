@@ -1,3 +1,7 @@
+# Changeproof 0.9.0 — live AI readiness and synthetic evaluation
+
+The existing sidebar now distinguishes backend health, provider configuration, explicitly approved synthetic inference checks, and detection-quality proxies. [Setup and evaluation guide](docs/live-ai-readiness-0.9.0.md). Package: `artifacts/changeproof-local-0.9.0.vsix`. No live result is implied by mock tests or health. Earlier milestone notes below are historical.
+
 # Changeproof 0.8.0 — optional hosted AI review
 
 Local deterministic review remains available without a server. The opt-in **AI Review Changes** command previews bounded, redacted tracked JS/TS changes against HEAD, asks for explicit approval, and displays separately labeled AI assessments in the existing sidebar/details interface. No runtime verification or automatic edits.

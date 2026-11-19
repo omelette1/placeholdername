@@ -11,8 +11,9 @@ export function createServer({accessToken,provider,concurrency=2,requestsPerHour
  for(const [key,value,min,max] of [['concurrency',concurrency,1,8],['requestsPerHour',requestsPerHour,1,1000],['bytesPerHour',bytesPerHour,1000,100000000],['timeoutMs',timeoutMs,10,60000]])if(!Number.isSafeInteger(value)||value<min||value>max)throw new Error('Invalid '+key);
  const app=Fastify({logger:false,bodyLimit:LIMITS.requestBytes,requestTimeout:15000,connectionTimeout:20000,keepAliveTimeout:5000,maxRequestsPerSocket:50,trustProxy:false});
  let active=0,used=0,bytes=0,windowStart=Date.now();
+ const instance_id=crypto.randomBytes(16).toString('hex');
  app.setErrorHandler((error,_request,reply)=>reply.code(error.statusCode===413?413:400).send({error:error.statusCode===413?'request_too_large':'invalid_request'}));
- app.get('/health',async()=>({status:'ok',contract_version:AI_VERSION,provider:provider.name,model:provider.model}));
+ app.get('/health',async()=>({status:'ok',contract_version:AI_VERSION,provider:provider.name,model:provider.model,instance_id}));
  app.addHook('onRequest',async(request,reply)=>{
   if(request.url==='/health'&&request.method==='GET')return;
   const supplied=request.headers.authorization;
@@ -41,7 +42,7 @@ export function createServer({accessToken,provider,concurrency=2,requestsPerHour
    const clean=value=>typeof value==='string'?redact(value).text:Array.isArray(value)?value.map(clean):value&&typeof value==='object'?Object.fromEntries(Object.entries(value).map(([key,v])=>[key,clean(v)])):value;
    const assessment=clean(raw);checkAssessment(assessment,request.body);
    return {schema_version:AI_VERSION,request_id:request.body.request_id,baseline:request.body.baseline,provider:provider.name,model:provider.model,runtime_verification:false,assessment};
-  }catch(error){const status=error instanceof ProviderError?error.status:502;return reply.code(status).send({error:error instanceof ProviderError?error.code:'invalid_model_output'});}
+  }catch(error){const status=error instanceof ProviderError?error.status:502;return reply.code(status).send({error:error instanceof ProviderError?error.code:['invalid_reference','missing_comparison_references'].includes(error.message)?'invalid_reference':'invalid_model_output'});}
   finally{clearTimeout(timer);controller.abort();active--;request.raw.off('aborted',disconnected);reply.raw.off('close',disconnected);}
  });
  return app;

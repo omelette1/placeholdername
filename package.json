@@ -1,6 +1,6 @@
 {
   "name": "changeproof-local",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "private": true,
   "description": "Initial local static-analysis prototype for reviewing code changes",
   "type": "module",
@@ -9,11 +9,13 @@
   },
   "scripts": {
     "review": "node packages/engine/src/cli.mjs",
-    "test": "node --test packages/engine/test/*.test.mjs packages/ai/test/*.test.mjs services/review-api/test/*.test.mjs extensions/vscode/test/*.test.cjs",
+    "test": "node --import ./evaluation/test/local-network-only.mjs --test packages/engine/test/*.test.mjs packages/ai/test/*.test.mjs services/review-api/test/*.test.mjs evaluation/test/*.test.mjs extensions/vscode/test/*.test.cjs",
     "build:extension": "node extensions/vscode/build.mjs",
     "package:extension": "npm run build:extension && node extensions/vscode/package.mjs",
     "start:review-api": "node --env-file=services/review-api/.env services/review-api/src/start.mjs",
-    "build:review-api": "node scripts/build-review-api.mjs"
+    "build:review-api": "node scripts/build-review-api.mjs",
+    "evaluate:ai": "node evaluation/run.mjs",
+    "check:ai": "node evaluation/smoke.mjs"
   },
   "dependencies": {
     "ajv": "^8.20.0",

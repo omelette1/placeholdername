@@ -1,0 +1,69 @@
+{
+  "version": "0.9.0",
+  "base_commit": "eee181b91d8ae9090ad2e81e9ace044bcedb6118",
+  "verification_date": "2026-11-19T00:33:54.917Z",
+  "automated": {
+    "command": "npm test",
+    "tests": 114,
+    "passed": 114,
+    "failed": 0,
+    "external_inference": false,
+    "non_loopback_fetch_guard": true,
+    "areas": [
+      "existing engine and extension regressions",
+      "health vs inference and backend instance identity",
+      "confirmation, synthetic-only input, schema/reference validation and typed provider failures",
+      "12 production-collected fixtures with expected metadata excluded",
+      "sequential bounded evaluation, exact provider/model, throttle stop, independent failure counts",
+      "real HTTP collector-to-service-to-injected-Groq-adapter path",
+      "mocked UI status/setup safe rendering and persistent panel reuse"
+    ]
+  },
+  "build": {
+    "extension": "passed",
+    "review_api": "passed",
+    "fixture_validation": {
+      "cases": 12,
+      "model_requests": 0,
+      "result": "passed"
+    }
+  },
+  "packaging": {
+    "vsix": "artifacts/changeproof-local-0.9.0.vsix",
+    "sha256": "1820a76ad993331cba8fd8a955b2c4098ec9abf326a1bbf391315c8c0bcdb366"
+  },
+  "native_editor": {
+    "mode": "installed VSIX",
+    "vscode": "1.142.0",
+    "status": "passed",
+    "provider": "mock",
+    "model": "synthetic-test-fixture",
+    "record": "artifacts/packaged-install-verification-0.9.0.json",
+    "launches": 1,
+    "visual_observation": false,
+    "current_user_window_modified": false
+  },
+  "development_host": "not separately rerun",
+  "live_smoke": "not run",
+  "live_evaluation": "not run",
+  "live_results": "artifacts/live-ai-evaluation-0.9.0.json",
+  "cursor": "untested",
+  "preservation": {
+    "newer_remote_commits_at_start": false,
+    "local_changes_at_start": false,
+    "deterministic_schema": "4.0.0 unchanged",
+    "ai_contract": "1.0.0 unchanged",
+    "legacy_python_workflow": "unchanged",
+    "backups_created": false,
+    "target_code_executed": false
+  },
+  "delivery_policy": "Commit and push scoped changes after appropriate checks per AGENTS.md. No force-push, deployment or marketplace publication.",
+  "limitations": [
+    "Health is a point-in-time configured-provider check, not authentication or inference.",
+    "Synthetic smoke compatibility is not detection accuracy.",
+    "Session-local status must be refreshed explicitly; no automatic monitoring.",
+    "In-memory quotas and provider-side data handling limitations from 0.8.0 remain.",
+    "Fixture judgments are authored and require human scrutiny; no LLM judge or accuracy percentages.",
+    "No live provider response or accuracy result was fabricated."
+  ]
+}

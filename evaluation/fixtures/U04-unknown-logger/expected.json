@@ -1,0 +1,27 @@
+{
+  "id": "U04-unknown-logger",
+  "fixture_version": "1.0.0",
+  "expected_outcome": "insufficient_context",
+  "expected_category": null,
+  "assumptions": [
+    "Neither value classification nor source record contract is supplied."
+  ],
+  "relevant_evidence": {
+    "file": "app.ts",
+    "before": [
+      2,
+      2
+    ],
+    "after": [
+      2,
+      2
+    ]
+  },
+  "ambiguity_review": {
+    "method": "Authored code/policy review during implementation; no independent human adjudication and no model judging of responses.",
+    "notes": "value could be harmless or sensitive; request its data contract rather than infer from names.",
+    "scored_binary": false,
+    "human_judgment_required": true
+  },
+  "uncertainty_proxy": "insufficient_context plus a specific context request and no asserted regression"
+}

@@ -1,3 +1,7 @@
+# Changeproof 0.9.0
+
+Use the existing sidebar **AI connection status** section. **Refresh AI Status** reads health only; **Check AI Connection** asks before sending a built-in synthetic example, never workspace code. **AI Setup Guide** reuses the existing details panel. Success measures connection/schema compatibility, not detection accuracy; mock success is labeled mock. See `docs/live-ai-readiness-0.9.0.md` for setup and bounded evaluation. Install `artifacts/changeproof-local-0.9.0.vsix`. Previous notes below describe retained functionality.
+
 # Changeproof Local Review — 0.7.0
 
 Review a real project's saved JavaScript/TypeScript locally. Run **Changeproof: Review Project**, choose **Current files** (no Git or commit required) or **Changes since HEAD**, and read the existing persistent sidebar and finding-details panel. Normal reviews never create samples, commits or project edits.

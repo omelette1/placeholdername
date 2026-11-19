@@ -1,0 +1,27 @@
+{
+  "id": "U01-unknown-fields",
+  "fixture_version": "1.0.0",
+  "expected_outcome": "insufficient_context",
+  "expected_category": null,
+  "assumptions": [
+    "No field classification or caller contract is supplied."
+  ],
+  "relevant_evidence": {
+    "file": "app.ts",
+    "before": [
+      2,
+      2
+    ],
+    "after": [
+      2,
+      2
+    ]
+  },
+  "ambiguity_review": {
+    "method": "Authored code/policy review during implementation; no independent human adjudication and no model judging of responses.",
+    "notes": "Record may be public or private; request schema/classification instead of inventing it.",
+    "scored_binary": false,
+    "human_judgment_required": true
+  },
+  "uncertainty_proxy": "insufficient_context plus a specific context request and no asserted regression"
+}

@@ -1,0 +1,28 @@
+{
+  "id": "R03-owner-check",
+  "fixture_version": "1.0.0",
+  "expected_outcome": "regression",
+  "expected_category": "weakened_access_check",
+  "assumptions": [
+    "req.user is trusted authenticated identity.",
+    "No additional policy enforcement surrounds this synthetic function."
+  ],
+  "relevant_evidence": {
+    "file": "app.ts",
+    "before": [
+      3,
+      3
+    ],
+    "after": [
+      3,
+      4
+    ]
+  },
+  "ambiguity_review": {
+    "method": "Authored code/policy review during implementation; no independent human adjudication and no model judging of responses.",
+    "notes": "Clear removal of an explicit guard; hidden production guards are outside the fixture contract.",
+    "scored_binary": true,
+    "human_judgment_required": false
+  },
+  "uncertainty_proxy": null
+}

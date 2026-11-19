@@ -9,7 +9,7 @@ export function groqProvider({apiKey,model='openai/gpt-oss-120b',fetchImpl=fetch
   let response;
   try{response=await fetchImpl('https://api.groq.com/openai/v1/chat/completions',{method:'POST',redirect:'error',signal,headers:{'Content-Type':'application/json',Authorization:'Bearer '+apiKey},body:JSON.stringify({model,messages:[{role:'system',content:SYSTEM_PROMPT},{role:'user',content:JSON.stringify(request)}],temperature:0,max_completion_tokens:6000,stream:false,response_format:{type:'json_schema',json_schema:{name:'changeproof_assessment',strict:true,schema:assessmentSchema}}})});}
   catch{throw new ProviderError('provider_unavailable');}
-  if(!response.ok){await response.body?.cancel().catch(()=>{});throw new ProviderError(response.status===429?'provider_quota':'provider_unavailable',response.status===429?429:503);}
+  if(!response.ok){await response.body?.cancel().catch(()=>{});throw new ProviderError(response.status===429?'provider_quota':[401,403].includes(response.status)?'provider_auth':response.status===400?'provider_configuration':'provider_unavailable',response.status===429?429:503);}
   try{const data=await boundedJson(response,LIMITS.outputBytes*2);if(data.choices?.[0]?.finish_reason!=='stop'||typeof data.choices[0].message?.content!=='string'||data.choices[0].message.tool_calls)throw new Error();return JSON.parse(data.choices[0].message.content);}catch{throw new ProviderError('invalid_model_output',502);}
  }};
 }

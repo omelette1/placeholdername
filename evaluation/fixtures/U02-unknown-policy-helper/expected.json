@@ -1,0 +1,27 @@
+{
+  "id": "U02-unknown-policy-helper",
+  "fixture_version": "1.0.0",
+  "expected_outcome": "insufficient_context",
+  "expected_category": null,
+  "assumptions": [
+    "validate and audit implementations are intentionally absent."
+  ],
+  "relevant_evidence": {
+    "file": "app.ts",
+    "before": [
+      2,
+      3
+    ],
+    "after": [
+      2,
+      3
+    ]
+  },
+  "ambiguity_review": {
+    "method": "Authored code/policy review during implementation; no independent human adjudication and no model judging of responses.",
+    "notes": "Neither helper semantics nor caller policy are known; names alone do not prove a guard was removed.",
+    "scored_binary": false,
+    "human_judgment_required": true
+  },
+  "uncertainty_proxy": "insufficient_context plus a specific context request and no asserted regression"
+}

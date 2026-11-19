@@ -1,0 +1,28 @@
+{
+  "id": "R01-header-logging",
+  "fixture_version": "1.0.0",
+  "expected_outcome": "regression",
+  "expected_category": "sensitive_data_exposure",
+  "assumptions": [
+    "The explicit synthetic comment defines credential sensitivity and logging policy.",
+    "console is the standard unshadowed console."
+  ],
+  "relevant_evidence": {
+    "file": "app.ts",
+    "before": [
+      3,
+      3
+    ],
+    "after": [
+      3,
+      3
+    ]
+  },
+  "ambiguity_review": {
+    "method": "Authored code/policy review during implementation; no independent human adjudication and no model judging of responses.",
+    "notes": "Clear under stated policy; does not establish real logger retention or audience.",
+    "scored_binary": true,
+    "human_judgment_required": false
+  },
+  "uncertainty_proxy": null
+}
