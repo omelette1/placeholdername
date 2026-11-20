@@ -1,10 +1,10 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "Changeproof AI request 1.1.0",
+  "title": "Changeproof AI request 1.2.0",
   "type": "object",
   "properties": {
     "schema_version": {
-      "const": "1.1.0"
+      "const": "1.2.0"
     },
     "request_id": {
       "type": "string",

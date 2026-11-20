@@ -1,4 +1,4 @@
-# Changeproof 0.16.0
+# Changeproof 0.17.0
 
 Review saved JavaScript/TypeScript and supported infrastructure configuration
 in VS Code. Read potential issues, follow their evidence, and see what could
@@ -11,6 +11,12 @@ checks** inside the app. No response copying or extra model call is needed.
 The AI summary and finding details show partial CP002 support or unverified
 claims, with body observations and cited navigation. See
 [automatic AI evidence checks](docs/automatic-ai-evidence-0.15.0.md) for scope.
+
+Every AI finding now includes locally checked, exact-source quote receipts
+from current code and (when available) the baseline. Invented or out-of-context
+quotes are rejected. A quote confirms only that exact text occurs at the stated
+location; its interpretation and security conclusion remain unverified. See
+[evidence receipts and accuracy](docs/evidence-receipts-and-accuracy-0.17.0.md).
 
 AI findings can now include a bounded line-replacement proposal. Changeproof
 checks the exact saved text and JavaScript/TypeScript syntax, shows the proposed
@@ -54,7 +60,7 @@ layout toolbar button. One tab is reused for dashboard, finding and AI views.
 
 ## Use the extension
 
-1. Install `artifacts/changeproof-local-0.16.0.vsix` using **Extensions: Install
+1. Install `artifacts/changeproof-local-0.17.0.vsix` using **Extensions: Install
    from VSIX…**. Reload the **existing** window once after updating.
 2. Open the project folder you want to inspect. Save your files.
 3. Click the **Changeproof shield icon** on the left, then select your project
@@ -172,7 +178,7 @@ synthetic syntax examples. Those are regression-test scores, not real-world
 precision or recall. Live AI evaluation also reports proxy metrics only over
 valid regression/safe-control responses, together with scored-case coverage;
 failed, throttled, unattempted and insufficient-context cases are not silently
-counted as correct or incorrect. See [patch and accuracy checks](docs/patch-and-accuracy-0.16.0.md).
+counted as correct or incorrect. See [evidence receipts and accuracy](docs/evidence-receipts-and-accuracy-0.17.0.md) and [patch checks](docs/patch-and-accuracy-0.16.0.md).
 
 [Sidebar controls and verification](docs/sidebar-controls-0.12.0.md) describe the
 new entry point and preserved consent boundaries.

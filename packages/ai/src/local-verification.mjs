@@ -54,6 +54,13 @@ export function verifyLocalAssessment(project,request,response){
   }
   const findings=response.assessment.findings.map((finding,index)=>{
     const row={index,status:'unverified',reason:'No independent supported rule establishes this AI claim. Absence of a rule match does not contradict the claim.',static_evidence:[],implementation_observations:[],runtime_verification:false};
+    row.evidence_quotes=finding.evidence_quotes.map(quote=>{
+      const data=files.get(quote.file),source=quote.revision==='before'?data?.before:data?.after;
+      if(source===undefined)throw new Error('evidence_quote_mismatch');
+      const actual=source.split('\n').slice(quote.start_line-1,quote.end_line).map(line=>line.replace(/\r$/,'')).join('\n');
+      if(actual!==quote.quote)throw new Error('evidence_quote_mismatch');
+      return {...quote,status:'exact_match',scope:'Exact submitted source text matched the verified snapshot. This does not verify the interpretation or security claim.',reference_index:finding.references.findIndex(r=>r.file===quote.file&&r.revision===quote.revision&&r.revision_id===quote.revision_id&&r.start_line<=quote.start_line&&r.end_line>=quote.end_line)};
+    });
     for(const [file,data] of files){
       if(!finding.references.some(r=>r.file===file&&r.revision==='after'))continue;
       if(finding.category==='sensitive_data_exposure')for(const observed of data.analysis?.findings||[]){

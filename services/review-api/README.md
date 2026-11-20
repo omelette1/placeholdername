@@ -1,4 +1,4 @@
-# Changeproof development AI review API (0.16.0)
+# Changeproof development AI review API (0.17.0)
 
 Requires Node 22+, Git for context collection, and root `npm ci`. From the repository root:
 
@@ -18,7 +18,7 @@ Limits: 160,000-byte request; 8 files; 32 context chunks; 120 lines/chunk; 100,0
 
 There is no request logging, database, prompt/response persistence or error-body echo. Only startup origin/provider is printed. Code, filenames, model text and the access token live in memory during the operation; do not add logging middleware or body-capturing proxies. `/health` intentionally discloses provider/model. Cancellation aborts the backend's provider request when the client disconnects; cancellation may not prevent charges for work already accepted upstream.
 
-Current AI contract 1.1.0 is independent of deterministic report 5.0.0. Grounding validates exact submitted file, before/after revision IDs and contained line ranges. Each regression finding needs both before and after references; unsupported or incomplete context should yield uncertainty/context requests. Optional suggested edits are restricted to exact submitted after-context lines and are locally checked before the user can apply them. A valid reference or syntactically valid edit does not prove the model's policy assumption, patch correctness or security.
+Current AI contract 1.2.0 is independent of deterministic report 5.0.0. Grounding validates exact submitted file, before/after revision IDs and contained line ranges. Each finding must include exact source quotes; the contract rejects quotes that do not match referenced submitted chunks. The extension rechecks them against the saved snapshot and exposes clickable quote receipts. A receipt proves only the quoted text and location, not the interpretation, policy assumption, behavior or security. Optional suggested edits are restricted to exact submitted after-context lines and are locally checked before the user can apply them.
 
 ## Provider data handling
 

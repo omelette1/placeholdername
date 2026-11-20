@@ -1,4 +1,4 @@
-# Changeproof Local Review — 0.16.0
+# Changeproof Local Review — 0.17.0
 
 Review saved JS/TS and supported infrastructure configuration in this VS Code
 window. Click the **Changeproof shield icon** in the left Activity Bar. The
@@ -47,12 +47,17 @@ Click findings directly in the summary and follow cited evidence. No manual
 response copying, extra model call or target-code execution is involved. General
 access-control claims, summaries and test success remain unverified.
 
+Each AI finding also carries exact-source quote receipts. The extension matches
+the quote to the approved saved snapshot and clickable source range; fabricated
+or out-of-context quotes are rejected. This verifies quotation only, not the
+meaning or security correctness of the finding.
+
 Suggested AI edits are bounded line replacements checked against the exact
 saved text and JavaScript/TypeScript syntax. Review the before/after preview and
 click **Apply this patch** to apply and save; Changeproof then reruns local
 static checks. It does not execute project tests or claim the patch is correct.
 
-Install `changeproof-local-0.16.0.vsix`, reload the existing window once, and
+Install `changeproof-local-0.17.0.vsix`, reload the existing window once, and
 review your project. Trusted Node 20.19+ is required; configure user-level
 `changeproof.nodePath` / `changeproof.checkovPath` if needed. Normal reviews do
 not open additional editor windows or create demos. **Run Demo** remains a

@@ -45,7 +45,7 @@ export function createServer({accessToken,provider,concurrency=2,requestsPerHour
    const clean=value=>typeof value==='string'?redact(value).text:Array.isArray(value)?value.map(clean):value&&typeof value==='object'?Object.fromEntries(Object.entries(value).map(([key,v])=>[key,clean(v)])):value;
    const assessment=clean(raw);checkAssessment(assessment,request.body);
    return {schema_version:AI_VERSION,request_id:request.body.request_id,baseline:request.body.baseline,provider:provider.name,model:provider.model,runtime_verification:false,assessment};
-  }catch(error){const status=error instanceof ProviderError?error.status:502;return reply.code(status).send({error:error instanceof ProviderError?error.code:['invalid_reference','missing_comparison_references'].includes(error.message)?'invalid_reference':'invalid_model_output'});}
+  }catch(error){const status=error instanceof ProviderError?error.status:502;const code=error instanceof ProviderError?error.code:['invalid_reference','missing_comparison_references'].includes(error.message)?'invalid_reference':['invalid_evidence_quote','missing_current_quote','missing_comparison_quote'].includes(error.message)?'invalid_evidence_quote':'invalid_model_output';return reply.code(status).send({error:code});}
   finally{clearTimeout(timer);controller.abort();active--;request.raw.off('aborted',disconnected);reply.raw.off('close',disconnected);}
  });
  return app;

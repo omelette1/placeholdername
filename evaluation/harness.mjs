@@ -22,7 +22,7 @@ export function collectFixture(fixture){
   const request=collectContext(dir).request;checkRequest(request);return request;
  }finally{fs.rmSync(dir,{recursive:true,force:true});}
 }
-export function classifyFailure(error){return ['invalid_reference','missing_comparison_references'].includes(error.code||error.message)?'invalid_references':error.status===429||['throttled','provider_quota'].includes(error.code)?'provider_throttled':(error.code||error.message)==='invalid_response'||(error.code||error.message)==='invalid_model_output'?'schema_failure':'request_or_provider_failure';}
+export function classifyFailure(error){return ['invalid_reference','missing_comparison_references','invalid_evidence_quote','missing_current_quote','missing_comparison_quote'].includes(error.code||error.message)?'invalid_references':error.status===429||['throttled','provider_quota'].includes(error.code)?'provider_throttled':(error.code||error.message)==='invalid_response'||(error.code||error.message)==='invalid_model_output'?'schema_failure':'request_or_provider_failure';}
 export function scoreAssessment(metadata,assessment){
  const withinRelevant=f=>['before','after'].every(revision=>f.references.some(r=>r.revision===revision&&r.file===metadata.relevant_evidence.file&&r.start_line<=metadata.relevant_evidence[revision][1]&&r.end_line>=metadata.relevant_evidence[revision][0]));
  const outcome=metadata.expected_outcome;
