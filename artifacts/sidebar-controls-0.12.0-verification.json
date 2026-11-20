@@ -1,0 +1,49 @@
+{
+  "version": "0.12.0",
+  "github_base": "3791a03d3745f6147438e9dd639987ffe44d060a",
+  "tests": {
+    "passed": 155,
+    "failed": 0,
+    "skipped": 0,
+    "real_offline_checkov": "3.4.5"
+  },
+  "sidebar_controls": [
+    "Activity Bar shield",
+    "folder selector and picker",
+    "persisted review mode",
+    "Scan project",
+    "Open results",
+    "Settings",
+    "optional AI profile dropdown",
+    "AI preview",
+    "backend health/setup/access-token actions"
+  ],
+  "new_checks": [
+    "actual extension activation/provider registration",
+    "sidebar Scan executes real bundled CLI without mode picker",
+    "same-window dashboard auto-open",
+    "selected-folder/full-profile AI preview without inference",
+    "workspace selection persistence",
+    "busy/duplicate click guards",
+    "stale message tokens and folder registry",
+    "global-only profile updates",
+    "CSP/escaping",
+    "actual client script button/dropdown wiring"
+  ],
+  "package": {
+    "built": true,
+    "sources_bundles_and_icon_match": true,
+    "manifest_sidebar_contributions_valid": true,
+    "credential_files_included": false,
+    "sha256": "ddd295a4ec3711d4f0af083cc12da57527ae9ffba588c016d22beb36052f19ad"
+  },
+  "live_provider_requests": 0,
+  "native_editor_launched": false,
+  "native_visual_verification": "not performed",
+  "client_script_verification": "minimal DOM/bridge harness, not native rendering",
+  "cursor": "untested",
+  "remote_hosts": "untested",
+  "detection_rules_changed": false,
+  "schema": "5.0.0",
+  "ai_contract": "1.0.0"
+}

@@ -1,13 +1,14 @@
 const path = require('node:path');
 const fs = require('node:fs');
 const crypto = require('node:crypto');
-const {sidebar,detailsHtml,stepsFor,safeTarget,relevantChange} = require('./finding-ui.cjs');
+const {sidebar,stepsFor,safeTarget,relevantChange} = require('./finding-ui.cjs');
 const {statusRoots,statusHtml}=require('./ai-status.cjs');
 const {aiHtml,aiRoots,aiSteps}=require('./ai-ui.cjs');
-function createFindingsView(vscode, context, {record,rerun,aiAction=()=>{}}) {
+const {dashboardHtml}=require('./dashboard.cjs');
+function createFindingsView(vscode, context, {record,rerun,aiAction=()=>{},onChange=()=>{}}) {
   const events = new vscode.EventEmitter();
   let state, selected = null, panel, watcher, decorated = new Set(), decorations;
-  let roots = [];
+  let roots = [], dashboardToken;
   let aiSelected=null, showingAi=false, showingStatus=false, connection={state:'not_checked'};
   let metadata=new Map();
   function metadataKey(file){try{return path.join(fs.realpathSync(path.dirname(file)),path.basename(file));}catch{return path.resolve(file);}}
@@ -33,6 +34,15 @@ function createFindingsView(vscode, context, {record,rerun,aiAction=()=>{}}) {
     if(fs.realpathSync(target)!==canonical)throw new Error('Evidence target changed. Rerun review.');
     return target;
   }
+  function snapshotTarget(loc,repository=state.report.repository,expected) {
+    const target=validatedTarget(loc,repository);
+    const snapshot=expected===undefined?metadata.get(metadataKey(target)):expected;
+    if(!snapshot||fingerprint(target)!==snapshot){
+      stale('Saved source changed since the reviewed snapshot.');
+      throw new Error('Saved source changed. Rerun explicitly before navigating or highlighting.');
+    }
+    return target;
+  }
   function range(loc) {return new vscode.Range(loc.start.line-1,loc.start.column-1,loc.end.line-1,loc.end.column-1);}
   function clearDecorations() {
     if (decorations) for (const editor of decorated) for (const type of Object.values(decorations)) {try {editor.setDecorations(type,[]);} catch {}}
@@ -41,16 +51,17 @@ function createFindingsView(vscode, context, {record,rerun,aiAction=()=>{}}) {
   function clearSelection() {selected=null;aiSelected=null;showingAi=false;showingStatus=false;clearDecorations();}
   function renderPanel() {
     if (!panel) return;
+    dashboardToken=crypto.randomBytes(18).toString('hex');
     if(showingStatus)panel.webview.html=statusHtml(connection,crypto.randomBytes(18).toString('hex'));
     else if(showingAi&&state?.ai)panel.webview.html=aiHtml(state,aiSelected,crypto.randomBytes(18).toString('hex'));
-    else if (state?.report && selected !== null) panel.webview.html=detailsHtml(state,state.report.findings[selected],crypto.randomBytes(18).toString('hex'));
-    else panel.webview.html='<!doctype html><html><head><meta http-equiv="Content-Security-Policy" content="default-src \'none\';"></head><body><p>Choose a finding from the current review. Previous selections have been cleared.</p></body></html>';
+    else panel.webview.html=dashboardHtml(state,selected,crypto.randomBytes(18).toString('hex'),dashboardToken);
   }
   function refresh() {
     roots=sidebar(state).concat(aiRoots(state),statusRoots(connection));events.fire();
-    tree.message=state ? `${state.demo?'Demo':state.mode==='current'?'Current files':'Changes since HEAD'} · ${state.stale?'STALE · ':''}${state.loading?'Loading':state.report?`${state.report.findings.length} potential exposure(s) · Coverage: ${state.report.coverage.status}`:state.error?'Setup / processing error':'No deterministic review yet'}` : 'Static checks only; no review yet.';
+    tree.message=state ? `${state.demo?'Demo':state.mode==='current'?'Current files':'Changes since HEAD'} · ${state.stale?'STALE · ':''}${state.loading?'Loading':state.report?`${state.report.findings.length} finding(s) · CP002 Coverage: ${state.report.coverage.status}`:state.error?'Setup / processing error':'No deterministic review yet'}` : 'Review Project to begin. Local checks; AI is optional.';
     if(state?.ai)tree.message+=' · AI: '+state.ai.phase+(state.ai.stale?' (STALE)':'');
     renderPanel();
+    onChange();
   }
   function stale(reason) {
     if(state?.ai)state.ai.stale=true;
@@ -71,6 +82,17 @@ function createFindingsView(vscode, context, {record,rerun,aiAction=()=>{}}) {
     clearDecorations();
     if(showingAi){if(!state?.ai?.response||state.ai.stale||aiSelected===null)return;}else if (!state?.report || state.stale || state.loading || selected===null) return;
     const steps=showingAi?aiSteps(state.ai.response.assessment.findings[aiSelected],state.ai.envelope.request).filter(s=>s.revision==='after'):stepsFor(state.report.findings[selected]);
+    // Watcher delivery is asynchronous. Never paint old evidence over a saved
+    // edit merely because its line/column bounds still happen to fit.
+    try{
+      for(const step of steps){
+        const repository=showingAi?state.ai.envelope.folder:state.report.repository;
+        const expected=showingAi?state.ai.envelope.snapshots.find(s=>s.file===step.location.file)?.snapshot:undefined;
+        if(showingAi&&!expected)throw new Error('Missing AI input snapshot.');
+        const target=snapshotTarget(step.location,repository,expected);
+        if((vscode.workspace.textDocuments||[]).some(d=>d.isDirty&&d.uri.scheme==='file'&&metadataKey(d.uri.fsPath)===metadataKey(target)))throw new Error('Unsaved source changes.');
+      }
+    }catch{stale('Selected evidence no longer matches its saved snapshot.');return;}
     ensureDecorations(new Set(steps.map(step=>step.role)));
     for (const editor of vscode.window.visibleTextEditors) {
       if (editor.document.uri.scheme!=='file') continue;
@@ -84,16 +106,20 @@ function createFindingsView(vscode, context, {record,rerun,aiAction=()=>{}}) {
   async function navigate(reviewId,index) {
     try {
       if (!state || state.id!==reviewId || selected===null || state.loading || state.stale) throw new Error('This evidence is stale or belongs to a replaced review. Rerun explicitly.');
-      const selectionIndex=selected;
+      const selectionToken=state.selectionToken;
       const step=stepsFor(state.report.findings[selected])[index];
       if (!Number.isSafeInteger(index) || !step) throw new Error('Unknown evidence step.');
-      const target=validatedTarget(step.location);
+      const target=snapshotTarget(step.location);
       const document=await vscode.workspace.openTextDocument(vscode.Uri.file(target));
-      if(state?.id!==reviewId||selected!==selectionIndex)throw new Error('Finding selection changed; select the current evidence step.');
+      if(state?.id!==reviewId||state.selectionToken!==selectionToken)throw new Error('Finding selection changed; select the current evidence step.');
       if (state.stale || document.isDirty) {stale('Unsaved source changes.');throw new Error('Saved source changed. Rerun explicitly before navigating.');}
       for (const pos of [step.location.start,step.location.end]) if (pos.line>document.lineCount || pos.column>document.lineAt(pos.line-1).text.length+1) {stale('Evidence range no longer matches source.');throw new Error('Evidence no longer matches this file. Rerun explicitly.');}
-      validatedTarget(step.location);
+      snapshotTarget(step.location);
+      panel?.reveal(vscode.ViewColumn.Two,true);
       await vscode.window.showTextDocument(document,{viewColumn:vscode.ViewColumn.One,selection:range(step.location),preview:true});
+      if(state?.id!==reviewId||state.selectionToken!==selectionToken)throw new Error('Finding selection changed; select the current evidence step.');
+      snapshotTarget(step.location);
+      if(state.stale||document.isDirty){stale('Source changed while opening evidence.');throw new Error('Source changed while opening evidence. Rerun explicitly.');}
       applyDecorations();
       record({phase:'evidence_navigated',review_id:reviewId,role:step.role,file:step.location.file,line:step.location.start.line});
       return true;
@@ -101,16 +127,31 @@ function createFindingsView(vscode, context, {record,rerun,aiAction=()=>{}}) {
   }
   function ensurePanel(){
     if (!panel) {
-      panel=vscode.window.createWebviewPanel('changeproof.findingDetails','Changeproof Finding Details',vscode.ViewColumn.Beside,{enableScripts:true,localResourceRoots:[]});
+      panel=vscode.window.createWebviewPanel('changeproof.findingDetails','Changeproof Review',vscode.ViewColumn.One,{enableScripts:true,localResourceRoots:[]});
       context.subscriptions.push(panel);
       panel.onDidDispose(()=>{panel=undefined;clearSelection();});
       panel.webview.onDidReceiveMessage(async message=>{
+        if(message?.type==='dashboard_select'||message?.type==='dashboard_action'){
+          if(message.dashboardToken!==dashboardToken||message.reviewId!==(state?.id||null)||showingAi||showingStatus)return;
+          if(message.type==='dashboard_select'){
+            if(Number.isSafeInteger(message.index)&&state?.report?.findings[message.index])await select(state.id,message.index);
+          }else if(message.action==='rerun'&&state?.folder&&!state.loading)await rerun(state.folder,{demo:state.demo,mode:state.mode,selection:state.selection});
+          else if(message.action==='review')await vscode.commands.executeCommand('changeproof.reviewProject');
+          else if(message.action==='folder')await vscode.commands.executeCommand('changeproof.selectFolderToReview');
+          else if(message.action==='ai')await vscode.commands.executeCommand('changeproof.aiReviewChanges');
+          return;
+        }
         if(message?.type?.startsWith('ai_')){if(message.token!==state?.ai?.token)return;if(message.type==='ai_navigate'){if(message.selectionToken!==state.ai.selectionToken)return;await navigateAi(message.token,message.step);}else await aiAction(message.type,state.ai);return;}
         if (!message || message.reviewId!==state?.id || message.selectionToken!==state?.selectionToken) return;
         if (message.type==='navigate') await navigate(message.reviewId,message.step);
         else if (message.type==='rerun') await rerun(state.folder,{demo:state.demo,mode:state.mode,selection:state.selection});
       });
-    } else panel.reveal(vscode.ViewColumn.Beside,true);
+    } else panel.reveal(panel.viewColumn||vscode.ViewColumn.One,true);
+  }
+  function showDashboard(){
+    clearSelection();
+    if(state?.report?.findings.length){selected=0;state.selectionToken=crypto.randomBytes(12).toString('hex');}
+    ensurePanel();renderPanel();
   }
   async function select(reviewId,index) {
     if (!state?.report || state.id!==reviewId || !Number.isSafeInteger(index) || !state.report.findings[index]) {vscode.window.showWarningMessage('That finding belongs to an old review. Select a current finding.');return;}
@@ -130,18 +171,30 @@ function createFindingsView(vscode, context, {record,rerun,aiAction=()=>{}}) {
     clearSelection();showingAi=true;aiSelected=index;state.ai.selectionToken=crypto.randomBytes(12).toString('hex');ensurePanel();renderPanel();applyDecorations();
   }
   async function navigateAi(token,index){
+    const selectionToken=state?.ai?.selectionToken;
     try{
       if(state?.ai?.token!==token||state.ai.stale||aiSelected===null||!Number.isSafeInteger(index))throw new Error('AI evidence is stale or replaced. Refresh the preview explicitly.');
       const step=aiSteps(state.ai.response.assessment.findings[aiSelected],state.ai.envelope.request)[index];
       if(!step||step.revision!=='after')throw new Error('Only current-file references can navigate.');
-      const target=validatedTarget(step.location,state.ai.envelope.folder),snapshot=state.ai.envelope.snapshots.find(s=>s.file===step.location.file);
-      if(!snapshot||fingerprint(target)!==snapshot.snapshot)throw new Error('Saved source changed. Refresh AI preview explicitly.');
+      const snapshot=state.ai.envelope.snapshots.find(s=>s.file===step.location.file);
+      if(!snapshot)throw new Error('Missing AI input snapshot.');
+      const repository=state.ai.envelope.folder;
+      const target=snapshotTarget(step.location,repository,snapshot.snapshot);
       const document=await vscode.workspace.openTextDocument(vscode.Uri.file(target));
-      if(state?.ai?.token!==token||state.ai.stale||document.isDirty)throw new Error('AI evidence changed or has unsaved edits. Rerun explicitly.');
+      if(state?.ai?.token!==token||state.ai.selectionToken!==selectionToken||state.ai.stale||document.isDirty)throw new Error('AI evidence changed or has unsaved edits. Rerun explicitly.');
       for(const pos of [step.location.start,step.location.end])if(pos.line>document.lineCount||pos.column>document.lineAt(pos.line-1).text.length+1)throw new Error('AI reference range no longer matches source.');
-      safeTarget(state.folder,step.location);
-      await vscode.window.showTextDocument(document,{viewColumn:vscode.ViewColumn.One,selection:range(step.location),preview:true});applyDecorations();return true;
-    }catch{if(state?.ai)state.ai.stale=true;clearDecorations();refresh();vscode.window.showWarningMessage('Changeproof: AI reference is unavailable, stale or not a current-file reference. Refresh AI preview explicitly.');return false;}
+      snapshotTarget(step.location,repository,snapshot.snapshot);
+      panel?.reveal(vscode.ViewColumn.Two,true);
+      await vscode.window.showTextDocument(document,{viewColumn:vscode.ViewColumn.One,selection:range(step.location),preview:true});
+      if(state?.ai?.token!==token||state.ai.selectionToken!==selectionToken)return false;
+      snapshotTarget(step.location,repository,snapshot.snapshot);
+      if(state.ai.stale||document.isDirty)throw new Error('Source changed while opening evidence.');
+      applyDecorations();return true;
+    }catch{
+      // A superseded navigation must not invalidate the newly selected review.
+      if(state?.ai?.token!==token||state.ai.selectionToken!==selectionToken)return false;
+      state.ai.stale=true;clearDecorations();refresh();vscode.window.showWarningMessage('Changeproof: AI reference is unavailable, stale or not a current-file reference. Refresh AI preview explicitly.');return false;
+    }
   }
   function watch(folder) {
     watcher?.dispose();watcher=undefined;
@@ -188,13 +241,15 @@ function createFindingsView(vscode, context, {record,rerun,aiAction=()=>{}}) {
     if ((vscode.workspace.textDocuments||[]).some(d=>d.isDirty&&relevantChange(report.repository||state.folder,d.uri)))stale('Unsaved buffers were not included in the saved-file review.');
     refresh();
     record({phase:'review_presented',review_id:state.id,selected_folder:state.folder,review_mode:state.mode,coverage:report.coverage.status,finding_count:report.findings.length,stale:state.stale});
+    showDashboard();
   }
-  function fail(id,error) {if(id!==state?.id)return;clearSelection();diagnostics.clear();state.loading=false;state.error=error;refresh();}
+  function fail(id,error) {if(id!==state?.id)return;clearSelection();diagnostics.clear();state.loading=false;state.error=error;refresh();showDashboard();}
   context.subscriptions.push(tree,events,diagnostics,{dispose(){watcher?.dispose();clearDecorations();}});
   if(vscode.workspace.onDidChangeTextDocument)context.subscriptions.push(vscode.workspace.onDidChangeTextDocument(e=>{if(state && (e.contentChanges.length || e.document.isDirty))noteFileChange(e.document.uri,e.document.isDirty);}));
   if(vscode.window.onDidChangeVisibleTextEditors)context.subscriptions.push(vscode.window.onDidChangeVisibleTextEditors(applyDecorations));
   context.subscriptions.push(vscode.workspace.onDidChangeWorkspaceFolders(()=>{clearSelection();diagnostics.clear();watcher?.dispose();state=undefined;refresh();}));
   context.subscriptions.push(vscode.commands.registerCommand('changeproof.openFinding',select),vscode.commands.registerCommand('changeproof.openEvidenceStep',navigate),vscode.commands.registerCommand('changeproof.rerunReview',()=>state?rerun(state.folder,{demo:state.demo,mode:state.mode,selection:state.selection}):undefined));
+  context.subscriptions.push(vscode.commands.registerCommand('changeproof.openDashboard',showDashboard));
   context.subscriptions.push(vscode.commands.registerCommand('changeproof.openAiFinding',selectAi),vscode.commands.registerCommand('changeproof.showAiSummary',()=>state?.ai?selectAi(state.ai.token):undefined),vscode.commands.registerCommand('changeproof.openAiEvidence',navigateAi));
   refresh();
   return {setAiConnection(value){connection=value;refresh();},getAiConnection:()=>connection,showAiSetup(){clearSelection();showingStatus=true;ensurePanel();renderPanel();},aiBegin,aiUpdate,selectAi,begin,finish,fail,select,navigate,stale,clearSelection,getState:()=>state,async openFirst(){if(!state?.report?.findings.length)return;await select(state.id,0);const steps=stepsFor(state.report.findings[0]);await navigate(state.id,steps.length-1);},getPanel:()=>panel};

@@ -2,7 +2,7 @@
   "name": "changeproof-local",
   "displayName": "Changeproof Local Review",
   "description": "Local static checks and opt-in hosted AI change assessment; no runtime verification.",
-  "version": "0.10.0",
+  "version": "0.12.0",
   "publisher": "changeproof-local",
   "license": "UNLICENSED",
   "engines": {
@@ -21,7 +21,8 @@
     "onCommand:changeproof.runDemo",
     "onCommand:changeproof.reviewProject",
     "onCommand:changeproof.aiReviewChanges",
-    "onCommand:changeproof.checkAiConnection"
+    "onCommand:changeproof.checkAiConnection",
+    "onView:changeproof.controls"
   ],
   "capabilities": {
     "untrustedWorkspaces": {
@@ -36,7 +37,8 @@
       {
         "command": "changeproof.reviewProject",
         "title": "Review Project",
-        "category": "Changeproof"
+        "category": "Changeproof",
+        "icon": "$(shield)"
       },
       {
         "command": "changeproof.runDemo",
@@ -61,7 +63,8 @@
       {
         "command": "changeproof.rerunReview",
         "title": "Rerun Reviewed Folder",
-        "category": "Changeproof"
+        "category": "Changeproof",
+        "icon": "$(refresh)"
       },
       {
         "command": "changeproof.aiReviewChanges",
@@ -88,13 +91,30 @@
         "command": "changeproof.showAiSetup",
         "title": "AI Setup Guide",
         "category": "Changeproof"
+      },
+      {
+        "command": "changeproof.openDashboard",
+        "title": "Open Review Dashboard",
+        "category": "Changeproof",
+        "icon": "$(layout)"
+      },
+      {
+        "command": "changeproof.openControls",
+        "title": "Open Changeproof",
+        "category": "Changeproof"
       }
     ],
     "views": {
-      "explorer": [
+      "changeproof": [
+        {
+          "id": "changeproof.controls",
+          "name": "Scan",
+          "type": "webview"
+        },
         {
           "id": "changeproof.findings",
-          "name": "Changeproof Local Review"
+          "name": "Results",
+          "visibility": "collapsed"
         }
       ]
     },
@@ -134,9 +154,23 @@
     "menus": {
       "view/title": [
         {
-          "command": "changeproof.aiReviewChanges",
+          "command": "changeproof.openDashboard",
           "when": "view == changeproof.findings",
-          "group": "navigation"
+          "group": "navigation@0"
+        },
+        {
+          "command": "changeproof.rerunReview",
+          "when": "view == changeproof.findings",
+          "group": "navigation@2"
+        }
+      ]
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "changeproof",
+          "title": "Changeproof",
+          "icon": "media/activity.svg"
         }
       ]
     }

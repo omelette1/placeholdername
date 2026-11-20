@@ -39,3 +39,21 @@ test('AI details and exact payload preview escape unusual filenames, identifiers
 test('changes during an in-flight assessment mark returned results stale without auto-review',async t=>{
  let entered,release;const started=new Promise(resolve=>entered=resolve);const provider={name:'mock',model:'delayed-fixture',review:async request=>{entered();await new Promise(resolve=>release=resolve);const {assessmentFixture}=await import('../../../packages/ai/test/fixtures.mjs');return assessmentFixture(request);}};const x=await setup(t,{provider});await x.fake.commands.get('changeproof.aiReviewChanges')();const pending=x.ai.action('ai_approve',x.ui.getState().ai);await started;fs.appendFileSync(x.file,'// changed while pending\n');release();await pending;assert.equal(x.ui.getState().ai.phase,'completed');assert.equal(x.ui.getState().ai.stale,true);
 });
+
+test('AI evidence rechecks saved snapshots after asynchronous document opening',async t=>{
+ const x=await setup(t);await x.fake.commands.get('changeproof.aiReviewChanges')();const ai=x.ui.getState().ai;
+ await x.ai.action('ai_approve',ai);await x.ui.selectAi(ai.token,0);
+ const open=x.fake.vscode.workspace.openTextDocument;
+ x.fake.vscode.workspace.openTextDocument=async uri=>{const doc=await open(uri);fs.appendFileSync(uri.fsPath,'// edit without a watcher event\n');return doc;};
+ assert.equal(await x.fake.commands.get('changeproof.openAiEvidence')(ai.token,1),false);
+ assert.equal(x.ui.getState().ai.stale,true);assert.equal(x.fake.editors.length,0);assert.equal(x.calls(),1);
+});
+
+test('AI reselection during navigation does not invalidate the newly selected assessment',async t=>{
+ const x=await setup(t);await x.fake.commands.get('changeproof.aiReviewChanges')();const ai=x.ui.getState().ai;
+ await x.ai.action('ai_approve',ai);await x.ui.selectAi(ai.token,0);
+ const open=x.fake.vscode.workspace.openTextDocument;
+ x.fake.vscode.workspace.openTextDocument=async uri=>{const doc=await open(uri);await x.ui.selectAi(ai.token,0);return doc;};
+ assert.equal(await x.fake.commands.get('changeproof.openAiEvidence')(ai.token,1),false);
+ assert.equal(x.ui.getState().ai.stale,false);assert.equal(x.fake.editors.length,0);
+});

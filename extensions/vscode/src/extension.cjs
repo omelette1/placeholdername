@@ -5,6 +5,7 @@ const {runEngine} = require('./client.cjs');
 const {createAiController}=require('./ai-client.cjs');
 const {createDemo} = require('./demo.cjs');
 const {createFindingsView} = require('./findings-view.cjs');
+const {createScanControls}=require('./scan-controls.cjs');
 function activate(context) {
   let running=false, demoRunning=false;
   const output=vscode.window.createOutputChannel('Changeproof Review Details');
@@ -14,9 +15,10 @@ function activate(context) {
     const line=JSON.stringify(entry);output.appendLine(line);
     try{fs.mkdirSync(context.logUri.fsPath,{recursive:true});fs.appendFileSync(path.join(context.logUri.fsPath,'reviews.jsonl'),line+'\n',{mode:0o600});}catch{output.appendLine('Could not persist review details; this Output channel still contains them.');}
   }
-  let ai;
-  const ui=createFindingsView(vscode,context,{record,rerun:review,aiAction:(...args)=>ai.action(...args)});
-  ai=createAiController(vscode,context,ui,{otherBusy:()=>running||demoRunning});
+  let ai,controls;
+  const ui=createFindingsView(vscode,context,{record,rerun:review,aiAction:(...args)=>ai.action(...args),onChange:()=>controls?.refresh()});
+  ai=createAiController(vscode,context,ui,{otherBusy:()=>running||demoRunning,onBusyChange:()=>controls?.refresh()});
+  controls=createScanControls(vscode,context,{review,aiReview:folder=>ai.reviewFolder(folder),getReview:()=>ui.getState(),getConnection:()=>ui.getAiConnection(),isBusy:()=>running||demoRunning||ai.isBusy()});
   function showDetails(){output.show(true);}
   async function selectFolder(){
     const chosen=await vscode.window.showOpenDialog({title:'Select the exact folder to review',openLabel:'Review This Folder',canSelectFolders:true,canSelectFiles:false,canSelectMany:false});
@@ -37,6 +39,7 @@ function activate(context) {
     if(!folder||folder.uri.scheme!=='file')return;
     const selectedFolder=folder.uri.fsPath;
     const selection=selectionOverride||(demo?'synthetic_demo':explicitFolder?'explicit_folder_picker':'workspace');
+    if(!demo)controls.setSelection(selectedFolder,mode);
     const id=ui.begin(selectedFolder,{demo,selection,mode});
     const trace=data=>record({invocation_id:id,selected_folder:selectedFolder,selection,review_mode:mode,...data});
     const node=vscode.workspace.getConfiguration('changeproof').inspect('nodePath')?.globalValue||'node';
@@ -44,6 +47,7 @@ function activate(context) {
       const reason='changeproof.nodePath must be an absolute path to trusted Node.';ui.fail(id,reason);trace({phase:'not_invoked',reason});offerDetails(`Changeproof cannot review ${selectedFolder}: ${reason}`,true);return;
     }
     running=true;
+    controls.refresh();
     try{
       const checkovPath=vscode.workspace.getConfiguration('changeproof').inspect('checkovPath')?.globalValue||undefined;
       const result=await vscode.window.withProgress({location:vscode.ProgressLocation.Notification,title:'Changeproof: '+(mode==='current'?'current files':'changes since HEAD')+' — '+selectedFolder,cancellable:false},()=>runEngine(node,context.asAbsolutePath('out/cli.cjs'),selectedFolder,trace,{mode,checkovPath}));
@@ -54,7 +58,7 @@ function activate(context) {
       }
       return result;
     }catch(error){ui.fail(id,error.message);trace({phase:'adapter_error',reason:error.message});offerDetails(`Changeproof review failed for ${selectedFolder} — ${error.message}`,true);}
-    finally{running=false;}
+    finally{running=false;controls.refresh();}
   }
   async function reviewProject(){
     if(ai?.isBusy()||running||demoRunning){vscode.window.showInformationMessage('A local review is already running.');return;}
@@ -81,6 +85,6 @@ function activate(context) {
     }catch(error){record({phase:'demo_error',reason:error.message});offerDetails('Changeproof demo failed: '+error.message,true);}
     finally{demoRunning=false;}
   }
-  context.subscriptions.push(vscode.commands.registerCommand('changeproof.reviewProject',reviewProject),vscode.commands.registerCommand('changeproof.reviewLocalChanges',()=>review()),vscode.commands.registerCommand('changeproof.runDemo',runDemo),vscode.commands.registerCommand('changeproof.showReviewDetails',showDetails),vscode.commands.registerCommand('changeproof.selectFolderToReview',selectFolder));
+  context.subscriptions.push(vscode.commands.registerCommand('changeproof.openControls',()=>vscode.commands.executeCommand('workbench.view.extension.changeproof')),vscode.commands.registerCommand('changeproof.reviewProject',reviewProject),vscode.commands.registerCommand('changeproof.reviewLocalChanges',()=>review()),vscode.commands.registerCommand('changeproof.runDemo',runDemo),vscode.commands.registerCommand('changeproof.showReviewDetails',showDetails),vscode.commands.registerCommand('changeproof.selectFolderToReview',selectFolder));
 }
 module.exports={activate};

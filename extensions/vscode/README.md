@@ -1,42 +1,41 @@
-# Changeproof 0.10.0
+# Changeproof Local Review — 0.12.0
 
-Current-files review now includes optional local Checkov configuration checks
-for Terraform, Kubernetes, Dockerfiles and GitHub Actions. CP003/CP004 add narrow
-TLS-disablement and dynamic-evaluation warnings. The AI demo profile reduces
-context and generation budgets; full review remains available.
+Review saved JS/TS and supported infrastructure configuration in this VS Code
+window. Click the **Changeproof shield icon** in the left Activity Bar. The
+**Scan** view has a project-folder selector, review-mode dropdown, **Scan project**,
+**Open results** and **Settings** buttons. **Optional AI** includes its context-size
+dropdown, backend check/setup and preview action. Folder/mode choices persist
+for the workspace; options never trigger an automatic scan.
 
-Run `npm run setup:local` to preserve an existing server-side Groq key and fill
-matching development tokens. Install Checkov 3.4.5 outside reviewed projects
-and configure the user-level `changeproof.checkovPath`. No installation happens
-during a review. Setup, policies, limits and unsupported behavior are documented
-in `docs/feature-scope-0.10.0.md`. Earlier sections below describe older releases.
+A completed review now automatically opens a dashboard with summary
+cards, searchable findings and evidence controls. Reopen it with
+**Changeproof: Open Review Dashboard**; one tab is reused. Choose **Current files** or **Changes since HEAD** in the sidebar, click
+**Scan project**,
+and click findings to inspect and navigate their recorded evidence.
 
----
+Current files works without Git or a commit and includes eligible untracked
+files. Changes mode compares tracked saved JS/TS with HEAD. The reusable details
+panel and labeled code highlights show supported sources, assignments, helper
+calls, parameters, logging and configuration locations. Results become **STALE**
+after edits; save and explicitly rerun using the refresh button. Saved snapshots
+are also checked during navigation/highlighting without relying on watcher timing.
 
-# Changeproof 0.9.0
+CP001–CP004 are bounded static checks, not confirmed leaks or malicious code.
+Optional trusted Checkov 3.4.5 checks ten policies across Terraform, Kubernetes,
+Dockerfiles and GitHub Actions in Current files mode. Its status is separate
+from CP002 coverage. Missing tools and unsupported input are explicit.
 
-Use the existing sidebar **AI connection status** section. **Refresh AI Status** reads health only; **Check AI Connection** asks before sending a built-in synthetic example, never workspace code. **AI Setup Guide** reuses the existing details panel. Success measures connection/schema compatibility, not detection accuracy; mock success is labeled mock. See `docs/live-ai-readiness-0.9.0.md` for setup and bounded evaluation. Install `artifacts/changeproof-local-0.9.0.vsix`. Previous notes below describe retained functionality.
+**AI Review Changes** is optional. It requires a local/HTTPS review backend,
+SecretStorage development token and tracked changes against HEAD. It previews
+the exact redacted bounded payload before approval. The Groq key stays on the
+backend. No automatic uploads, fixes, target execution or live-infrastructure
+access. No findings does not establish safety; review coverage and limitations.
 
-# Changeproof Local Review — 0.7.0
+Install `changeproof-local-0.12.0.vsix`, reload the existing window once, and
+review your project. Trusted Node 20.19+ is required; configure user-level
+`changeproof.nodePath` / `changeproof.checkovPath` if needed. Normal reviews do
+not open additional editor windows or create demos. **Run Demo** remains a
+separate optional command. Cursor/remote hosts remain untested.
 
-Review a real project's saved JavaScript/TypeScript locally. Run **Changeproof: Review Project**, choose **Current files** (no Git or commit required) or **Changes since HEAD**, and read the existing persistent sidebar and finding-details panel. Normal reviews never create samples, commits or project edits.
-
-Current-files mode includes eligible untracked files, honors ignore rules/exclusions, stays within the selected project, skips symlinks and enforces size/enumeration limits. Newness is not applicable without a baseline. Changes mode preserves the tracked HEAD comparison and lists untracked files separately.
-
-CP001 flags name-based potential sensitive logging. CP002 follows supported authorization-header sources through assignments and directly resolved same-file helper arguments, calls, parameters and logging. Click each step to open and select its recorded code. Helper tracing is limited to three calls deep; recursion, unresolved calls, closures, imports and transforms retain explicit limitations. No imported code or project configuration is executed.
-
-The sidebar separates findings, CP002 coverage, limitations and errors. The details panel shows the reviewed folder and mode, actual evidence, newness, coverage and runtime false. Findings are potential exposures, not confirmed leaks. Zero findings does not establish safety.
-
-Changes mark results STALE and clear diagnostics/highlights. Save and explicitly rerun using the details button or **Changeproof: Rerun Reviewed Folder**; the folder and mode are retained. No automatic review loop runs. Native SOURCE, ASSIGNMENT, ARGUMENT, FUNCTION_CALL, PARAMETER and LOGGING labels make highlighting independent of color. One panel and sidebar are reused.
-
-**Changeproof: Run Demo** remains optional and separate. It creates only its synthetic baseline in dedicated extension storage and opens its evidence. It never modifies the actual workspace repository.
-
-Install artifacts/changeproof-local-0.7.0.vsix locally, reload VS Code once if prompted, then run Review Project. Trusted Node 20.19+ is required at runtime; Git with --no-lazy-fetch is required only for changes mode/full Git integration. Without usable Git, current-files mode parses nested .gitignore rules locally. Development/build uses Node 22+.
-
-No AI, cloud uploads, telemetry, live-infrastructure access, target execution or automatic fixes. HTML is escaped, the webview uses a restrictive nonce CSP, and targets are validated against the selected project. Cursor and remote hosts remain untested; native host assertions are not visual observation. Nothing is published to a marketplace.
-
-## Optional hosted AI review (0.8.0)
-
-**Changeproof: AI Review Changes** prepares saved tracked JS/TS changes against HEAD and opens an exact redacted JSON preview in the existing details panel. Nothing is sent until **Approve and send this exact payload**. Backend/model transmissions are optional; local Review Project remains independent. AI assessments are separately labeled, not runtime verified. HEAD references display submitted text only; current references navigate and highlight. Edits mark results stale; rerun and approve explicitly.
-
-Start/configure the development service using `services/review-api/README.md`. Set `changeproof.aiBackendUrl` in **user** settings (HTTP loopback or remote HTTPS origin), then run **Changeproof: Set AI Review Access Token**. It uses VS Code SecretStorage; never enter a Groq API key. Provider credentials stay server-side. This is development authentication, not public login. Exclusions and best-effort redaction do not guarantee all secrets are removed; review the entire payload. Cursor remains untested. See `docs/hosted-ai-0.8.0.md` for limits and verification distinctions.
+See the repository README for current setup and supported behavior; the
+historical milestone reports document their own verification scope.

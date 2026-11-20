@@ -29,19 +29,24 @@ function safeTarget(repository, location) {
 }
 function sidebar(state) {
   const group = (label, children) => ({label,children,collapsibleState:2});
-  if (!state) return [{label:'No review yet. Run Changeproof: Review Project.'}];
+  const actions=group('Review actions',[
+    {label:'Open Review Dashboard',command:{command:'changeproof.openDashboard',title:'Open Review Dashboard'}},
+    {label:'Review Project…',tooltip:'Choose Current files or Changes since HEAD. Runs local checks; does not send code to AI.',command:{command:'changeproof.reviewProject',title:'Review Project'}},
+    ...(state?.folder?[{label:'Rerun reviewed folder',tooltip:'Explicitly rerun the same folder and mode.',command:{command:'changeproof.rerunReview',title:'Rerun reviewed folder'}}]:[]),
+  ]);
+  if (!state) return [{label:'No review yet. Run Changeproof: Review Project.'},actions];
   const review = group('Review', [{label:`${state.demo ? 'Synthetic demo' : state.selection === 'explicit_folder_picker' ? 'Explicit folder review' : 'Workspace review'}: ${state.folder || 'No local folder'}`},
     {label:'Mode: '+(state.mode==='current'?'Current files (no baseline)':'Changes since HEAD')},
     {label:state.stale ? 'STALE — files changed; rerun explicitly.' : state.loading ? 'Review running…' : state.error || state.report?.analysis_errors?.length ? 'Processing incomplete; see errors.' : state.report?.coverage?.status === 'partial' ? 'Processing finished with partial analysis coverage.' : !state.report ? 'No deterministic review yet; AI progress and results are separate.' : 'Processing finished; coverage is separate.'}]);
-  if (state.loading) return [review,group('Findings', [{label:'Waiting for actual results…'}])];
+  if (state.loading) return [actions,review,group('Findings', [{label:'Waiting for actual results…'}])];
   const r = state.report;
-  if (!r) return [review,group(state.error?'Setup / processing errors':'Deterministic checks', [{label:state.error || 'No deterministic review in this folder yet. Run Review Project; AI results are separate.'}])];
+  if (!r) return [actions,review,group(state.error?'Setup / processing errors':'Deterministic checks', [{label:state.error || 'No deterministic review in this folder yet. Run Review Project; AI results are separate.'}])];
   const findings = r.findings.flatMap((f,index) => f.rule_id.startsWith('CKV')?[]:[({label:`${f.rule_id} · ${f.title}`,description:`${f.location.file}:${f.location.start.line}`,tooltip:f.explanation,
     command:{command:'changeproof.openFinding',title:'Open finding details',arguments:[state.id,index]}})]);
   if (!findings.length) findings.push({label:r.analysis_errors.length ? 'No findings produced; processing is incomplete.' : 'No potential exposures found within processed checks; this does not establish safety.'});
   const infra=r.infrastructure;
   const infrastructure=infra?group('Infrastructure: '+infra.status,[{label:infra.reason},{label:'Scanner: Checkov '+infra.scanner.version+' · current snapshot only'},...infra.frameworks.map(f=>({label:`${f.framework}: ${f.status} · ${f.checks} checks · ${f.failed} failed · ${f.skipped} suppressed`})),...r.findings.flatMap((f,index)=>f.rule_id.startsWith('CKV')?[{label:f.rule_id+' · '+f.title,description:f.location.file+':'+f.location.start.line,command:{command:'changeproof.openFinding',title:'Open configuration finding',arguments:[state.id,index]}}]:[]),...infra.errors.map(e=>({label:e.code,tooltip:e.message})),...infra.skipped_files.map(e=>({label:'Skipped: '+e.file+' · '+e.reason}))]):group('Infrastructure: not assessed',[]);
-  return [review,infrastructure,group(`Findings (${r.findings.filter(f=>!f.rule_id.startsWith('CKV')).length})`,findings),
+  return [actions,review,infrastructure,group(`Findings (${r.findings.filter(f=>!f.rule_id.startsWith('CKV')).length})`,findings),
     group(`Coverage: ${r.coverage.status}`, [{label:(r.coverage.scope||'CP002 bounded checks')+'; analyzed is not a security guarantee.'},
       ...r.files_inspected.map(f=>group(`${f.file}: ${f.coverage.status}`,f.coverage.scopes.map(s=>({label:`${s.kind} · line ${s.location.start.line}: ${s.status}`,tooltip:`Supported steps: ${s.supported_steps}`}))))]),
     group(`Limitations (${r.analysis_limitations.length+(r.input_limitations||[]).length})`,(r.input_limitations||[]).map(message=>({label:message})).concat(r.analysis_limitations.map(n=>({label:`${n.code} · ${n.location.file}:${n.location.start.line} (${n.revision})`,tooltip:n.message}))).concat([{label:'Static checks only. No runtime verification or proof of application-wide security.'}])),

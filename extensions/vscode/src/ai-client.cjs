@@ -10,8 +10,9 @@ function collect(node,cli,folder,signal,profile='full'){return new Promise((reso
  });
 });}
 function sameSnapshot(a,b){return a.folder===b.folder&&a.request.baseline===b.request.baseline&&a.changed_paths_hash===b.changed_paths_hash&&a.index_hash===b.index_hash&&JSON.stringify(a.snapshots)===JSON.stringify(b.snapshots)&&JSON.stringify(a.request.files)===JSON.stringify(b.request.files)&&JSON.stringify(a.request.omissions)===JSON.stringify(b.request.omissions);}
-function createAiController(vscode,context,ui,{otherBusy=()=>false}={}){
+function createAiController(vscode,context,ui,{otherBusy=()=>false,onBusyChange=()=>{}}={}){
  let busy=false,controller,lastSmoke=null,statusGeneration=0;
+ const setBusy=value=>{busy=value;onBusyChange();};
  const shared=()=>require(context.asAbsolutePath('out/ai-client.cjs'));
  const secretKey='changeproof.aiDevelopmentAccessToken';
  async function setToken(){const token=await vscode.window.showInputBox({title:'Changeproof development backend access token',prompt:'Must match server REVIEW_ACCESS_TOKEN. Stored in VS Code SecretStorage; never sent to Groq.',password:true,ignoreFocusOut:true,validateInput:value=>value.length<32||/\s/.test(value)?'Use at least 32 non-whitespace characters.':null});if(token!==undefined){if(token.length<32||/\s/.test(token))return;await context.secrets.store(secretKey,token);}}
@@ -26,7 +27,7 @@ function createAiController(vscode,context,ui,{otherBusy=()=>false}={}){
   catch{if(generation!==statusGeneration)return null;ui.setAiConnection({state:'unavailable',url,error:'Start the review API, check its user-level URL and compatible health contract.',checked_at:new Date().toISOString()});return null;}
  }
  async function checkConnection(){
-  if(busy||otherBusy())return;busy=true;
+  if(busy||otherBusy())return;setBusy(true);
   try{
    const status=await refreshStatus();if(!status)return;
    const answer=await vscode.window.showInformationMessage('Send one small built-in synthetic before/after example to '+status.url+' and its '+status.health.provider+' provider? No workspace code or project metadata is included. Provider usage may apply. A valid response checks connection/schema compatibility, not detection accuracy.',{modal:true},'Send synthetic check');
@@ -40,14 +41,14 @@ function createAiController(vscode,context,ui,{otherBusy=()=>false}={}){
     const known={invalid_reference:'Invalid provider code references.',missing_comparison_references:'Provider omitted before/after references.',invalid_model_output:'Provider output failed schema validation.',invalid_response:'Provider response failed schema or request identity validation.',provider_auth:'Groq authentication failed. Check the server-side key.',provider_configuration:'Provider rejected the configured model/schema.',unauthorized:'Backend access token rejected. Set AI Review Access Token.',provider_quota:'Provider throttled or quota exhausted. No retry attempted.',throttled:'Backend/provider quota exhausted. No retry attempted.',provider_timeout:'Provider timed out.',provider_unavailable:'Provider unavailable.',provider_changed:'Backend provider/model changed during the check; refresh status.',missing_development_token:'Set AI Review Access Token. Do not enter the Groq key.'};
     const code=error.code||error.message;lastSmoke={url:status.url,provider:status.health.provider,model:status.health.model,instance_id:status.health.instance_id,status:'failed',timestamp:new Date().toISOString(),contract_valid:false,error:known[code]||'Synthetic connection check failed or was cancelled; no valid inference result.'};ui.setAiConnection({...status,smoke:lastSmoke,checking_smoke:false});
    }
-  }finally{busy=false;}
+  }finally{setBusy(false);}
  }
- async function review(){
+ async function review(explicitFolder){
   if(busy||otherBusy())return;
-  let folder=ui.getState()?.demo?null:ui.getState()?.folder;
+  let folder=explicitFolder|| (ui.getState()?.demo?null:ui.getState()?.folder);
   if(!folder){const folders=(vscode.workspace.workspaceFolders||[]).filter(f=>f.uri.scheme==='file');if(folders.length===1)folder=folders[0].uri.fsPath;else if(folders.length>1)folder=(await vscode.window.showWorkspaceFolderPick({placeHolder:'Choose project for AI review'}))?.uri.fsPath;else folder=(await vscode.window.showOpenDialog({title:'Choose project for AI changes review',canSelectFolders:true,canSelectFiles:false,canSelectMany:false}))?.[0]?.fsPath;}
   if(!folder)return;
-  const token=ui.aiBegin(folder);busy=true;
+  const token=ui.aiBegin(folder);setBusy(true);
   try{
    const url=shared().backendUrl(vscode.workspace.getConfiguration('changeproof').inspect('aiBackendUrl')?.globalValue||'http://127.0.0.1:4318');
    const configuredProfile=vscode.workspace.getConfiguration('changeproof').inspect('aiProfile')?.globalValue;
@@ -56,12 +57,12 @@ function createAiController(vscode,context,ui,{otherBusy=()=>false}={}){
    if(!envelope.request.files.length){ui.aiUpdate(token,{phase:'empty',error:'No eligible saved tracked JS/TS changes against HEAD. Nothing was sent.'});await ui.selectAi(token);return;}
    shared().checkRequest(envelope.request);ui.aiUpdate(token,{phase:'preview',envelope,url});await ui.selectAi(token);
   }catch{ui.aiUpdate(token,{phase:'error',error:'AI preview could not be collected. A readable Git HEAD baseline and trusted Node are required; check excluded, oversized or unsupported input. Local Current files review still works without Git. Nothing was sent.'});await ui.selectAi(token);}
-  finally{busy=false;}
+  finally{setBusy(false);}
  }
  async function action(type,ai){
   if(type==='ai_cancel'){controller?.abort();ui.aiUpdate(ai.token,{phase:'cancelled',envelope:undefined});return;}
   if(type!=='ai_approve'||busy||otherBusy()||ai.phase!=='preview')return;
-  busy=true;
+  setBusy(true);
   try{
    const access=await context.secrets.get(secretKey);if(!access)throw new Error('Set AI Review Access Token using the Changeproof command. No source was sent.');
    const node=nodePath();const folder=ui.getState().folder;
@@ -79,10 +80,10 @@ function createAiController(vscode,context,ui,{otherBusy=()=>false}={}){
    });
    await ui.selectAi(ai.token);
   }catch(error){const safeMessages=['Set AI Review Access Token','Project or saved inputs changed','Authentication failed','Review quota','Review service','Review provider','Provider output','Review request','AI review cancelled','AI review timed out','AI review service'];const message=safeMessages.some(p=>error.message.startsWith(p))?error.message:'AI review failed validation or could not complete. No valid assessment is available.';ui.aiUpdate(ai.token,{phase:'error',error:message,response:undefined});await ui.selectAi(ai.token);}
-  finally{busy=false;}
+  finally{setBusy(false);}
  }
  if(vscode.workspace.onDidChangeConfiguration)context.subscriptions.push(vscode.workspace.onDidChangeConfiguration(event=>{if(event.affectsConfiguration('changeproof.aiBackendUrl')){statusGeneration++;lastSmoke=null;controller?.abort();ui.setAiConnection({state:'not_checked'});}}));
- context.subscriptions.push(vscode.commands.registerCommand('changeproof.refreshAiStatus',refreshStatus),vscode.commands.registerCommand('changeproof.checkAiConnection',checkConnection),vscode.commands.registerCommand('changeproof.showAiSetup',()=>ui.showAiSetup()),vscode.commands.registerCommand('changeproof.aiReviewChanges',review),vscode.commands.registerCommand('changeproof.setAiAccessToken',setToken),{dispose(){controller?.abort();}});
- return {action,refreshStatus,checkConnection,isBusy:()=>busy};
+ context.subscriptions.push(vscode.commands.registerCommand('changeproof.refreshAiStatus',refreshStatus),vscode.commands.registerCommand('changeproof.checkAiConnection',checkConnection),vscode.commands.registerCommand('changeproof.showAiSetup',()=>ui.showAiSetup()),vscode.commands.registerCommand('changeproof.aiReviewChanges',()=>review()),vscode.commands.registerCommand('changeproof.setAiAccessToken',setToken),{dispose(){controller?.abort();}});
+ return {action,refreshStatus,checkConnection,isBusy:()=>busy,reviewFolder:folder=>review(folder)};
 }
 module.exports={createAiController,collect,sameSnapshot};

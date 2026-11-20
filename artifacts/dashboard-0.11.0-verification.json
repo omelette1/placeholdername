@@ -1,0 +1,23 @@
+{
+  "version": "0.11.0",
+  "base_github_commit": "3791a03d3745f6147438e9dd639987ffe44d060a",
+  "tests": {
+    "passed": 146,
+    "failed": 0,
+    "skipped": 0,
+    "real_offline_checkov": "3.4.5"
+  },
+  "extension_build": "passed",
+  "vsix_package": "passed",
+  "packaged_sources_match": true,
+  "dashboard_client_script": "executed in minimal DOM/VS Code bridge harness; filters, search, persistence and messages passed",
+  "editor_api_checks": "auto-open, panel reuse, primary/secondary columns, selection, evidence, stale/empty/error states and token allowlist passed",
+  "visual_rendering": "not observed; Chromium launch blocked by socket Operation not permitted",
+  "native_vscode": "not run",
+  "cursor": "untested",
+  "live_groq_requests": 0,
+  "detection_rules_changed": false,
+  "schema": "5.0.0",
+  "ai_contract": "1.0.0",
+  "sha256": "eebd30650c788a9950e9963a96545687c7a406ad62773f84fbe8c2c106d66a18"
+}

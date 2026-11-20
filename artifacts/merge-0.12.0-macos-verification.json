@@ -1,0 +1,43 @@
+{
+  "version": "0.12.0",
+  "date": "2026-11-20T02:40:56.005Z",
+  "base_commit": "3791a03d3745f6147438e9dd639987ffe44d060a",
+  "patch": {
+    "file": "changeproof-0.12.0-update.patch",
+    "sha256": "ec819d33b4dbd0a3fc82d51489cb9954852e252dd5cae68fc12dd6333640b954",
+    "applied_cleanly": true,
+    "conflicts": 0
+  },
+  "checks": {
+    "tests": 155,
+    "passed": 155,
+    "failed": 0,
+    "skipped": 0,
+    "real_offline_checkov": "3.4.5",
+    "extension_build": "passed",
+    "backend_build": "passed",
+    "local_fixture_collection": {
+      "cases": 12,
+      "external_requests": 0
+    },
+    "package": {
+      "path": "artifacts/changeproof-local-0.12.0.vsix",
+      "sha256": "9b5516a52df1ee17f5d133aadaa167a865d44efa9436385901d0b42f85c8b6aa",
+      "source_bundles_icon_match": true,
+      "no_env_files": true
+    }
+  },
+  "preserved": {
+    "env_files_byte_identical": true,
+    "macos_scanner_guard_unchanged": true,
+    "prior_live_reports_unchanged": true,
+    "local_backups_created": false
+  },
+  "verification_scope": {
+    "live_ai_requests": 0,
+    "editor_windows_launched": 0,
+    "native_visual_verification": false,
+    "extension_installation": "not changed; this task merges source and produces a rebuilt package",
+    "imported_verification_records": "provided with patch; local results recorded separately here"
+  }
+}

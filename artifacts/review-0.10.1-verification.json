@@ -1,0 +1,59 @@
+{
+  "version": "0.10.1",
+  "base_commit": "3791a03d3745f6147438e9dd639987ffe44d060a",
+  "uploaded_tracked_sources_match_base": true,
+  "private_env_files_used": false,
+  "automated_tests": {
+    "passed": 141,
+    "failed": 0,
+    "skipped": 0,
+    "real_offline_checkov": "3.4.5",
+    "network": "loopback mock AI only; no live provider requests"
+  },
+  "builds": {
+    "extension": "passed",
+    "review_api": "passed",
+    "vsix_package": "passed"
+  },
+  "fixture_validation": {
+    "cases": 12,
+    "requests_sent": 0,
+    "live_inference": "not run",
+    "accuracy": "not measured"
+  },
+  "package_checks": {
+    "source_and_bundles_match": true,
+    "manifest_version": "0.10.1",
+    "toolbar_actions": 3,
+    "packaged_cli": "passed",
+    "packaged_ui_api": "passed",
+    "missing_optional_scanner": "not_assessed",
+    "secret_env_files_included": false,
+    "sha256": "f3acf696a83f8ce9d22b10920dbe72fe90a29162332d10b125e8cfa968d757d6"
+  },
+  "new_regressions": [
+    "quoted credential keys and snake-case names",
+    "escaped/multiline/Unicode redaction offsets",
+    "nonliteral and nonsensitive controls",
+    "saved same-length edits before watcher delivery",
+    "highlight selection checks saved snapshot",
+    "edits during document open",
+    "edits during editor reveal",
+    "same-finding reselection invalidates old local navigation",
+    "visible explicit review/rerun actions",
+    "AI edits during document open",
+    "AI reselection preserves new assessment"
+  ],
+  "native_editor_launched": false,
+  "native_editor_verification": "not run",
+  "visual_verification": "not observed",
+  "cursor": "untested",
+  "live_groq_evaluation": "not repeated; prior partial results unchanged",
+  "unsupported_unchanged": [
+    "general access-control proof",
+    "cross-file flow",
+    "deployed infrastructure audit",
+    "automatic fixes",
+    "target code execution"
+  ]
+}

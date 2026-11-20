@@ -1,148 +1,160 @@
-# Changeproof 0.10.0
+# Changeproof 0.12.0
 
-Current-files review now includes optional local Checkov configuration checks
-for Terraform, Kubernetes, Dockerfiles and GitHub Actions. CP003/CP004 add narrow
-TLS-disablement and dynamic-evaluation warnings. The AI demo profile reduces
-context and generation budgets; full review remains available.
+Review saved JavaScript/TypeScript and supported infrastructure configuration
+in VS Code. Read potential issues, follow their evidence, and see what could
+and could not be checked. Local review needs no account, server or LLM.
+Optional AI review sends only an explicitly approved, bounded change preview
+to your configured backend and model provider.
 
-Run `npm run setup:local` to preserve an existing server-side Groq key and fill
-matching development tokens. Install Checkov 3.4.5 outside reviewed projects
-and configure the user-level `changeproof.checkovPath`. No installation happens
-during a review. Setup, policies, limits and unsupported behavior are documented
-in `docs/feature-scope-0.10.0.md`. Earlier sections below describe older releases.
+## Sidebar controls
 
----
+Click the **Changeproof shield icon** in the left Activity Bar. Choose a project
+folder, select Current files or Changes since HEAD, and click **Scan project**.
+The Scan view has folder/mode controls, Open results and Settings buttons, and
+an Optional AI section with a visible context-size dropdown and preview action.
+Folder and mode persist for this workspace; changing options never starts a scan.
+No Command Palette is needed for this normal workflow.
 
-# Changeproof 0.9.0 — live AI readiness and synthetic evaluation
+## Review dashboard
 
-The existing sidebar now distinguishes backend health, provider configuration, explicitly approved synthetic inference checks, and detection-quality proxies. [Setup and evaluation guide](docs/live-ai-readiness-0.9.0.md). Package: `artifacts/changeproof-local-0.9.0.vsix`. No live result is implied by mock tests or health. Earlier milestone notes below are historical.
+Completed reviews now open **Changeproof Review** automatically in the existing
+window: summary cards, searchable Code/Configuration filters, selectable findings
+and an evidence trail with editor navigation. The sidebar remains a secondary
+outline. Reopen the dashboard using **Changeproof: Open Review Dashboard** or its
+layout toolbar button. One tab is reused for dashboard, finding and AI views.
 
-# Changeproof 0.8.0 — optional hosted AI review
+## Use the extension
 
-Local deterministic review remains available without a server. The opt-in **AI Review Changes** command previews bounded, redacted tracked JS/TS changes against HEAD, asks for explicit approval, and displays separately labeled AI assessments in the existing sidebar/details interface. No runtime verification or automatic edits.
+1. Install `artifacts/changeproof-local-0.12.0.vsix` using **Extensions: Install
+   from VSIX…**. Reload the **existing** window once after updating.
+2. Open the project folder you want to inspect. Save your files.
+3. Click the **Changeproof shield icon** on the left, then select your project
+   folder in the **Scan** view.
+4. Choose **Current files** or **Changes since HEAD** and click **Scan project**.
+5. Use the automatically opened dashboard, select a finding, then click an
+   evidence step in the reusable details panel to navigate and highlight it.
 
-See [setup and scope](docs/hosted-ai-0.8.0.md) and [review API](services/review-api/README.md). Installable package: `artifacts/changeproof-local-0.8.0.vsix`. Earlier milestone notes below are historical; schema 4.0.0 remains the deterministic contract, while AI uses a separate 1.0.0 contract.
+**Current files** reviews eligible saved tracked/untracked JS/TS and supported
+configuration. It works without Git or an initial commit. Newness is not
+applicable because there is no baseline. **Changes since HEAD** reviews saved
+tracked JS/TS against HEAD; it lists untracked files without analyzing them.
+Infrastructure comparison against HEAD is unsupported: use Current files.
 
-# Changeproof — local change review
+Normal reviews reuse the same window and never create samples or commits.
+**Run Demo** is separate and optional. Changes invalidate results; save and
+click **Rerun reviewed folder** or the refresh toolbar button. There are no
+automatic review loops. A delayed watcher event cannot authorize stale evidence:
+navigation/highlighting also check the saved snapshot directly.
 
-An **initial local static-analysis prototype** for reviewing code changes, including AI-generated changes in private repositories. The same command-line engine powers a thin VS Code extension. No GitHub account, repository upload, network calls, telemetry, models or AI assistant integration is used by the tool. AI-powered reasoning is future work; the engine cannot tell whether a change was AI-generated.
+## What it checks
 
-The original rule, **CP001: potential sensitive logging**, inspects newly added/changed direct `console.log/info/warn/error/debug/trace` calls in JS/TS, JSX/TSX, CJS/MJS and CTS/MTS. It flags direct arguments named `accessToken`, `refreshToken`, `password`, or `authorization` (case-insensitive), including direct property arguments such as `user.password`. Names alone cannot establish sensitive data flow or a confirmed leak. Comments and string contents are not searched.
+| Check | Supported behavior |
+| --- | --- |
+| CP001 | Direct console arguments with sensitive-looking names; name-based hypothesis only. |
+| CP002 | Authorization-header reads through simple assignments and directly resolved same-file helper calls, at most three calls deep. Evidence includes arguments, calls, parameters and logging. |
+| CP003 | Explicit Node TLS verification disablement using supported environment assignments or inline HTTPS options. |
+| CP004 | Direct, unshadowed built-in `eval` / `Function` calls; input exploitability is unknown. |
+| Infrastructure | Ten curated Checkov policies for Terraform, Kubernetes YAML, Dockerfiles and GitHub Actions; current saved configuration only. |
+| Optional AI | Bounded before/after tracked JS/TS changes: possible logging/response exposure and weakened access checks, with validated reference ranges and stated assumptions. |
 
-**CP002: potential authorization-header logging** now follows supported header reads through declarations and simple `=` assignments within one function. Evidence shows source, intermediate assignments, sink, HEAD newness (true/false/unknown), limitations and `runtime_verification: false`. Unknown transformations/calls produce explicit boundary notes. It does not infer general data flow or workflows. CP001 is retained and folded into CP002 at a shared sink to avoid duplicate warnings. See [exact syntax and reproduction](docs/authorization-flow.md).
+Coverage applies specifically to the bounded CP002 analysis, not every security
+property. Infrastructure and AI have separate status/limitations. No findings
+is not proof of safety. No target application, package script, configuration
+plugin or live cloud infrastructure is executed or accessed.
 
-## Coverage reporting (0.5.0)
+## Local prerequisites and build
 
-The JSON contract is now **3.0.0**. Processing completion and analysis coverage
-are separate: `analysis_complete` means no processing errors, not a security
-assurance. Coverage applies only to CP002 in changed tracked JS/TS files.
-The panel and JSON distinguish **analyzed**, **partial**, **unsupported**, and
-**not_analyzed**. “Analyzed” means within this narrow rule's supported syntax,
-not all security behavior. File/scope details identify unsupported functions,
-top-level executable statements, and boundaries; skips and untracked files
-reduce aggregate coverage. Unchanged/deleted files are not flow-reviewed.
-
-Unknown calls/expressions clear tracked values. Subsequent fresh header reads
-can start new paths. For example, a header-to-log path after `await req.json()`
-is now found, while the function remains partially analyzed. No path is inferred
-through that call. Branches and object mutations remain hard boundaries; helper
-functions and cross-function data flow remain unsupported.
-
-## Review a real project (0.7.0)
-
-Open your project in VS Code, run **Changeproof: Review Project**, choose **Current files** or **Changes since HEAD**, then read findings in the existing sidebar/details interface. Current files work without Git or a commit and include eligible untracked JS/TS. Their newness is not applicable, never fabricated as new. Normal reviews create no demo, commit or project edit.
-
-Bounded same-file helper evidence now includes argument → call → parameter → assignment → logging. Traversal is capped and recursion/unresolved/imported helpers retain explicit limitations. No target code or configuration is executed. See [implemented behavior and limits](docs/real-project-0.7.0.md).
-
-CLI: `node packages/engine/src/cli.mjs /path/to/project --mode current` (or `--mode changes`). The current report contract is **4.0.0**; prior sections describing older versions are historical.
-
-## Finding UI (0.6.0)
-
-The sidebar now separates findings from coverage, limitations, skipped/untracked files and processing errors. Clicking a finding opens **Changeproof Finding Details** with existing source → assignment → logging navigation, HEAD newness, coverage, limitations and runtime status. Native code decorations include text labels. Relevant changes mark results **STALE** and clear highlights/diagnostics; rerun explicitly. No new analysis rules or engine behavior were added. See [UI usage and verification](docs/finding-ui-0.6.0.md).
-
-## Try the installed extension
-
-Run **Changeproof: Run Demo** from the Command Palette. That is the only demo command: it creates its own synthetic baseline repository in dedicated extension storage, reviews that exact path, opens the finding and displays a finding-details panel with source → assignment → logging buttons beside it. Your workspace and its Git history stay unchanged. The demo is real static analysis, not pre-recorded results or target execution.
-
-Install/update with `code --install-extension artifacts/changeproof-local-0.7.0.vsix`; if an older extension is still loaded, use **Developer: Reload Window** once after installation. See [demo verification](docs/run-demo.md).
-
-## Run the CLI
-
-Development/packaging requires Node 22+. The CLI and packaged extension runtime require trusted Node 20.19+ and Git on PATH with the `--no-lazy-fetch` safety option (tested with Git 2.55.0). Older Git versions without that option are rejected rather than risking an implicit network fetch.
+Development/build: Node 22+. Packaged runtime: trusted Node 20.19+.
+Changes/AI review requires Git supporting `--no-lazy-fetch`; current-files
+review falls back to local ignore parsing without usable Git. Executable paths
+come from user settings, never target workspace settings.
 
 ```sh
-cd /Users/owen/Downloads/changeproof
 npm ci --ignore-scripts
-node packages/engine/src/cli.mjs /absolute/path/to/local/git-project
-# Equivalent:
-npm run review -- /absolute/path/to/local/git-project
-```
-
-Use the direct `node` command for machine JSON; npm adds its own script banner. The CLI accepts any local Git working-tree path and reviews its containing repository; it reads without modifying the target repository. **Do not run target dependencies, hooks, scripts or tests.** The tool only launches read-only Git plumbing. A repository is treated as data; its compiler config and Git content filters are not executed.
-
-Comparison is **HEAD → final saved tracked working tree**, incorporating staged and unstaged changes. Untracked files are listed separately, not analyzed. Git-ignored untracked files are excluded. An empty/unborn repository returns a missing-HEAD error; commit a baseline yourself before reviewing. This repository currently has no commits from the earlier prototype, and reviewing it will accurately report that condition until you create one.
-
-Exit **0** = analysis completed, findings may exist. Exit **2** = usage or analysis errors. There is no merge blocking. JSON includes revision, files, changed ranges, findings, evidence, limitations, errors, skips and `runtime_verification: false`. See [report contract](docs/report-format.md) and [JSON Schema](docs/report.schema.json).
-
-Default exclusions: `.git`, dependencies, common build/cache directories, `.env*`, common private-key files, `.npmrc`, `.netrc`, and names beginning `credentials`, `secrets`, `id_rsa`, or `id_ed25519`. Binary/non-UTF-8 files, symlinks, submodules and files above 1 MiB are skipped explicitly. Unsupported languages are not analyzed. Output contains paths, identifier metadata and safe name categories, not source snippets or literal secret values. No exclusion list can recognize every secret filename.
-
-## Run the VS Code extension
-
-Build the bundled shared CLI first:
-
-```sh
-npm run build:extension
-code --new-window --extensionDevelopmentPath="$PWD/extensions/vscode" /absolute/path/to/local/git-project
-```
-
-Or open `extensions/vscode` in VS Code and press **F5** using the included “Debug Changeproof Local” launch configuration (after building from the root). In the Extension Development Host, open your local project, save buffers, then run **Changeproof: Review Local Changes** from the Command Palette. For multi-root workspaces, select the folder. See findings, skipped files, untracked files and errors in **Explorer → Changeproof Local Review**. Findings also appear as warning diagnostics in Problems; clicking a finding opens its file and line. No findings is distinct from incomplete analysis.
-
-Node must be available to the extension host. If needed, set **User Settings** `changeproof.nodePath` to the absolute path of a trusted Node executable, for example the output of `command -v node`. Workspace-controlled executable settings are deliberately ignored. Do not point it at target project code. Remote VS Code workspaces run the engine where the workspace extension host runs; remote scenarios are untested.
-
-For a persistent **local VSIX installation** (nothing is published):
-
-```sh
 npm run package:extension
-code --install-extension "$PWD/artifacts/changeproof-local-0.7.0.vsix"
 ```
 
-You can also select **Extensions: Install from VSIX…**. The artifact includes the bundled shared CLI and licenses, not target source, test fixtures, packager dependencies or a service. See [packaged-install verification](docs/packaged-install.md), reported separately from development-host testing.
+Install the resulting VSIX as above. If Node is unavailable to the extension
+host, set the user-level `changeproof.nodePath` to its trusted absolute path.
+No Marketplace publication is required.
 
-Alternatively, copy the built extension to a new user-extension directory:
+For optional infrastructure checks, install **Checkov 3.4.5** outside projects
+being reviewed, then set user-level `changeproof.checkovPath` to that executable.
+It never installs itself during a review. Missing or incompatible Checkov is
+shown as **not assessed**; code checks remain available.
 
 ```sh
-# macOS/Linux; do not overwrite an existing installation without reviewing it.
-mkdir -p "$HOME/.vscode/extensions/changeproof-local.changeproof-local-0.7.0"
-cp extensions/vscode/package.json "$HOME/.vscode/extensions/changeproof-local.changeproof-local-0.7.0/"
-cp -R extensions/vscode/src extensions/vscode/out "$HOME/.vscode/extensions/changeproof-local.changeproof-local-0.7.0/"
+python3 -m venv "$HOME/.local/share/changeproof/checkov"
+"$HOME/.local/share/changeproof/checkov/bin/python" -m pip install checkov==3.4.5
 ```
 
-Restart VS Code or run **Developer: Reload Window**. Windows users can copy those same files to `%USERPROFILE%\.vscode\extensions\changeproof-local.changeproof-local-0.7.0`. The bundled extension requires only trusted system Node and Git, not the target project's packages. The local VSIX is unsigned and has not been published to a marketplace.
+CLI (machine JSON on stdout):
 
-**Compatibility:** VS Code and Cursor have separate verification status in [verification](docs/local-verification.md). Cursor compatibility is an aim, not a claim; Cursor is **untested**. The extension uses standard command, TreeView, diagnostics, workspace and navigation APIs; it assumes no coding assistant is installed.
+```sh
+node packages/engine/src/cli.mjs /absolute/path/to/project --mode current
+# Optional explicit trusted scanner:
+node packages/engine/src/cli.mjs /absolute/path/to/project --mode current --checkov /absolute/path/to/checkov
+# Requires Git HEAD:
+node packages/engine/src/cli.mjs /absolute/path/to/project --mode changes
+```
 
-## Verification
+Report schema is **5.0.0**. Exit 0 / `analysis_complete` describe completion of
+the code-processing path, not clean security or complete infrastructure
+coverage. Inspect `infrastructure.status` / `infrastructure.errors` separately.
+
+## Optional AI setup
+
+If your backend, Groq key and VS Code access token are already configured,
+keep them. Start the backend from this checkout with `npm run start:review-api`.
+Local Review Project works with the backend stopped.
+
+For a fresh setup:
+
+1. Run `npm run setup:local`. This creates/matches development access tokens in
+   ignored server/evaluation env files and preserves an existing Groq key.
+2. Put `GROQ_API_KEY` only in `services/review-api/.env`. Start the backend with
+   `npm run start:review-api` (loopback port 4318 by default).
+3. Run **Changeproof: Set AI Review Access Token** with the server's
+   `REVIEW_ACCESS_TOKEN`, not its Groq key. It is stored in VS Code SecretStorage.
+4. Run **AI Review Changes**, inspect the exact redacted payload, profile and
+   destination, then explicitly approve transmission if appropriate.
+
+The default **demo** profile bounds context and generation to reduce provider
+usage; throttling is still possible. There are no automatic retries or model
+fallbacks. Redaction supports recognized tokens and credential literals,
+including quoted object keys and escaped/multiline values, but is best effort.
+Inspect the entire preview; names and paths can disclose information too.
+Keep `.env` files out of project archives and Git. The local API uses development
+authentication; it is not a public multiuser service.
+
+## Verification and limits
 
 ```sh
 npm run build:extension
 npm test
-# Optional real VS Code host test (isolated synthetic repo and user profile):
-node extensions/vscode/test/run-host.mjs /absolute/path/to/code
-# Separate clean-profile packaged-install test:
-node extensions/vscode/test/run-host.mjs /absolute/path/to/code artifacts/changeproof-local-0.7.0.vsix
-# macOS installation present on this workstation:
-node extensions/vscode/test/run-host.mjs '/Applications/Visual Studio Code.app/Contents/Resources/app/bin/code'
+npm run build:review-api
+npm run evaluate:ai -- --validate
 ```
 
-These tests run only our tool and controlled fixtures, not a target project's runtime code. Fixtures cover staged, unstaged, mixed, untracked, no-change, binary, missing HEAD, exclusions, read-only behavior, harmless syntax, potential sensitive logging and extension-to-bundled-CLI communication. Runtime verification of reviewed code remains false even though the tool's own implementation is tested.
+[Sidebar controls and verification](docs/sidebar-controls-0.12.0.md) describe the
+new entry point and preserved consent boundaries.
 
-## Scope and next step
+To include the real optional scanner tests, set `CHANGEPROOF_TEST_CHECKOV` to the
+trusted Checkov executable when running `npm test`. Tests use controlled fixtures
+and mock AI; they do not establish model detection accuracy. Actual live Groq
+evaluation is **partial** after throttling, documented in
+[the existing live report](docs/live-verification-2026-11-19.md).
 
-No automatic edits, patches, runtime tests, uploads, telemetry, hosted dashboard, accounts or merge blocking are part of this workflow. No general access-control analysis is implemented. CP002 supports only the exact function-local assignment syntax documented above; indirect loggers, cross-function flow, computed transformations, branch/loop reasoning and arbitrary calls are not resolved. CP001 remains name-based and is not proof of sensitive data flow. Names can produce false positives and false negatives; no findings is not proof of safety. Save files before review and avoid concurrent edits: reads are not an atomic repository snapshot. Reports/diagnostics are snapshots; rerun after edits.
+No general access-control proof, cross-file data flow, arbitrary framework
+support, deployed-infrastructure scan, automatic fix or runtime exploit test
+is implemented. Cursor and remote editor hosts remain untested. Editor API tests
+are not visual observation. Infrastructure isolation wraps a trusted pinned
+Python tool; it is not an OS sandbox for arbitrary executables.
 
-The next smallest milestone is resolving both arms of one simple `if/else` with explicit path uncertainty, retaining the same function-local and privacy boundaries. AI reasoning and runtime checks remain later work.
+[Dashboard behavior and verification](docs/review-dashboard-0.11.0.md) ·
+[Detailed policies, bounds and AI profiles](docs/feature-scope-0.10.0.md) ·
+[Report schema](docs/report.schema.json) ·
+[AI service](services/review-api/README.md)
 
-[Local architecture](docs/local-architecture.md) · [Report format](docs/report-format.md) · [Verification](docs/local-verification.md)
-
-The previous dashboard, FastAPI runner, document-sharing demo, and Python/Playwright tests remain untouched as historical work. They are **not** invoked by this CLI or extension. Their old setup is preserved in [legacy demo instructions](docs/legacy-demo.md); its historical design and related-work notes remain in `docs/architecture.md`, `docs/related-work.md`, and `docs/verification.md`. This direction reuses the project identity and evidence/limitations discipline, not the old runtime scanner. Automated security testing and code comparison are established ideas; no novelty is claimed.
-# placeholdername
+The old React dashboard/FastAPI runner is preserved as historical work and is
+not used by the current extension. See [legacy setup](docs/legacy-demo.md).

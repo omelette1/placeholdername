@@ -1,6 +1,6 @@
 {
   "name": "changeproof-local",
-  "version": "0.10.0",
+  "version": "0.12.0",
   "private": true,
   "description": "Initial local static-analysis prototype for reviewing code changes",
   "type": "module",

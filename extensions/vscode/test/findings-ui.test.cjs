@@ -27,7 +27,7 @@ test('unsaved edits clear diagnostics/decorations, mark details stale, and do no
 });
 test('filesystem changes mark stale, review replacement rejects old IDs and clears selection',async t=>{
  const f=fixture(t),id=f.ui.begin(f.root);f.ui.finish(id,f.report);await f.ui.select(id,0);await f.ui.navigate(id,3);fs.appendFileSync(path.join(f.root,f.file),'// changed\n');f.fake.watchers.at(-1).change.fire(f.fake.vscode.Uri.file(path.join(f.root,f.file)));assert.equal(f.ui.getState().stale,true);assert.equal(f.reruns.length,0);
- const next=f.ui.begin(f.root);assert.ok([...f.fake.editors[0].decorations.values()].every(v=>!v.length));f.ui.finish(next,f.report);assert.equal(await f.ui.navigate(id,0),false);assert.match(f.fake.panels[0].webview.html,/Previous selections have been cleared/);
+ const next=f.ui.begin(f.root);assert.ok([...f.fake.editors[0].decorations.values()].every(v=>!v.length));f.ui.finish(next,f.report);assert.equal(await f.ui.navigate(id,0),false);assert.match(f.fake.panels[0].webview.html,/Review workspace/);assert.match(f.fake.panels[0].webview.html,/Evidence trail/);
 });
 test('outside paths, symlink swaps and out-of-range locations are refused',async t=>{
  const f=fixture(t);assert.throws(()=>safeTarget(f.root,{...f.loc(1),file:'../outside.ts'}));assert.throws(()=>safeTarget(f.root,{...f.loc(1),file:'/etc/passwd'}));
@@ -71,4 +71,50 @@ test('first-review delayed filesystem events are checked against actual engine i
  const f=fixture(t);const signature=file=>{const s=fs.statSync(file,{bigint:true});return [s.dev,s.ino,s.size,s.mtimeNs,s.ctimeNs,s.mode].join(':');};const file=path.join(f.root,f.file);f.report.files_inspected[0].snapshot=signature(file);
  let id=f.ui.begin(f.root);f.fake.watchers.at(-1).change.fire(f.fake.vscode.Uri.file(file));assert.equal(f.ui.getState().stale,false);f.ui.finish(id,f.report);assert.equal(f.ui.getState().stale,false,'late notification matches the engine snapshot');
  id=f.ui.begin(f.root);fs.appendFileSync(file,'// changed after snapshot\n');f.fake.watchers.at(-1).change.fire(f.fake.vscode.Uri.file(file));f.ui.finish(id,f.report);assert.equal(f.ui.getState().stale,true,'a real change after the read must remain stale');assert.equal(f.reruns.length,0);
+});
+
+test('saved same-length edits invalidate evidence before watcher delivery and clear highlights',async t=>{
+ const f=fixture(t),id=f.ui.begin(f.root);f.ui.finish(id,f.report);await f.ui.select(id,0);await f.ui.navigate(id,3);
+ const target=path.join(f.root,f.file);fs.writeFileSync(target,fs.readFileSync(target,'utf8').replaceAll('copied','public'));
+ assert.equal(f.ui.getState().stale,false,'no watcher notification has been delivered');
+ assert.equal(await f.ui.navigate(id,3),false);assert.equal(f.ui.getState().stale,true);
+ assert.equal(f.fake.diagnostics.size,0);assert.ok([...f.fake.editors[0].decorations.values()].every(v=>!v.length));
+ assert.equal(f.reruns.length,0);
+});
+
+test('selecting a finding after a saved edit never paints stale locations',async t=>{
+ const f=fixture(t),id=f.ui.begin(f.root);f.ui.finish(id,f.report);
+ fs.appendFileSync(path.join(f.root,f.file),'// no watcher event\n');await f.ui.select(id,0);
+ assert.equal(f.ui.getState().stale,true);assert.equal(f.fake.types.length,0);assert.equal(f.fake.diagnostics.size,0);
+});
+
+test('a saved edit while opening a document is refused even when all coordinates still fit',async t=>{
+ const f=fixture(t),id=f.ui.begin(f.root);f.ui.finish(id,f.report);await f.ui.select(id,0);
+ const open=f.fake.vscode.workspace.openTextDocument;
+ f.fake.vscode.workspace.openTextDocument=async uri=>{const doc=await open(uri);fs.appendFileSync(uri.fsPath,'// saved during open\n');return doc;};
+ assert.equal(await f.ui.navigate(id,3),false);assert.equal(f.fake.editors.length,0);assert.equal(f.ui.getState().stale,true);
+});
+
+test('source changes during showTextDocument clear decorations and do not record successful navigation',async t=>{
+ const f=fixture(t),id=f.ui.begin(f.root);f.ui.finish(id,f.report);await f.ui.select(id,0);
+ const show=f.fake.vscode.window.showTextDocument;
+ f.fake.vscode.window.showTextDocument=async(doc,opts)=>{const editor=await show(doc,opts);fs.appendFileSync(doc.uri.fsPath,'// saved during reveal\n');return editor;};
+ assert.equal(await f.ui.navigate(id,3),false);assert.equal(f.ui.getState().stale,true);
+ assert.ok([...f.fake.editors[0].decorations.values()].every(v=>!v.length));assert.ok(!f.records.some(r=>r.phase==='evidence_navigated'));
+});
+
+test('even reselection of the same finding cancels a pending old navigation',async t=>{
+ const f=fixture(t),id=f.ui.begin(f.root);f.ui.finish(id,f.report);await f.ui.select(id,0);
+ const open=f.fake.vscode.workspace.openTextDocument;
+ f.fake.vscode.workspace.openTextDocument=async uri=>{const doc=await open(uri);await f.ui.select(id,0);return doc;};
+ assert.equal(await f.ui.navigate(id,3),false);assert.equal(f.fake.editors.length,0);assert.equal(f.ui.getState().stale,false);
+});
+
+test('review and explicit rerun actions are available directly in the persistent sidebar',t=>{
+ const f=fixture(t);
+ assert.ok(f.fake.flatten().some(i=>i.command?.command==='changeproof.reviewProject'));
+ assert.ok(!f.fake.flatten().some(i=>i.command?.command==='changeproof.rerunReview'));
+ const id=f.ui.begin(f.root,{mode:'current'});f.ui.finish(id,f.report);
+ assert.ok(f.fake.flatten().some(i=>i.command?.command==='changeproof.rerunReview'));
+ assert.equal(f.reruns.length,0);
 });
