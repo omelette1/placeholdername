@@ -6,3 +6,4 @@ await build({entryPoints:[root+'packages/engine/src/cli.mjs'],outfile:root+'exte
 await build({entryPoints:[root+'packages/ai/src/context-cli.mjs'],outfile:root+'extensions/vscode/out/ai-context.cjs',bundle:true,platform:'node',format:'cjs',target:'node20',logLevel:'info'});
 await build({entryPoints:[root+'packages/ai/src/client-entry.mjs'],outfile:root+'extensions/vscode/out/ai-client.cjs',bundle:true,platform:'node',format:'cjs',target:'node20',logLevel:'info'});
 await build({entryPoints:[root+'packages/claims/src/cli.mjs'],outfile:root+'extensions/vscode/out/claims.cjs',bundle:true,platform:'node',format:'cjs',target:'node20',logLevel:'info'});
+await build({entryPoints:[root+'packages/ai/src/local-verification-cli.mjs'],outfile:root+'extensions/vscode/out/ai-verify.cjs',bundle:true,platform:'node',format:'cjs',target:'node20',logLevel:'info'});

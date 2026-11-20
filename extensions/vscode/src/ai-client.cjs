@@ -1,5 +1,6 @@
 const {execFile}=require('node:child_process');
 const path=require('node:path');
+const {verifyAiResponse}=require('./ai-verification.cjs');
 function collect(node,cli,folder,signal,profile='full'){return new Promise((resolve,reject)=>{
  const env={...process.env};for(const key of Object.keys(env))if(['NODE_OPTIONS','NODE_PATH','GROQ_API_KEY','REVIEW_ACCESS_TOKEN'].includes(key))delete env[key];
  execFile(node,[cli,folder,'--profile',profile],{cwd:path.dirname(cli),env,signal,windowsHide:true,timeout:60000,maxBuffer:2*1024*1024},(error,stdout)=>{
@@ -76,7 +77,15 @@ function createAiController(vscode,context,ui,{otherBusy=()=>false,onBusyChange=
     shared().checkResponse(response,ai.envelope.request);
     const after=await collect(node,context.asAbsolutePath('out/ai-context.cjs'),folder,signal,ai.envelope.profile||'full');
     const stale=dirty(folder)||!sameSnapshot(ai.envelope,after)||ui.getState()?.ai?.stale===true;
-    ui.aiUpdate(ai.token,{phase:'completed',response,stale});
+    let verification={status:stale?'stale':'unavailable',reason:stale?'The approved inputs changed. Refresh the preview; no current corroboration is established.':'Independent local check could not complete. No corroboration is established.'};
+    if(!stale){
+     ui.aiUpdate(ai.token,{phase:'verifying',response,stale:false,verification:{status:'checking'}});
+     try{verification=await verifyAiResponse(node,context.asAbsolutePath('out/ai-verify.cjs'),folder,ai.envelope.request,response,signal);}catch{if(signal.aborted)throw new Error('AI review cancelled.');}
+    }
+    const finalSnapshot=await collect(node,context.asAbsolutePath('out/ai-context.cjs'),folder,signal,ai.envelope.profile||'full');
+    const finalStale=stale||dirty(folder)||!sameSnapshot(ai.envelope,finalSnapshot)||ui.getState()?.ai?.stale===true;
+    if(finalStale)verification={status:'stale',reason:'Saved inputs changed. Independent evidence is stale; refresh and explicitly approve a new review.'};
+    ui.aiUpdate(ai.token,{phase:'completed',response,stale:finalStale,verification});
    });
    await ui.selectAi(ai.token);
   }catch(error){const safeMessages=['Set AI Review Access Token','Project or saved inputs changed','Authentication failed','Review quota','Review service','Review provider','Provider output','Review request','AI review cancelled','AI review timed out','AI review service'];const message=safeMessages.some(p=>error.message.startsWith(p))?error.message:'AI review failed validation or could not complete. No valid assessment is available.';ui.aiUpdate(ai.token,{phase:'error',error:message,response:undefined});await ui.selectAi(ai.token);}

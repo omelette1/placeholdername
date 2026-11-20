@@ -1,4 +1,4 @@
-# Changeproof Local Review — 0.14.0
+# Changeproof Local Review — 0.15.0
 
 Review saved JS/TS and supported infrastructure configuration in this VS Code
 window. Click the **Changeproof shield icon** in the left Activity Bar. The
@@ -39,7 +39,14 @@ the exact redacted bounded payload before approval. The Groq key stays on the
 backend. No automatic uploads, fixes, target execution or live-infrastructure
 access. No findings does not establish safety; review coverage and limitations.
 
-Install `changeproof-local-0.14.0.vsix`, reload the existing window once, and
+After an approved AI response, the app automatically checks its cited snapshots
+locally and compares eligible logging claims with CP002. The AI summary/details
+show partial static support or unverified claims and function-body observations.
+Click findings directly in the summary and follow cited evidence. No manual
+response copying, extra model call or target-code execution is involved. General
+access-control claims, summaries and test success remain unverified.
+
+Install `changeproof-local-0.15.0.vsix`, reload the existing window once, and
 review your project. Trusted Node 20.19+ is required; configure user-level
 `changeproof.nodePath` / `changeproof.checkovPath` if needed. Normal reviews do
 not open additional editor windows or create demos. **Run Demo** remains a

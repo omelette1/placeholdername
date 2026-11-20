@@ -1,0 +1,3 @@
+import {verifyLocalAssessment} from './local-verification.mjs';
+async function main(){try{const chunks=[];let size=0;for await(const b of process.stdin){size+=b.length;if(size>260000)throw Error('size');chunks.push(b);}const input=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(Buffer.concat(chunks)));console.log(JSON.stringify(verifyLocalAssessment(process.argv[2],input.request,input.response)));}catch{console.log(JSON.stringify({kind:'local_ai_evidence_error',error:'Local evidence could not be checked against the approved snapshot. No corroboration is established.'}));process.exitCode=2;}}
+void main();

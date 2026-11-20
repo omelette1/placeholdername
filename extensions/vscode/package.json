@@ -2,7 +2,7 @@
   "name": "changeproof-local",
   "displayName": "Changeproof Local Review",
   "description": "Local static checks and opt-in hosted AI change assessment; no runtime verification.",
-  "version": "0.14.0",
+  "version": "0.15.0",
   "publisher": "changeproof-local",
   "license": "UNLICENSED",
   "engines": {

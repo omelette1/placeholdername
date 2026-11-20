@@ -1,10 +1,16 @@
-# Changeproof 0.14.0
+# Changeproof 0.15.0
 
 Review saved JavaScript/TypeScript and supported infrastructure configuration
 in VS Code. Read potential issues, follow their evidence, and see what could
 and could not be checked. Local review needs no account, server or LLM.
 Optional AI review sends only an explicitly approved, bounded change preview
 to your configured backend and model provider.
+
+Optional AI responses now receive **automatic independent local evidence
+checks** inside the app. No response copying or extra model call is needed.
+The AI summary and finding details show partial CP002 support or unverified
+claims, with body observations and cited navigation. See
+[automatic AI evidence checks](docs/automatic-ai-evidence-0.15.0.md) for scope.
 
 ## Sidebar controls
 
@@ -42,7 +48,7 @@ layout toolbar button. One tab is reused for dashboard, finding and AI views.
 
 ## Use the extension
 
-1. Install `artifacts/changeproof-local-0.14.0.vsix` using **Extensions: Install
+1. Install `artifacts/changeproof-local-0.15.0.vsix` using **Extensions: Install
    from VSIX…**. Reload the **existing** window once after updating.
 2. Open the project folder you want to inspect. Save your files.
 3. Click the **Changeproof shield icon** on the left, then select your project

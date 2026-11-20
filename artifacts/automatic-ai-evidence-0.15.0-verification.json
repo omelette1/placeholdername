@@ -1,0 +1,57 @@
+{
+  "version": "0.15.0",
+  "base_commit": "84fe3228d8c8c9e66d1f616097bbe12c98d33997",
+  "automated_tests": {
+    "tests": 196,
+    "passed": 196,
+    "failed": 0,
+    "skipped": 0,
+    "real_checkov": "3.4.5"
+  },
+  "builds": {
+    "extension": "passed",
+    "review_api": "passed",
+    "vsix": "passed"
+  },
+  "packaged_api_harness": {
+    "status": "passed",
+    "real_loopback_http": true,
+    "provider": "mock",
+    "model_requests": 1,
+    "extra_verification_requests": 0,
+    "partial_static_support_findings": 1,
+    "summary_finding_button": "passed",
+    "evidence_navigation": "passed",
+    "reused_panels": 1,
+    "native_editor": false
+  },
+  "coverage": [
+    "New CP002 source-to-console pattern, all trace steps within cited after-ranges.",
+    "Existing patterns and general access-control claims remain unverified.",
+    "Partial references cannot corroborate full traces.",
+    "Changed source/HEAD, symlinks and altered approved context fail closed.",
+    "Empty AI findings and model summaries do not establish safety.",
+    "Supported function bodies receive independent syntax observations.",
+    "Unavailable verifier preserves the model response without inventing support."
+  ],
+  "package": {
+    "file": "changeproof-local-0.15.0.vsix",
+    "files": 32,
+    "sha256": "e094e6414f108217e86c0b486fe68445fdac52206d14114f0b5966660a0ddfaf",
+    "bundled_sources_match": true,
+    "no_secret_or_dependency_paths": true
+  },
+  "live_provider_requests": 0,
+  "target_execution_added": false,
+  "automatic_llm_review_checks": true,
+  "manual_response_paste_required": false,
+  "test_build_runner_added": false,
+  "native_visual_verification": "not performed",
+  "cursor": "untested",
+  "real_world_accuracy_established": false,
+  "limitations": [
+    "Partial static support only for supported new CP002 flows; not proof of complete model claims or runtime exposure.",
+    "General access control, application policy, summaries and test/build success remain unverified.",
+    "Existing AI-review Git baseline, bounded context, backend and approval requirements remain."
+  ]
+}
