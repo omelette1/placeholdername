@@ -1,8 +1,8 @@
 {
   "name": "changeproof-local",
-  "version": "0.15.0",
+  "version": "0.16.0",
   "private": true,
-  "description": "Initial local static-analysis prototype for reviewing code changes",
+  "description": "VS Code extension for evidence-backed local security reviews and cautious AI patch proposals",
   "type": "module",
   "bin": {
     "changeproof": "packages/engine/src/cli.mjs"
@@ -15,6 +15,7 @@
     "start:review-api": "node --env-file=services/review-api/.env services/review-api/src/start.mjs",
     "build:review-api": "node scripts/build-review-api.mjs",
     "evaluate:ai": "node evaluation/run.mjs",
+    "evaluate:rules": "node evaluation/rule-benchmark.mjs",
     "check:ai": "node evaluation/smoke.mjs",
     "setup:local": "node scripts/configure-local.mjs",
     "test:infra": "node --test packages/infrastructure/test/*.test.mjs",

@@ -1,4 +1,4 @@
-# Changeproof 0.15.0
+# Changeproof 0.16.0
 
 Review saved JavaScript/TypeScript and supported infrastructure configuration
 in VS Code. Read potential issues, follow their evidence, and see what could
@@ -11,6 +11,12 @@ checks** inside the app. No response copying or extra model call is needed.
 The AI summary and finding details show partial CP002 support or unverified
 claims, with body observations and cited navigation. See
 [automatic AI evidence checks](docs/automatic-ai-evidence-0.15.0.md) for scope.
+
+AI findings can now include a bounded line-replacement proposal. Changeproof
+checks the exact saved text and JavaScript/TypeScript syntax, shows the proposed
+replacement, and applies it only when you click **Apply this patch**. It then
+reruns the local static checks. This is not a behavior or security proof and
+does not execute project tests or scripts.
 
 ## Sidebar controls
 
@@ -48,7 +54,7 @@ layout toolbar button. One tab is reused for dashboard, finding and AI views.
 
 ## Use the extension
 
-1. Install `artifacts/changeproof-local-0.15.0.vsix` using **Extensions: Install
+1. Install `artifacts/changeproof-local-0.16.0.vsix` using **Extensions: Install
    from VSIX…**. Reload the **existing** window once after updating.
 2. Open the project folder you want to inspect. Save your files.
 3. Click the **Changeproof shield icon** on the left, then select your project
@@ -157,7 +163,16 @@ npm run build:extension
 npm test
 npm run build:review-api
 npm run evaluate:ai -- --validate
+npm run evaluate:rules
+npm run verify:fixtures
 ```
+
+`evaluate:rules` reports per-rule confusion metrics for 24 labeled, authored
+synthetic syntax examples. Those are regression-test scores, not real-world
+precision or recall. Live AI evaluation also reports proxy metrics only over
+valid regression/safe-control responses, together with scored-case coverage;
+failed, throttled, unattempted and insufficient-context cases are not silently
+counted as correct or incorrect. See [patch and accuracy checks](docs/patch-and-accuracy-0.16.0.md).
 
 [Sidebar controls and verification](docs/sidebar-controls-0.12.0.md) describe the
 new entry point and preserved consent boundaries.
@@ -169,10 +184,11 @@ evaluation is **partial** after throttling, documented in
 [the existing live report](docs/live-verification-2026-11-19.md).
 
 No general access-control proof, cross-file data flow, arbitrary framework
-support, deployed-infrastructure scan, automatic fix or runtime exploit test
-is implemented. Cursor and remote editor hosts remain untested. Editor API tests
-are not visual observation. Infrastructure isolation wraps a trusted pinned
-Python tool; it is not an OS sandbox for arbitrary executables.
+support, deployed-infrastructure scan, silent automatic fix or runtime exploit
+test is implemented. Suggested patches require an explicit apply click and are
+not correctness proofs. Cursor and remote editor hosts remain untested. Editor
+API tests are not visual observation. Infrastructure isolation wraps a trusted
+pinned Python tool; it is not an OS sandbox for arbitrary executables.
 
 [Dashboard behavior and verification](docs/review-dashboard-0.11.0.md) ·
 [Detailed policies, bounds and AI profiles](docs/feature-scope-0.10.0.md) ·

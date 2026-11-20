@@ -7,7 +7,7 @@ test('pasted response flows through real bundled local auditor into the reused p
  const x=fixture(t);await x.claims.check(x.root);assert.equal(x.fake.panels.length,1);assert.match(x.ui.getPanel().webview.html,/Check assistant claims/);
  await send(x,'claims_audit',{response:'Function `visible` exists in `app.ts`.\nFile `missing.ts` exists.\n159 tests passed.'});
  const state=x.claims.getState();assert.deepEqual(state.report.counts,{matched:1,contradicted:1,unverified:1});assert.match(x.ui.getPanel().webview.html,/No independently captured execution evidence/);assert.equal(x.fake.panels.length,1);assert.ok(!JSON.stringify(x.records).includes('159 tests'));
- await send(x,'claims_navigate',{index:0,evidence:1});assert.equal(x.fake.editors[0].document.uri.fsPath,path.join(x.root,'app.ts'));assert.equal(x.fake.editors[0].selection.start.line,0);assert.equal(x.ui.getPanel().viewColumn,x.fake.vscode.ViewColumn.Two);
+ await send(x,'claims_navigate',{index:0,evidence:1});assert.equal(x.fake.editors[0].document.uri.fsPath,fs.realpathSync(path.join(x.root,'app.ts')));assert.equal(x.fake.editors[0].selection.start.line,0);assert.equal(x.ui.getPanel().viewColumn,x.fake.vscode.ViewColumn.Two);
 });
 test('saved same-length edits invalidate claim evidence before any watcher notification',async t=>{
  const x=fixture(t);await x.claims.check(x.root);await send(x,'claims_audit',{response:'Function `visible` exists in `app.ts`.'});fs.writeFileSync(path.join(x.root,'app.ts'),'function changed(){}\n');await send(x,'claims_navigate',{index:0,evidence:1});assert.equal(x.claims.getState().stale,true);assert.equal(x.fake.editors.length,0);assert.match(x.ui.getPanel().webview.html,/STALE/);
@@ -47,7 +47,7 @@ test('body evidence warns on empty definitions while implementation and test cla
  await send(x,'claims_audit',{response:'Function `visible` exists in `app.ts`.\nImplemented function `visible` in `app.ts`.\nAll tests passed.'});
  const r=x.claims.getState().report;assert.deepEqual(r.counts,{matched:1,contradicted:0,unverified:2});assert.equal(r.implementation_warnings,2);assert.equal(r.claims[0].implementation.kind,'empty_body');
  const html=x.ui.getPanel().webview.html;assert.match(html,/Presence matches are not behavior passes/);assert.match(html,/Implementation evidence: Empty function body/);assert.match(html,/Behavior verified: false/);
- await send(x,'claims_navigate',{index:1,evidence:0});assert.equal(x.fake.editors[0].document.uri.fsPath,path.join(x.root,'app.ts'));
+ await send(x,'claims_navigate',{index:1,evidence:0});assert.equal(x.fake.editors[0].document.uri.fsPath,fs.realpathSync(path.join(x.root,'app.ts')));
 });
 test('claim view explains unsupported source input and rejects invented implementation verification',async t=>{
  const x=fixture(t);await x.claims.check(x.root);await send(x,'claims_audit',{response:'function visible() {\nreturn 1;\n}'});assert.match(x.ui.getPanel().webview.html,/No supported file\/function assertion was found/);assert.match(x.ui.getPanel().webview.html,/What can be checked/);

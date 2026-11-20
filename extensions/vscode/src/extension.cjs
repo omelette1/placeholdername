@@ -18,7 +18,7 @@ function activate(context) {
   }
   let ai,controls,claims;
   const ui=createFindingsView(vscode,context,{record,rerun:review,aiAction:(...args)=>ai.action(...args),onChange:()=>controls?.refresh()});
-  ai=createAiController(vscode,context,ui,{otherBusy:()=>running||demoRunning||claims?.isBusy(),onBusyChange:()=>controls?.refresh()});
+  ai=createAiController(vscode,context,ui,{otherBusy:()=>running||demoRunning||claims?.isBusy(),onBusyChange:()=>controls?.refresh(),rerun:(folder,options)=>review(folder,options)});
   claims=createClaimController(vscode,context,ui,{otherBusy:()=>running||demoRunning||ai.isBusy(),onBusyChange:()=>controls?.refresh()});
   controls=createScanControls(vscode,context,{review,aiReview:folder=>ai.reviewFolder(folder),getReview:()=>ui.getState(),getConnection:()=>ui.getAiConnection(),isBusy:()=>running||demoRunning||ai.isBusy()||claims.isBusy()});
   function showDetails(){output.show(true);}

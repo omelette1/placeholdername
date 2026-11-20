@@ -1,6 +1,6 @@
 const {test}=require('node:test');const assert=require('node:assert/strict');const fs=require('node:fs');const os=require('node:os');const path=require('node:path');const {execFileSync}=require('node:child_process');
 const {fakeVscode}=require('./mock-vscode.cjs');const {createFindingsView}=require('../src/findings-view.cjs');const {createAiController}=require('../src/ai-client.cjs');const {aiHtml}=require('../src/ai-ui.cjs');
-async function setup(t,{provider,withGit=true,baselineCode,updatedCode}={}){
+async function setup(t,{provider,withGit=true,baselineCode,updatedCode,rerun}={}){
  const root=fs.mkdtempSync(path.join(os.tmpdir(),'cp-ai-extension-'));t.after(()=>fs.rmSync(root,{recursive:true,force:true}));const file=path.join(root,'app.ts');const baseline=baselineCode||'function route(req,res){\n if(req.doc.owner!==req.user.id)throw Error("denied");\n return res.send("ok");\n}\n';fs.writeFileSync(file,baseline);
  if(withGit){const git=(...args)=>execFileSync('git',['-C',root,...args],{stdio:'ignore'});git('init','-q');git('add','.');git('-c','user.name=Synthetic','-c','user.email=test@example.invalid','-c','commit.gpgSign=false','commit','-qm','baseline');}
  fs.writeFileSync(file,updatedCode??baseline.replace(' if(req.doc.owner!==req.user.id)throw Error("denied");',' // check removed'));
@@ -9,7 +9,7 @@ async function setup(t,{provider,withGit=true,baselineCode,updatedCode}={}){
  const fake=fakeVscode(root);fake.vscode.workspace.getConfiguration=()=>({inspect:key=>key==='nodePath'?{globalValue:process.execPath}:{globalValue:url,workspaceValue:'https://malicious.invalid'}});
  const secrets=new Map([['changeproof.aiDevelopmentAccessToken','synthetic-development-token-1234567890']]);const records=[];
  const context={subscriptions:[],secrets:{get:async k=>secrets.get(k),store:async(k,v)=>secrets.set(k,v)},asAbsolutePath:p=>path.resolve(__dirname,'..',p)};let ai;
- const ui=createFindingsView(fake.vscode,context,{record:x=>records.push(x),rerun:()=>{},aiAction:(...args)=>ai.action(...args)});ai=createAiController(fake.vscode,context,ui);t.after(()=>context.subscriptions.forEach(d=>d.dispose()));
+ const ui=createFindingsView(fake.vscode,context,{record:x=>records.push(x),rerun:()=>{},aiAction:(...args)=>ai.action(...args)});ai=createAiController(fake.vscode,context,ui,{rerun});t.after(()=>context.subscriptions.forEach(d=>d.dispose()));
  return {root,file,fake,context,ui,ai,records,calls:()=>calls,url,secrets};
 }
 async function waitFor(fn){for(let i=0;i<200;i++){if(fn())return;await new Promise(resolve=>setTimeout(resolve,20));}throw new Error('UI operation did not complete');}
@@ -23,6 +23,27 @@ test('the app automatically cross-checks its model response once, exposes static
 test('unavailable independent checker preserves the AI response without inventing local support',async t=>{
  const x=await setup(t);const original=x.context.asAbsolutePath;x.context.asAbsolutePath=p=>p==='out/ai-verify.cjs'?path.join(x.root,'nonexistent-checker.cjs'):original(p);
  await x.ai.reviewFolder(x.root);const ai=x.ui.getState().ai;await x.ai.action('ai_approve',ai);assert.equal(ai.phase,'completed');assert.equal(ai.verification.status,'unavailable');assert.ok(ai.response);assert.match(x.fake.panels[0].webview.html,/No corroboration is established/);assert.equal(x.calls(),1);
+});
+test('proposed edits are previewed, applied only on click, saved, then the deterministic engine reruns',async t=>{
+ const {mockProvider}=await import('../../../services/review-api/src/providers.mjs');const {assessmentFixture}=await import('../../../packages/ai/test/fixtures.mjs');let rerun,report;
+ const provider=mockProvider(request=>{const assessment=assessmentFixture(request);const chunk=request.files[0].chunks.find(c=>c.revision==='after'),index=chunk.text.split('\n').findIndex(line=>line.includes('check removed'));assessment.findings[0].suggested_edits=[{file:'app.ts',revision_id:chunk.revision_id,start_line:chunk.start_line+index,end_line:chunk.start_line+index,expected:chunk.text.split('\n')[index],replacement:' if(req.doc.owner!==req.user.id) throw Error("denied");'}];return assessment;});
+ const x=await setup(t,{provider,rerun:async(folder,options)=>{rerun={folder,options};const {runEngine}=require('../src/client.cjs');report=await runEngine(process.execPath,x.context.asAbsolutePath('out/cli.cjs'),folder,()=>{},{mode:options.mode});}});
+ await x.ai.reviewFolder(x.root);const ai=x.ui.getState().ai;await x.ai.action('ai_approve',ai);assert.equal(ai.verification.findings[0].patch.status,'ready');await x.ui.selectAi(ai.token,0);assert.match(x.fake.panels[0].webview.html,/Apply this patch and rerun local checks/);assert.ok(!fs.readFileSync(x.file,'utf8').includes('req.doc.owner'));
+ await x.fake.panels[0].messages.listeners[0]({type:'ai_apply_patch',token:ai.token,index:0});
+ assert.equal(fs.readFileSync(x.file,'utf8').includes('if(req.doc.owner!==req.user.id)'),true);assert.equal(rerun.folder,x.root);assert.equal(rerun.options.mode,'changes');assert.equal(report.findings.some(f=>f.rule_id==='CP002'),false);
+});
+test('patch application refuses a changed saved snapshot and leaves the concurrent edit intact',async t=>{
+ const {mockProvider}=await import('../../../services/review-api/src/providers.mjs');const {assessmentFixture}=await import('../../../packages/ai/test/fixtures.mjs');let reruns=0;
+ const provider=mockProvider(request=>{const assessment=assessmentFixture(request),chunk=request.files[0].chunks.find(c=>c.revision==='after'),index=chunk.text.split('\n').findIndex(line=>line.includes('check removed'));assessment.findings[0].suggested_edits=[{file:'app.ts',revision_id:chunk.revision_id,start_line:chunk.start_line+index,end_line:chunk.start_line+index,expected:chunk.text.split('\n')[index],replacement:' if(req.doc.owner!==req.user.id) throw Error("denied");'}];return assessment;});
+ const x=await setup(t,{provider,rerun:async()=>{reruns++;}});await x.ai.reviewFolder(x.root);const ai=x.ui.getState().ai;await x.ai.action('ai_approve',ai);assert.equal(ai.verification.findings[0].patch.status,'ready');fs.appendFileSync(x.file,'// concurrent edit\n');const current=fs.readFileSync(x.file,'utf8');
+ await x.fake.panels[0].messages.listeners[0]({type:'ai_apply_patch',token:ai.token,index:0});assert.equal(fs.readFileSync(x.file,'utf8'),current);assert.equal(reruns,0);assert.match(x.fake.warnings.at(-1)[0],/saved project changed/);
+});
+test('a save failure reports that the patch is unsaved and skips local checks',async t=>{
+ const {mockProvider}=await import('../../../services/review-api/src/providers.mjs');const {assessmentFixture}=await import('../../../packages/ai/test/fixtures.mjs');let reruns=0;
+ const provider=mockProvider(request=>{const assessment=assessmentFixture(request),chunk=request.files[0].chunks.find(c=>c.revision==='after'),index=chunk.text.split('\n').findIndex(line=>line.includes('check removed'));assessment.findings[0].suggested_edits=[{file:'app.ts',revision_id:chunk.revision_id,start_line:chunk.start_line+index,end_line:chunk.start_line+index,expected:chunk.text.split('\n')[index],replacement:' if(req.doc.owner!==req.user.id) throw Error("denied");'}];return assessment;});
+ const x=await setup(t,{provider,rerun:async()=>{reruns++;}});await x.ai.reviewFolder(x.root);const ai=x.ui.getState().ai;await x.ai.action('ai_approve',ai);assert.equal(ai.phase,'completed');assert.equal(ai.stale,false);assert.equal(ai.verification.findings[0].patch.status,'ready');assert.equal(x.ai.isBusy(),false);const document=await x.fake.vscode.workspace.openTextDocument(x.fake.vscode.Uri.file(fs.realpathSync(x.file)));document.save=async()=>false;
+ const currentAi=x.ui.getState().ai;assert.equal(currentAi.phase,'completed');assert.equal(currentAi.stale,false);assert.equal(currentAi.verification.findings[0].patch.status,'ready');await x.ai.action('ai_apply_patch',currentAi,{index:0});
+ assert.ok(document.text.includes('if(req.doc.owner!==req.user.id)'));assert.ok(!fs.readFileSync(x.file,'utf8').includes('if(req.doc.owner!==req.user.id)'));assert.equal(reruns,0);assert.match(x.fake.warnings.at(-1)[0],/applied the patch in the editor, but could not save it/);
 });
 test('complete mocked-editor / real-HTTP mock-provider flow: exact preview, explicit approval, reusable panel, references and no code logs',async t=>{
  const x=await setup(t);await x.fake.commands.get('changeproof.aiReviewChanges')();assert.equal(x.calls(),0);let state=x.ui.getState();assert.equal(state.ai.phase,'preview');assert.ok(!x.fake.trees[0].message.includes('Setup / processing error'));const html=x.fake.panels[0].webview.html;assert.match(html,/Exact JSON request/);assert.ok(html.includes(x.url));assert.ok(!html.includes('malicious.invalid'));assert.ok(!html.includes('synthetic-development-token-1234567890'));assert.equal(x.fake.panels.length,1);

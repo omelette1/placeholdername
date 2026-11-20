@@ -1,10 +1,10 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "Changeproof AI response 1.0.0",
+  "title": "Changeproof AI response 1.1.0",
   "type": "object",
   "properties": {
     "schema_version": {
-      "const": "1.0.0"
+      "const": "1.1.0"
     },
     "request_id": {
       "type": "string",
@@ -95,6 +95,48 @@
                 "type": "string",
                 "maxLength": 2000
               },
+              "suggested_edits": {
+                "type": "array",
+                "maxItems": 4,
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "file": {
+                      "type": "string",
+                      "maxLength": 400
+                    },
+                    "revision_id": {
+                      "type": "string",
+                      "maxLength": 100
+                    },
+                    "start_line": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "end_line": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "expected": {
+                      "type": "string",
+                      "maxLength": 6000
+                    },
+                    "replacement": {
+                      "type": "string",
+                      "maxLength": 6000
+                    }
+                  },
+                  "required": [
+                    "file",
+                    "revision_id",
+                    "start_line",
+                    "end_line",
+                    "expected",
+                    "replacement"
+                  ],
+                  "additionalProperties": false
+                }
+              },
               "references": {
                 "type": "array",
                 "items": {
@@ -146,6 +188,7 @@
               "missing_context",
               "suggested_verification",
               "suggested_correction",
+              "suggested_edits",
               "references"
             ],
             "additionalProperties": false

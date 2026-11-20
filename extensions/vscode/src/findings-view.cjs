@@ -144,7 +144,7 @@ function createFindingsView(vscode, context, {record,rerun,aiAction=()=>{},onCha
           else if(message.action==='ai')await vscode.commands.executeCommand('changeproof.aiReviewChanges');
           return;
         }
-        if(message?.type?.startsWith('ai_')){if(message.token!==state?.ai?.token)return;if(message.type==='ai_select'){if(Number.isSafeInteger(message.index))await selectAi(message.token,message.index);}else if(message.type==='ai_navigate'){if(message.selectionToken!==state.ai.selectionToken)return;await navigateAi(message.token,message.step);}else await aiAction(message.type,state.ai);return;}
+        if(message?.type?.startsWith('ai_')){if(message.token!==state?.ai?.token)return;if(message.type==='ai_select'){if(Number.isSafeInteger(message.index))await selectAi(message.token,message.index);}else if(message.type==='ai_navigate'){if(message.selectionToken!==state.ai.selectionToken)return;await navigateAi(message.token,message.step);}else await aiAction(message.type,state.ai,message);return;}
         if (!message || message.reviewId!==state?.id || message.selectionToken!==state?.selectionToken) return;
         if (message.type==='navigate') await navigate(message.reviewId,message.step);
         else if (message.type==='rerun') await rerun(state.folder,{demo:state.demo,mode:state.mode,selection:state.selection});

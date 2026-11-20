@@ -11,6 +11,26 @@ import {bodyEvidence} from '../../claims/src/body-evidence.mjs';
 
 const hash=value=>crypto.createHash('sha256').update(value).digest('hex');
 const covered=(loc,refs)=>refs.some(r=>r.revision==='after'&&r.file===loc.file&&r.start_line<=loc.start.line&&r.end_line>=loc.end.line);
+function checkPatch(edits,files){
+  if(!edits.length)return null;
+  const updated=new Map();
+  for(const edit of [...edits].sort((a,b)=>a.file.localeCompare(b.file)||b.start_line-a.start_line)){
+    if(redact(edit.replacement).text!==edit.replacement)return {status:'blocked',reason:'The replacement contains text identified as a credential and cannot be applied.',edits:[],remaining_supported_findings:[]};
+    const data=files.get(edit.file);if(!data)return {status:'blocked',reason:'The proposed file is unavailable in the checked snapshot.',edits:[],remaining_supported_findings:[]};
+    const source=updated.get(edit.file)??data.after,lines=source.split('\n'),actual=lines.slice(edit.start_line-1,edit.end_line).map(line=>line.replace(/\r$/,'')).join('\n');
+    if(actual!==edit.expected)return {status:'blocked',reason:'Current saved lines differ from the exact submitted patch context. Secret redaction or a concurrent edit may be responsible.',edits:[],remaining_supported_findings:[]};
+    lines.splice(edit.start_line-1,edit.end_line-edit.start_line+1,...(edit.replacement?edit.replacement.split('\n'):[]));
+    updated.set(edit.file,lines.join('\n'));
+  }
+  const remaining=[];
+  for(const [file,after] of updated){
+    const tree=ts.createSourceFile(file,after,ts.ScriptTarget.Latest,true);
+    if(tree.parseDiagnostics.length)return {status:'blocked',reason:'The proposed edit does not parse as JavaScript/TypeScript. It was not applied.',edits:[],remaining_supported_findings:[]};
+    const data=files.get(file),findings=inspectDetailed(file,data.before,after,lineRanges(data.before,after)).findings;
+    for(const finding of findings)remaining.push({rule_id:finding.rule_id,file,line:finding.location.start.line});
+  }
+  return {status:'ready',reason:'Exact saved lines and syntax were checked locally. Behavior, policy, tests and security correctness remain unverified.',edits,remaining_supported_findings:remaining};
+}
 export function verifyLocalAssessment(project,request,response){
   checkRequest(request);checkResponse(response,request);
   const root=fs.realpathSync(project),gitRoot=fs.realpathSync(git(root,['rev-parse','--show-toplevel']).toString().trimEnd());
@@ -51,10 +71,11 @@ export function verifyLocalAssessment(project,request,response){
       const inspect=node=>{if(row.implementation_observations.length>=20||!node.body)return;const start=tree.getLineAndCharacterOfPosition(node.getStart(tree)),end=tree.getLineAndCharacterOfPosition(node.end),location={file,start:{line:start.line+1,column:start.character+1},end:{line:end.line+1,column:end.character+1}};if(covered(location,finding.references))row.implementation_observations.push({location,...bodyEvidence(node.body)});};
       for(const node of tree.statements){if(ts.isFunctionDeclaration(node))inspect(node);if(ts.isVariableStatement(node))for(const d of node.declarationList.declarations){const v=d.initializer;if(v&&(ts.isArrowFunction(v)||ts.isFunctionExpression(v)))inspect(v);}}
     }
+    row.patch=finding.suggested_edits.length?checkPatch(finding.suggested_edits,files):null;
     if(finding.category==='weakened_access_check')row.reason='General access-control behavior and application policy are unsupported by the independent local rules. Any body observations are syntax evidence only.';
     return row;
   });
   for(const [file,data] of files){const b=safeRead(root,file);if((b?.snapshot??null)!==data.snapshot||hash(b===null?'':text(b))!==hash(data.after))throw Error('stale_snapshot');}
   if(head()!==request.baseline)throw Error('stale_snapshot');
-  return {schema_version:'1.0.0',kind:'local_ai_evidence_check',request_id:request.request_id,baseline:request.baseline,status:'completed',references_validated:true,snapshot_validated:true,findings,counts:{partial_static_support:findings.filter(f=>f.status==='partial_static_support').length,unverified:findings.filter(f=>f.status==='unverified').length},summary_verification:'unverified',runtime_verification:false,limitations:['Independent local static checks, not a second LLM vote or proof of the complete security claim.','Only submitted files are read locally; source is never executed and no additional model request is made.','CP002 support requires a new supported flow and every recorded step inside cited after-ranges.','Other vulnerability types, application policy, tests/builds and free-text summary claims remain unverified.','Empty results and absence of a static match do not establish safety or refute an AI finding.']};
+  return {schema_version:'1.0.0',kind:'local_ai_evidence_check',request_id:request.request_id,baseline:request.baseline,status:'completed',references_validated:true,snapshot_validated:true,findings,counts:{partial_static_support:findings.filter(f=>f.status==='partial_static_support').length,unverified:findings.filter(f=>f.status==='unverified').length},summary_verification:'unverified',runtime_verification:false,limitations:['Independent local static checks, not a second LLM vote or proof of the complete security claim.','Only submitted files are read locally; source is never executed and no additional model request is made.','CP002 support requires a new supported flow and every recorded step inside cited after-ranges.','Suggested edits are checked for exact saved text and syntax only; they are not behaviorally verified.','Other vulnerability types, application policy, tests/builds and free-text summary claims remain unverified.','Empty results and absence of a static match do not establish safety or refute an AI finding.']};
 }

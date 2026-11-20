@@ -1,6 +1,7 @@
 const {execFile}=require('node:child_process');
 const path=require('node:path');
 const {verifyAiResponse}=require('./ai-verification.cjs');
+const {safeTarget}=require('./finding-ui.cjs');
 function collect(node,cli,folder,signal,profile='full'){return new Promise((resolve,reject)=>{
  const env={...process.env};for(const key of Object.keys(env))if(['NODE_OPTIONS','NODE_PATH','GROQ_API_KEY','REVIEW_ACCESS_TOKEN'].includes(key))delete env[key];
  execFile(node,[cli,folder,'--profile',profile],{cwd:path.dirname(cli),env,signal,windowsHide:true,timeout:60000,maxBuffer:2*1024*1024},(error,stdout)=>{
@@ -11,7 +12,7 @@ function collect(node,cli,folder,signal,profile='full'){return new Promise((reso
  });
 });}
 function sameSnapshot(a,b){return a.folder===b.folder&&a.request.baseline===b.request.baseline&&a.changed_paths_hash===b.changed_paths_hash&&a.index_hash===b.index_hash&&JSON.stringify(a.snapshots)===JSON.stringify(b.snapshots)&&JSON.stringify(a.request.files)===JSON.stringify(b.request.files)&&JSON.stringify(a.request.omissions)===JSON.stringify(b.request.omissions);}
-function createAiController(vscode,context,ui,{otherBusy=()=>false,onBusyChange=()=>{}}={}){
+function createAiController(vscode,context,ui,{otherBusy=()=>false,onBusyChange=()=>{},rerun=async()=>{}}={}){
  let busy=false,controller,lastSmoke=null,statusGeneration=0;
  const setBusy=value=>{busy=value;onBusyChange();};
  const shared=()=>require(context.asAbsolutePath('out/ai-client.cjs'));
@@ -60,7 +61,40 @@ function createAiController(vscode,context,ui,{otherBusy=()=>false,onBusyChange=
   }catch{ui.aiUpdate(token,{phase:'error',error:'AI preview could not be collected. A readable Git HEAD baseline and trusted Node are required; check excluded, oversized or unsupported input. Local Current files review still works without Git. Nothing was sent.'});await ui.selectAi(token);}
   finally{setBusy(false);}
  }
- async function action(type,ai){
+ async function action(type,ai,message){
+  if(type==='ai_apply_patch'){
+   const index=message?.index,patch=ai.verification?.findings?.[index]?.patch;
+   if(busy||otherBusy()||ai.phase!=='completed'||ai.stale||patch?.status!=='ready'||!Number.isSafeInteger(index))return;
+   setBusy(true);let edited=false,applied=false;
+   try{
+    const folder=ui.getState()?.folder,node=nodePath(),current=await collect(node,context.asAbsolutePath('out/ai-context.cjs'),folder,undefined,ai.envelope.profile||'full');
+    if(dirty(folder)||!sameSnapshot(ai.envelope,current)||ui.getState()?.ai?.token!==ai.token)throw new Error('The saved project changed. Refresh the AI preview before applying this patch.');
+    const documents=new Map(),workspaceEdit=new vscode.WorkspaceEdit();
+    for(const edit of patch.edits){
+     const location={file:edit.file,start:{line:edit.start_line,column:1},end:{line:edit.end_line,column:1}};
+     const target=safeTarget(folder,location),document=await vscode.workspace.openTextDocument(vscode.Uri.file(target));
+     if(document.isDirty)throw new Error('Save or discard editor changes before applying a patch.');
+     const lines=edit.expected.split('\n'),actual=[];
+     for(let offset=0;offset<lines.length;offset++){const line=edit.start_line-1+offset;if(line>=document.lineCount)throw new Error('Patch context no longer matches the saved file.');actual.push(document.lineAt(line).text);}
+     if(actual.join('\n')!==edit.expected)throw new Error('Patch context no longer matches the saved file.');
+     documents.set(target,document);
+     workspaceEdit.replace(vscode.Uri.file(target),new vscode.Range(edit.start_line-1,0,edit.end_line-1,document.lineAt(edit.end_line-1).text.length),edit.replacement);
+    }
+    if(!await vscode.workspace.applyEdit(workspaceEdit))throw new Error('The editor rejected the patch.');
+    edited=true;
+    for(const document of documents.values())if(!await document.save())throw new Error('Patch applied in the editor but could not be saved. Save it manually before rerunning checks.');
+    applied=true;
+    vscode.window.showInformationMessage('Changeproof applied the selected patch and is rerunning local static checks. Behavior and security correctness remain unverified.');
+   }catch(error){
+    const message=edited
+     ?'Changeproof applied the patch in the editor, but could not save it. Save manually; local checks were not rerun.'
+     :'Changeproof did not apply the proposed patch: '+(error.message||'saved-source validation failed.');
+    vscode.window.showWarningMessage(message);
+   }
+   finally{setBusy(false);}
+   if(applied)await rerun(ui.getState()?.folder,{mode:'changes',selection:'ai_patch_applied'});
+   return;
+  }
   if(type==='ai_cancel'){controller?.abort();ui.aiUpdate(ai.token,{phase:'cancelled',envelope:undefined});return;}
   if(type!=='ai_approve'||busy||otherBusy()||ai.phase!=='preview')return;
   setBusy(true);

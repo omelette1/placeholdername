@@ -7,6 +7,10 @@ function verifyAiResponse(node,cli,folder,request,response,signal){return new Pr
    const valid=loc=>loc&&response.assessment.findings[index].references.some(r=>r.revision==='after'&&r.file===loc.file&&r.start_line<=loc.start?.line&&r.end_line>=loc.end?.line)&&[loc.start,loc.end].every(p=>Number.isSafeInteger(p?.line)&&p.line>0&&Number.isSafeInteger(p?.column)&&p.column>0);
    for(const ev of row.static_evidence){if(ev.rule_id!=='CP002'||ev.newly_introduced!==true||!Array.isArray(ev.trace)||!ev.trace.length||ev.trace.length>64)throw Error();for(const step of ev.trace){const ref=response.assessment.findings[index].references[step.reference_index];if(!valid(step.location)||!Number.isSafeInteger(step.reference_index)||ref?.revision!=='after'||ref.file!==step.location.file||ref.start_line>step.location.start.line||ref.end_line<step.location.end.line||typeof step.kind!=='string')throw Error();}}
    for(const o of row.implementation_observations)if(!valid(o.location)||o.behavior_verified!==false||typeof o.summary!=='string'||typeof o.detail!=='string')throw Error();
+   const proposed=response.assessment.findings[index].suggested_edits,patch=row.patch;
+   if(proposed.length===0){if(patch!==null)throw Error();}
+   else if(!patch||!['ready','blocked'].includes(patch.status)||typeof patch.reason!=='string'||!Array.isArray(patch.edits)||!Array.isArray(patch.remaining_supported_findings)||patch.remaining_supported_findings.length>64)throw Error();
+   else if(patch.status==='ready'&&JSON.stringify(patch.edits)!==JSON.stringify(proposed)||patch.status==='blocked'&&patch.edits.length)throw Error();
    if(row.status==='partial_static_support'&&!row.static_evidence.length)throw Error();
   }for(const key of ['partial_static_support','unverified'])if(value.counts?.[key]!==value.findings.filter(f=>f.status===key).length)throw Error();resolve(value);}catch{reject(Error('Local evidence unavailable; no corroboration established.'));}
  });child.stdin.on('error',()=>{});child.stdin.end(JSON.stringify({request,response}));
