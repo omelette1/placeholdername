@@ -1,0 +1,556 @@
+{
+  "report_version": "1.0.0",
+  "trial_date_pacific": "2026-11-19",
+  "base_source_commit": "4038d97e472e22f74be63ec786b31f268a964d97",
+  "evaluated_source_sha256": {
+    "services/review-api/src/server.mjs": "802f79db943fc056bf3da1d302ddbb4ca85a6a2f185656e5592a98691d848883",
+    "evaluation/harness.mjs": "4ab50802a64542b1e59f456e67df757458b515516c4946636516b7c3bf50a34c",
+    "evaluation/run.mjs": "f7aedfc770f75451af039fb8088ca5bb227802ae4270fe77d82095bd7080f401",
+    "evaluation/verify-fixtures.mjs": "79fa497e1202204970b9b3c25a5ad6209c0d942c60e84ca0fe18fdb84a822613"
+  },
+  "fixture_contracts": {
+    "report_version": "1.0.0",
+    "date": "2026-11-20T02:45:36.236Z",
+    "fixture_commit": "4038d97e472e22f74be63ec786b31f268a964d97",
+    "fixture_set_sha256": "67090f25cbc3952c57a22149938c95056122d0e883c2540ba89d0cd9d1f58dd7",
+    "fixture_cases": 12,
+    "executed_fixture_cases": 8,
+    "controlled_function_invocations": 24,
+    "failed_contracts": 0,
+    "cases": [
+      {
+        "id": "R01-header-logging",
+        "status": "fixture_contract_confirmed",
+        "authored_expectation": "regression",
+        "before": {
+          "credential_logged": false
+        },
+        "after": {
+          "credential_logged": true
+        }
+      },
+      {
+        "id": "R02-private-response",
+        "status": "fixture_contract_confirmed",
+        "authored_expectation": "regression",
+        "before": {
+          "private_field_disclosed": false,
+          "public_name_preserved": true
+        },
+        "after": {
+          "private_field_disclosed": true,
+          "public_name_preserved": true
+        }
+      },
+      {
+        "id": "R03-owner-check",
+        "status": "fixture_contract_confirmed",
+        "authored_expectation": "regression",
+        "before": {
+          "nonowner_allowed": false,
+          "owner_allowed": true,
+          "nonowner_receives_body": false
+        },
+        "after": {
+          "nonowner_allowed": true,
+          "owner_allowed": true,
+          "nonowner_receives_body": true
+        }
+      },
+      {
+        "id": "R04-tenant-check",
+        "status": "fixture_contract_confirmed",
+        "authored_expectation": "regression",
+        "before": {
+          "other_tenant_allowed": false,
+          "own_tenant_allowed": true,
+          "other_tenant_receives_body": false
+        },
+        "after": {
+          "other_tenant_allowed": true,
+          "own_tenant_allowed": true,
+          "other_tenant_receives_body": true
+        }
+      },
+      {
+        "id": "S01-safe-redaction",
+        "status": "fixture_contract_confirmed",
+        "authored_expectation": "safe",
+        "before": {
+          "credential_logged": false
+        },
+        "after": {
+          "credential_logged": false
+        }
+      },
+      {
+        "id": "S02-equivalent-owner",
+        "status": "fixture_contract_confirmed",
+        "authored_expectation": "safe",
+        "before": {
+          "nonowner_allowed": false,
+          "owner_allowed": true,
+          "nonowner_receives_body": false
+        },
+        "after": {
+          "nonowner_allowed": false,
+          "owner_allowed": true,
+          "nonowner_receives_body": false
+        }
+      },
+      {
+        "id": "S03-helper-protection",
+        "status": "fixture_contract_confirmed",
+        "authored_expectation": "safe",
+        "before": {
+          "nonowner_allowed": false,
+          "owner_allowed": true,
+          "nonowner_receives_body": false
+        },
+        "after": {
+          "nonowner_allowed": false,
+          "owner_allowed": true,
+          "nonowner_receives_body": false
+        }
+      },
+      {
+        "id": "S04-public-field",
+        "status": "fixture_contract_confirmed",
+        "authored_expectation": "safe",
+        "before": {
+          "private_field_disclosed": false,
+          "public_name_preserved": true
+        },
+        "after": {
+          "private_field_disclosed": false,
+          "public_name_preserved": true
+        }
+      },
+      {
+        "id": "U01-unknown-fields",
+        "status": "not_executed",
+        "reason": "No complete authored classification/policy contract. No invented runtime verdict."
+      },
+      {
+        "id": "U02-unknown-policy-helper",
+        "status": "not_executed",
+        "reason": "No complete authored classification/policy contract. No invented runtime verdict."
+      },
+      {
+        "id": "U03-omitted-scoping",
+        "status": "not_executed",
+        "reason": "No complete authored classification/policy contract. No invented runtime verdict."
+      },
+      {
+        "id": "U04-unknown-logger",
+        "status": "not_executed",
+        "reason": "No complete authored classification/policy contract. No invented runtime verdict."
+      }
+    ],
+    "real_project_runtime_verification": false,
+    "limitations": [
+      "Only our committed synthetic fixtures were executed, never an uploaded/selected project or model-generated code.",
+      "These tests confirm fixture behavior under explicit stubbed identity, response and logging contracts; they do not verify a deployed application.",
+      "No inferred classification is assigned to the four insufficient-context fixtures.",
+      "This checks test-set expectations, not correctness of each LLM security claim or real-world accuracy.",
+      "node:vm is an execution convenience for these reviewed fixtures, not an isolation guarantee for untrusted code."
+    ]
+  },
+  "live_phase_1": {
+    "run_date": "2026-11-20T02:43:30.701Z",
+    "source": "4038d97",
+    "local_fixture_collection": {
+      "cases": 12,
+      "valid": 12
+    },
+    "local_rules": [
+      {
+        "id": "R01-header-logging",
+        "authored_expectation": "regression",
+        "local_rule_ids": [
+          "CP002"
+        ],
+        "local_finding_count": 1,
+        "local_coverage_scopes": [
+          "analyzed"
+        ]
+      },
+      {
+        "id": "R02-private-response",
+        "authored_expectation": "regression",
+        "local_rule_ids": [],
+        "local_finding_count": 0,
+        "local_coverage_scopes": [
+          "unsupported"
+        ]
+      },
+      {
+        "id": "R03-owner-check",
+        "authored_expectation": "regression",
+        "local_rule_ids": [],
+        "local_finding_count": 0,
+        "local_coverage_scopes": [
+          "unsupported"
+        ]
+      },
+      {
+        "id": "R04-tenant-check",
+        "authored_expectation": "regression",
+        "local_rule_ids": [],
+        "local_finding_count": 0,
+        "local_coverage_scopes": [
+          "unsupported"
+        ]
+      },
+      {
+        "id": "S01-safe-redaction",
+        "authored_expectation": "safe",
+        "local_rule_ids": [],
+        "local_finding_count": 0,
+        "local_coverage_scopes": [
+          "analyzed"
+        ]
+      },
+      {
+        "id": "S02-equivalent-owner",
+        "authored_expectation": "safe",
+        "local_rule_ids": [],
+        "local_finding_count": 0,
+        "local_coverage_scopes": [
+          "unsupported"
+        ]
+      },
+      {
+        "id": "S03-helper-protection",
+        "authored_expectation": "safe",
+        "local_rule_ids": [],
+        "local_finding_count": 0,
+        "local_coverage_scopes": [
+          "unsupported",
+          "unsupported"
+        ]
+      },
+      {
+        "id": "S04-public-field",
+        "authored_expectation": "safe",
+        "local_rule_ids": [],
+        "local_finding_count": 0,
+        "local_coverage_scopes": [
+          "unsupported"
+        ]
+      },
+      {
+        "id": "U01-unknown-fields",
+        "authored_expectation": "insufficient_context",
+        "local_rule_ids": [],
+        "local_finding_count": 0,
+        "local_coverage_scopes": [
+          "unsupported"
+        ]
+      },
+      {
+        "id": "U02-unknown-policy-helper",
+        "authored_expectation": "insufficient_context",
+        "local_rule_ids": [],
+        "local_finding_count": 0,
+        "local_coverage_scopes": [
+          "unsupported"
+        ]
+      },
+      {
+        "id": "U03-omitted-scoping",
+        "authored_expectation": "insufficient_context",
+        "local_rule_ids": [],
+        "local_finding_count": 0,
+        "local_coverage_scopes": [
+          "unsupported"
+        ]
+      },
+      {
+        "id": "U04-unknown-logger",
+        "authored_expectation": "insufficient_context",
+        "local_rule_ids": [],
+        "local_finding_count": 0,
+        "local_coverage_scopes": [
+          "unsupported"
+        ]
+      }
+    ],
+    "local_rule_limitations": "Local rule matches are syntax/data-flow observations, not runtime proof or AI evaluation. Access-control and response projection cases exceed the local rule set.",
+    "live": {
+      "report_version": "1.0.0",
+      "evaluation_date": "2026-11-20T02:44:45.409Z",
+      "mode": "live",
+      "provider": "groq",
+      "model": "openai/gpt-oss-120b",
+      "fixture_set_sha256": "67090f25cbc3952c57a22149938c95056122d0e883c2540ba89d0cd9d1f58dd7",
+      "fixture_commit": "4038d97e472e22f74be63ec786b31f268a964d97",
+      "max_requests": 12,
+      "requests_attempted": 2,
+      "cases_total": 12,
+      "cases_not_attempted": 10,
+      "stop_reason": "cancelled",
+      "counts": {
+        "request_or_provider_failures": 1,
+        "schema_failures": 0,
+        "invalid_references": 0,
+        "provider_throttles": 0,
+        "collector_failures": 0,
+        "expected_regressions_detected": 1,
+        "expected_regressions_missed": 0,
+        "safe_control_cases_with_findings": 0,
+        "findings_on_safe_controls": 0,
+        "safe_controls_without_findings": 0,
+        "appropriate_uncertainty_proxies": 0,
+        "uncertainty_requires_judgment": 0,
+        "cases_requiring_human_judgment": 2
+      },
+      "cases": [
+        {
+          "id": "R01-header-logging",
+          "expected": "regression",
+          "status": "valid_response",
+          "outcome": "expected_regression_detected",
+          "finding_count": 1,
+          "uncertainty_acknowledged": true,
+          "human_judgment_required": true,
+          "scoring_proxy_only": true
+        },
+        {
+          "id": "R02-private-response",
+          "expected": "regression",
+          "status": "request_or_provider_failure",
+          "human_judgment_required": true
+        }
+      ],
+      "limitations": [
+        "Category/reference overlap is a scoring proxy, not a judge of reasoning or security.",
+        "Expected answers and ambiguity notes are authored, not LLM judged, and excluded from model input.",
+        "Insufficient-context cases require human judgment; no binary accuracy percentage is computed.",
+        "Failures/unattempted cases are not silently converted to detection misses.",
+        "No source, prompts, model prose, responses or credentials are persisted."
+      ]
+    },
+    "provider_requests": [
+      {
+        "attempt": 1,
+        "destination": "api.groq.com",
+        "started": "2026-11-20T02:43:30.847Z",
+        "http_status": 200
+      },
+      {
+        "attempt": 2,
+        "destination": "api.groq.com",
+        "started": "2026-11-20T02:44:25.406Z",
+        "network_error": "connection_failed"
+      }
+    ],
+    "runtime_verification": false,
+    "runner_stop_reason": "request_failed"
+  },
+  "live_phase_2": {
+    "date": "2026-11-20T02:52:24.828Z",
+    "model": "openai/gpt-oss-120b",
+    "selected_case_ids": [
+      "S01-safe-redaction",
+      "R03-owner-check",
+      "U01-unknown-fields",
+      "S02-equivalent-owner",
+      "R04-tenant-check",
+      "U02-unknown-policy-helper",
+      "S03-helper-protection",
+      "U03-omitted-scoping",
+      "S04-public-field",
+      "U04-unknown-logger"
+    ],
+    "prior_case_ids_excluded": [
+      "R01-header-logging",
+      "R02-private-response"
+    ],
+    "maximum_additional_requests": 10,
+    "provider_requests": [
+      {
+        "attempt": 1,
+        "case_id": "S01-safe-redaction",
+        "started": "2026-11-20T02:52:24.978Z",
+        "http_status": 200
+      },
+      {
+        "attempt": 2,
+        "case_id": "R03-owner-check",
+        "started": "2026-11-20T02:53:18.069Z",
+        "connection_failed": true
+      }
+    ],
+    "progress": [
+      {
+        "id": "S01-safe-redaction",
+        "status": "valid_response",
+        "outcome": "no_finding_on_safe_control",
+        "finding_count": 0,
+        "uncertainty_acknowledged": false,
+        "human_judgment_required": false,
+        "scoring_proxy_only": true
+      },
+      {
+        "id": "R03-owner-check",
+        "status": "request_or_provider_failure",
+        "reason": "provider_unavailable"
+      }
+    ],
+    "live": {
+      "report_version": "1.0.0",
+      "evaluation_date": "2026-11-20T02:53:21.463Z",
+      "mode": "live",
+      "provider": "groq",
+      "model": "openai/gpt-oss-120b",
+      "fixture_set_sha256": "67090f25cbc3952c57a22149938c95056122d0e883c2540ba89d0cd9d1f58dd7",
+      "fixture_commit": "4038d97e472e22f74be63ec786b31f268a964d97",
+      "max_requests": 10,
+      "selected_case_ids": [
+        "S01-safe-redaction",
+        "R03-owner-check",
+        "U01-unknown-fields",
+        "S02-equivalent-owner",
+        "R04-tenant-check",
+        "U02-unknown-policy-helper",
+        "S03-helper-protection",
+        "U03-omitted-scoping",
+        "S04-public-field",
+        "U04-unknown-logger"
+      ],
+      "requests_attempted": 2,
+      "cases_total": 12,
+      "cases_not_attempted": 10,
+      "stop_reason": "cancelled",
+      "counts": {
+        "request_or_provider_failures": 1,
+        "schema_failures": 0,
+        "invalid_references": 0,
+        "provider_throttles": 0,
+        "collector_failures": 0,
+        "expected_regressions_detected": 0,
+        "expected_regressions_missed": 0,
+        "safe_control_cases_with_findings": 0,
+        "findings_on_safe_controls": 0,
+        "safe_controls_without_findings": 1,
+        "appropriate_uncertainty_proxies": 0,
+        "uncertainty_requires_judgment": 0,
+        "cases_requiring_human_judgment": 1
+      },
+      "cases": [
+        {
+          "id": "S01-safe-redaction",
+          "expected": "safe",
+          "status": "valid_response",
+          "outcome": "no_finding_on_safe_control",
+          "finding_count": 0,
+          "uncertainty_acknowledged": false,
+          "human_judgment_required": false,
+          "scoring_proxy_only": true
+        },
+        {
+          "id": "R03-owner-check",
+          "expected": "regression",
+          "status": "request_or_provider_failure",
+          "human_judgment_required": true
+        }
+      ],
+      "limitations": [
+        "Category/reference overlap is a scoring proxy, not a judge of reasoning or security.",
+        "Expected answers and ambiguity notes are authored, not LLM judged, and excluded from model input.",
+        "Insufficient-context cases require human judgment; no binary accuracy percentage is computed.",
+        "Failures/unattempted cases are not silently converted to detection misses.",
+        "No source, prompts, model prose, responses or credentials are persisted."
+      ]
+    },
+    "backend_socket_idle_timeout_ms": 50000,
+    "provider_deadline_ms": 45000,
+    "runner_stop_reason": "provider_unavailable"
+  },
+  "socket_deadline_reproduction": {
+    "before": {
+      "provider_delay_ms": 22000,
+      "configured_socket_idle_timeout_ms": 20000,
+      "configured_provider_budget_ms": 45000,
+      "live_provider_calls": 0,
+      "result": "request_failed",
+      "error_code": "transport_failure",
+      "duration_ms": 20026
+    },
+    "after": {
+      "provider_delay_ms": 22000,
+      "configured_socket_idle_timeout_ms": 50000,
+      "configured_provider_budget_ms": 45000,
+      "live_provider_calls": 0,
+      "result": "valid_response",
+      "duration_ms": 22034
+    },
+    "causal_limit": "This independently reproduces a backend timeout bug; it does not prove that it caused every live transport failure."
+  },
+  "combined_live_summary": {
+    "distinct_cases_attempted": 4,
+    "valid_responses": 2,
+    "request_failures": 2,
+    "cases_not_attempted": 8,
+    "matched_regression_category_reference_proxies": 1,
+    "safe_controls_without_findings": 1,
+    "safe_controls_reached": 1,
+    "insufficient_context_cases_reached": 0,
+    "ai_accuracy": null,
+    "ai_false_positive_rate": null,
+    "ai_reasoning_independently_adjudicated": false,
+    "cases": [
+      {
+        "id": "R01-header-logging",
+        "expected": "regression",
+        "status": "valid_response",
+        "outcome": "expected_regression_detected",
+        "finding_count": 1,
+        "uncertainty_acknowledged": true,
+        "human_judgment_required": true,
+        "scoring_proxy_only": true
+      },
+      {
+        "id": "R02-private-response",
+        "expected": "regression",
+        "status": "request_or_provider_failure",
+        "human_judgment_required": true
+      },
+      {
+        "id": "S01-safe-redaction",
+        "expected": "safe",
+        "status": "valid_response",
+        "outcome": "no_finding_on_safe_control",
+        "finding_count": 0,
+        "uncertainty_acknowledged": false,
+        "human_judgment_required": false,
+        "scoring_proxy_only": true
+      },
+      {
+        "id": "R03-owner-check",
+        "expected": "regression",
+        "status": "request_or_provider_failure",
+        "human_judgment_required": true
+      }
+    ],
+    "network_stop_status": "network approval was cancelled before a decision was returned",
+    "no_failed_case_retried": true,
+    "no_mock_result_counted_as_live": true
+  },
+  "local_rule_summary": "CP002 flags credential logging. The response-projection, ownership and tenant regressions are unsupported by the local rule set, not asserted safe.",
+  "regression_checks": {
+    "passed": 159,
+    "failed": 0,
+    "skipped": 0,
+    "real_offline_checkov": "3.4.5",
+    "backend_build": "passed"
+  },
+  "credential_handling": "Supplied archive configuration was read only in memory. Temporary generated development tokens were used. No keys, tokens, prompts, responses or model prose are included. Temporary backends closed.",
+  "product_changes": [
+    "Backend socket idle timeout now outlasts its provider deadline.",
+    "Added an internal built-in fixture-contract verifier, not arbitrary-project runtime verification.",
+    "Added explicit built-in case selection for evaluation without silently repeating earlier cases."
+  ],
+  "real_project_runtime_verification": false
+}

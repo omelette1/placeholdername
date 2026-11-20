@@ -13,7 +13,7 @@ function controlsHtml(model,nonce,token){
   <label for="folder">Project folder</label><select id="folder" ${disabled} aria-label="Project folder"><option value="">Choose a project…</option>${model.folders.map((folder,i)=>`<option value="${i}" ${folder.path===model.folder?'selected':''}>${e(folder.label)}</option>`).join('')}</select><p class="path">${e(model.folder||'No project selected')}</p><button data-action="browse" ${disabled}>Choose folder…</button>
   <label for="mode">What to check</label><select id="mode" ${disabled}><option value="current" ${model.mode==='current'?'selected':''}>Current files</option><option value="changes" ${model.mode==='changes'?'selected':''}>Changes since HEAD</option></select><p class="help">${e(modeHelp)}</p>
   <button class="primary" data-action="scan" ${model.busy||!model.folder?'disabled':''}>${model.busy?'Working…':'Scan project'}</button><p class="foot">Local checks · no code uploads · saved files only</p>
-  <div class="row"><button data-action="results">Open results</button><button data-action="settings">Settings</button></div>
+  <div class="row"><button data-action="results">Open results</button><button data-action="settings">Settings</button></div><button class="secondary" data-action="claims" ${model.busy||!model.folder?'disabled':''}>Check assistant claims…</button><p class="help">Paste a completion message and check supported delivery facts locally.</p>
   <div class="status" role="status" aria-live="polite"><strong>${e(review?.stale?'STALE — save and scan again':review?.loading?'Scanning saved files…':review?.error?'Scan could not finish':review?.report?'Last review':'Ready to scan')}</strong><p class="help">${e(review?.error|| (review?.report?`${review.report.findings.length} finding(s) · CP002 coverage: ${review.report.coverage.status}`:'Results and code evidence open in the editor.'))}</p>${review?.folder?'<p class="path">'+e(review.folder)+'</p>':''}</div>
   ${model.error?'<p id="error" role="alert">'+e(model.error)+'</p>':''}
   <details class="section" id="ai"><summary>Optional AI</summary><p class="help">Reviews tracked JS/TS changes against HEAD. You inspect and approve the exact payload before sending it.</p><label for="profile">AI context size</label><select id="profile" ${disabled}><option value="demo" ${model.profile==='demo'?'selected':''}>Small · up to 9 KB of code</option><option value="full" ${model.profile==='full'?'selected':''}>Larger · up to 100 KB of code</option></select><p class="help">Before + after context combined. More context can use more provider quota; this is not a whole-application review.</p><button class="secondary" data-action="ai" ${model.busy||!model.folder?'disabled':''}>Preview AI review…</button><p class="help">${e(model.connection.state==='reachable'?'Backend reachable · '+model.connection.health.provider+' · '+model.connection.health.model:model.connection.state==='checking'?'Checking backend…':model.connection.state==='unavailable'?'Backend unavailable. Start your local review API.':'Backend status not checked.')}</p><div class="row"><button data-action="health" ${disabled}>Check backend</button><button data-action="setup" ${disabled}>AI setup</button></div><button class="secondary" data-action="token" ${disabled}>Set backend access token…</button><p class="help">The Groq key stays on the backend. Local Scan project does not need a backend.</p></details>
@@ -44,7 +44,7 @@ function createScanControls(vscode,context,{review,aiReview,getReview=()=>null,g
   async function handle(message){
     if(!message||message.token!==token||typeof message.action!=='string'||busy())return;
     const action=message.action;
-    const allowed=['scan','browse','folder','mode','profile','results','settings','ai','health','setup','token'];
+    const allowed=['scan','browse','folder','mode','profile','results','settings','ai','health','setup','token','claims'];
     if(!allowed.includes(action))return;
     // Resolve only registered folder indices; never accept a webview-supplied path.
     const folders=model().folders;
@@ -64,7 +64,8 @@ function createScanControls(vscode,context,{review,aiReview,getReview=()=>null,g
         await vscode.workspace.getConfiguration('changeproof').update('aiProfile',message.value,vscode.ConfigurationTarget.Global);
       }else if(action==='scan'){
         if(!folder||!fs.statSync(folder).isDirectory())throw new Error();await persist();await review(folder,{mode,selection:'controls'});
-      }else if(action==='results')await vscode.commands.executeCommand('changeproof.openDashboard');
+      }else if(action==='claims'){if(!folder)throw new Error();await vscode.commands.executeCommand('changeproof.checkClaims',folder);}
+      else if(action==='results')await vscode.commands.executeCommand('changeproof.openDashboard');
       else if(action==='settings')await vscode.commands.executeCommand('workbench.action.openSettings','@ext:changeproof-local.changeproof-local');
       else if(action==='ai'){
         if(!folder||!fs.statSync(folder).isDirectory())throw new Error();await aiReview(folder);

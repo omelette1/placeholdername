@@ -8,7 +8,7 @@ const {dashboardHtml}=require('./dashboard.cjs');
 function createFindingsView(vscode, context, {record,rerun,aiAction=()=>{},onChange=()=>{}}) {
   const events = new vscode.EventEmitter();
   let state, selected = null, panel, watcher, decorated = new Set(), decorations;
-  let roots = [], dashboardToken;
+  let roots = [], dashboardToken, auxiliary;
   let aiSelected=null, showingAi=false, showingStatus=false, connection={state:'not_checked'};
   let metadata=new Map();
   function metadataKey(file){try{return path.join(fs.realpathSync(path.dirname(file)),path.basename(file));}catch{return path.resolve(file);}}
@@ -48,11 +48,13 @@ function createFindingsView(vscode, context, {record,rerun,aiAction=()=>{},onCha
     if (decorations) for (const editor of decorated) for (const type of Object.values(decorations)) {try {editor.setDecorations(type,[]);} catch {}}
     decorated.clear();
   }
-  function clearSelection() {selected=null;aiSelected=null;showingAi=false;showingStatus=false;clearDecorations();}
+  function clearSelection() {const previous=auxiliary;auxiliary=undefined;previous?.onClose?.();selected=null;aiSelected=null;showingAi=false;showingStatus=false;clearDecorations();}
   function renderPanel() {
     if (!panel) return;
+    panel.title=auxiliary?.title||'Changeproof Review';
     dashboardToken=crypto.randomBytes(18).toString('hex');
-    if(showingStatus)panel.webview.html=statusHtml(connection,crypto.randomBytes(18).toString('hex'));
+    if(auxiliary)panel.webview.html=auxiliary.render(crypto.randomBytes(18).toString('hex'));
+    else if(showingStatus)panel.webview.html=statusHtml(connection,crypto.randomBytes(18).toString('hex'));
     else if(showingAi&&state?.ai)panel.webview.html=aiHtml(state,aiSelected,crypto.randomBytes(18).toString('hex'));
     else panel.webview.html=dashboardHtml(state,selected,crypto.randomBytes(18).toString('hex'),dashboardToken);
   }
@@ -60,7 +62,7 @@ function createFindingsView(vscode, context, {record,rerun,aiAction=()=>{},onCha
     roots=sidebar(state).concat(aiRoots(state),statusRoots(connection));events.fire();
     tree.message=state ? `${state.demo?'Demo':state.mode==='current'?'Current files':'Changes since HEAD'} · ${state.stale?'STALE · ':''}${state.loading?'Loading':state.report?`${state.report.findings.length} finding(s) · CP002 Coverage: ${state.report.coverage.status}`:state.error?'Setup / processing error':'No deterministic review yet'}` : 'Review Project to begin. Local checks; AI is optional.';
     if(state?.ai)tree.message+=' · AI: '+state.ai.phase+(state.ai.stale?' (STALE)':'');
-    renderPanel();
+    if(!auxiliary)renderPanel();
     onChange();
   }
   function stale(reason) {
@@ -131,6 +133,7 @@ function createFindingsView(vscode, context, {record,rerun,aiAction=()=>{},onCha
       context.subscriptions.push(panel);
       panel.onDidDispose(()=>{panel=undefined;clearSelection();});
       panel.webview.onDidReceiveMessage(async message=>{
+        if(auxiliary){await auxiliary.onMessage(message);return;}
         if(message?.type==='dashboard_select'||message?.type==='dashboard_action'){
           if(message.dashboardToken!==dashboardToken||message.reviewId!==(state?.id||null)||showingAi||showingStatus)return;
           if(message.type==='dashboard_select'){
@@ -252,6 +255,6 @@ function createFindingsView(vscode, context, {record,rerun,aiAction=()=>{},onCha
   context.subscriptions.push(vscode.commands.registerCommand('changeproof.openDashboard',showDashboard));
   context.subscriptions.push(vscode.commands.registerCommand('changeproof.openAiFinding',selectAi),vscode.commands.registerCommand('changeproof.showAiSummary',()=>state?.ai?selectAi(state.ai.token):undefined),vscode.commands.registerCommand('changeproof.openAiEvidence',navigateAi));
   refresh();
-  return {setAiConnection(value){connection=value;refresh();},getAiConnection:()=>connection,showAiSetup(){clearSelection();showingStatus=true;ensurePanel();renderPanel();},aiBegin,aiUpdate,selectAi,begin,finish,fail,select,navigate,stale,clearSelection,getState:()=>state,async openFirst(){if(!state?.report?.findings.length)return;await select(state.id,0);const steps=stepsFor(state.report.findings[0]);await navigate(state.id,steps.length-1);},getPanel:()=>panel};
+  return {showAuxiliary(page){clearSelection();auxiliary=page;ensurePanel();renderPanel();},refreshAuxiliary(page){if(auxiliary===page)renderPanel();},setAiConnection(value){connection=value;refresh();},getAiConnection:()=>connection,showAiSetup(){clearSelection();showingStatus=true;ensurePanel();renderPanel();},aiBegin,aiUpdate,selectAi,begin,finish,fail,select,navigate,stale,clearSelection,getState:()=>state,async openFirst(){if(!state?.report?.findings.length)return;await select(state.id,0);const steps=stepsFor(state.report.findings[0]);await navigate(state.id,steps.length-1);},getPanel:()=>panel};
 }
 module.exports={createFindingsView};

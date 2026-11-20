@@ -37,15 +37,17 @@ export function fixtureProvenance(){
  if(status||tracked.length!==36)throw new Error('Live evaluation requires all 12 synthetic fixtures and metadata committed and unchanged.');
  return git(root,['rev-parse','--verify','HEAD^{commit}']).toString().trim();
 }
-export async function evaluate({url,token,maxRequests,expectedModel,signal,send=postReview,healthCheck=getHealth,live=false,provenance=fixtureProvenance}={}){
+export async function evaluate({url,token,maxRequests,expectedModel,signal,caseIds,send=postReview,healthCheck=getHealth,live=false,provenance=fixtureProvenance}={}){
  if(!live)throw new Error('Explicit --live is required to send evaluation requests.');
  if(!Number.isInteger(maxRequests)||maxRequests<1||maxRequests>12)throw new Error('--max-requests must be 1–12.');
  if(!token||token.length<32)throw new Error('Configure REVIEW_ACCESS_TOKEN for the development backend.');
  if(!expectedModel||!/^[a-zA-Z0-9_.\/-]{1,150}$/.test(expectedModel))throw new Error('Set an explicit --model matching backend GROQ_MODEL.');
+ const allFixtures=loadCases();
+ if(caseIds!==undefined&&(!Array.isArray(caseIds)||!caseIds.length||caseIds.length>12||new Set(caseIds).size!==caseIds.length||caseIds.some(id=>typeof id!=='string'||!allFixtures.some(f=>f.metadata.id===id))))throw new Error('Explicit case IDs must be unique built-in fixture IDs.');
  const fixture_commit=provenance();
  const health=await healthCheck(url,{signal});
  if(health.provider!=='groq'||health.model!==expectedModel)throw new Error('Live evaluation requires the exact configured Groq model. Mock/other-model fallback is forbidden.');
- const fixtures=loadCases();const rows=[];let attempts=0,stopped=null;
+ const fixtures=caseIds?caseIds.map(id=>allFixtures.find(f=>f.metadata.id===id)):allFixtures;const rows=[];let attempts=0,stopped=null;
  for(const fixture of fixtures){
   if(attempts>=maxRequests){stopped='maximum_request_count';break;}
   if(signal?.aborted){stopped='cancelled';break;}
@@ -62,6 +64,6 @@ export async function evaluate({url,token,maxRequests,expectedModel,signal,send=
  }
  const counts={request_or_provider_failures:0,schema_failures:0,invalid_references:0,provider_throttles:0,collector_failures:0,expected_regressions_detected:0,expected_regressions_missed:0,safe_control_cases_with_findings:0,findings_on_safe_controls:0,safe_controls_without_findings:0,appropriate_uncertainty_proxies:0,uncertainty_requires_judgment:0,cases_requiring_human_judgment:0};
  for(const row of rows){const key=({request_or_provider_failure:'request_or_provider_failures',schema_failure:'schema_failures',invalid_references:'invalid_references',provider_throttled:'provider_throttles',collector_failure:'collector_failures'})[row.status]||({expected_regression_detected:'expected_regressions_detected',expected_regression_missed:'expected_regressions_missed',finding_on_safe_control:'safe_control_cases_with_findings',no_finding_on_safe_control:'safe_controls_without_findings',appropriate_uncertainty_proxy:'appropriate_uncertainty_proxies',uncertainty_requires_judgment:'uncertainty_requires_judgment'})[row.outcome];if(key)counts[key]++;if(row.outcome==='finding_on_safe_control')counts.findings_on_safe_controls+=row.finding_count;if(row.human_judgment_required)counts.cases_requiring_human_judgment++;}
- const fixture_hash=crypto.createHash('sha256').update(JSON.stringify(fixtures)).digest('hex');
- return {report_version:'1.0.0',evaluation_date:new Date().toISOString(),mode:'live',provider:health.provider,model:health.model,fixture_set_sha256:fixture_hash,fixture_commit,max_requests:maxRequests,requests_attempted:attempts,cases_total:fixtures.length,cases_not_attempted:fixtures.length-rows.length,stop_reason:stopped,counts,cases:rows,limitations:['Category/reference overlap is a scoring proxy, not a judge of reasoning or security.','Expected answers and ambiguity notes are authored, not LLM judged, and excluded from model input.','Insufficient-context cases require human judgment; no binary accuracy percentage is computed.','Failures/unattempted cases are not silently converted to detection misses.','No source, prompts, model prose, responses or credentials are persisted.']};
+ const fixture_hash=crypto.createHash('sha256').update(JSON.stringify(allFixtures)).digest('hex');
+ return {report_version:'1.0.0',evaluation_date:new Date().toISOString(),mode:'live',provider:health.provider,model:health.model,fixture_set_sha256:fixture_hash,fixture_commit,max_requests:maxRequests,selected_case_ids:fixtures.map(f=>f.metadata.id),requests_attempted:attempts,cases_total:allFixtures.length,cases_not_attempted:allFixtures.length-rows.length,stop_reason:stopped,counts,cases:rows,limitations:['Category/reference overlap is a scoring proxy, not a judge of reasoning or security.','Expected answers and ambiguity notes are authored, not LLM judged, and excluded from model input.','Insufficient-context cases require human judgment; no binary accuracy percentage is computed.','Failures/unattempted cases are not silently converted to detection misses.','No source, prompts, model prose, responses or credentials are persisted.']};
 }

@@ -10,7 +10,9 @@ export function createServer({accessToken,provider,concurrency=2,requestsPerHour
  if(typeof accessToken!=='string'||accessToken.length<32||/[\s]/.test(accessToken))throw new Error('REVIEW_ACCESS_TOKEN must contain at least 32 non-whitespace characters.');
  if(!provider||!['groq','mock'].includes(provider.name))throw new Error('A review provider is required.');
  for(const [key,value,min,max] of [['concurrency',concurrency,1,8],['requestsPerHour',requestsPerHour,1,1000],['bytesPerHour',bytesPerHour,1000,100000000],['timeoutMs',timeoutMs,10,60000]])if(!Number.isSafeInteger(value)||value<min||value>max)throw new Error('Invalid '+key);
- const app=Fastify({logger:false,bodyLimit:LIMITS.requestBytes,requestTimeout:15000,connectionTimeout:20000,keepAliveTimeout:5000,maxRequestsPerSocket:50,trustProxy:false});
+ // Inference can legitimately remain silent until the provider deadline. An
+ // earlier socket idle timeout would drop the response before our 504 handler.
+ const app=Fastify({logger:false,bodyLimit:LIMITS.requestBytes,requestTimeout:15000,connectionTimeout:Math.max(20000,timeoutMs+5000),keepAliveTimeout:5000,maxRequestsPerSocket:50,trustProxy:false});
  let active=0,used=0,bytes=0,windowStart=Date.now();
  const instance_id=crypto.randomBytes(16).toString('hex');
  app.setErrorHandler((error,_request,reply)=>reply.code(error.statusCode===413?413:400).send({error:error.statusCode===413?'request_too_large':'invalid_request'}));

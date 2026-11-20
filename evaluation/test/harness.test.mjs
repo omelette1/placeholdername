@@ -14,3 +14,10 @@ test('evaluation uses production collector → HTTP API → real Groq adapter wi
  const app=createServer({accessToken:options.token,provider});t.after(()=>app.close());const url=await app.listen({host:'127.0.0.1',port:0});
  const report=await evaluate({...options,url,maxRequests:2,send:undefined,healthCheck:undefined});assert.equal(calls,2);assert.equal(report.requests_attempted,2);assert.equal(report.cases.every(c=>c.status==='valid_response'),true);assert.equal(report.counts.expected_regressions_missed,2);assert.equal(report.cases_not_attempted,10);assert.ok(!JSON.stringify(report).includes(empty.summary));
 });
+test('explicit built-in case selection preserves requested order and rejects unknown/duplicate cases before sending',async()=>{
+ let sends=0;const response=request=>({schema_version:'1.0.0',request_id:request.request_id,baseline:request.baseline,provider:'groq',model:'synthetic-model',runtime_verification:false,assessment:empty});
+ for(const caseIds of [[],['unknown'],['S01-safe-redaction','S01-safe-redaction'],['../target']])await assert.rejects(evaluate({...options,caseIds,send:async()=>{sends++;}}));
+ assert.equal(sends,0);const ids=['S01-safe-redaction','U01-unknown-fields'];
+ const result=await evaluate({...options,caseIds:ids,maxRequests:2,send:async(_u,_t,r)=>{sends++;return response(r);}});
+ assert.deepEqual(result.selected_case_ids,ids);assert.deepEqual(result.cases.map(c=>c.id),ids);assert.equal(result.cases_total,12);assert.equal(result.requests_attempted,2);assert.equal(result.cases_not_attempted,10);
+});

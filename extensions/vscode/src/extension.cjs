@@ -6,6 +6,7 @@ const {createAiController}=require('./ai-client.cjs');
 const {createDemo} = require('./demo.cjs');
 const {createFindingsView} = require('./findings-view.cjs');
 const {createScanControls}=require('./scan-controls.cjs');
+const {createClaimController}=require('./claim-controller.cjs');
 function activate(context) {
   let running=false, demoRunning=false;
   const output=vscode.window.createOutputChannel('Changeproof Review Details');
@@ -15,10 +16,11 @@ function activate(context) {
     const line=JSON.stringify(entry);output.appendLine(line);
     try{fs.mkdirSync(context.logUri.fsPath,{recursive:true});fs.appendFileSync(path.join(context.logUri.fsPath,'reviews.jsonl'),line+'\n',{mode:0o600});}catch{output.appendLine('Could not persist review details; this Output channel still contains them.');}
   }
-  let ai,controls;
+  let ai,controls,claims;
   const ui=createFindingsView(vscode,context,{record,rerun:review,aiAction:(...args)=>ai.action(...args),onChange:()=>controls?.refresh()});
-  ai=createAiController(vscode,context,ui,{otherBusy:()=>running||demoRunning,onBusyChange:()=>controls?.refresh()});
-  controls=createScanControls(vscode,context,{review,aiReview:folder=>ai.reviewFolder(folder),getReview:()=>ui.getState(),getConnection:()=>ui.getAiConnection(),isBusy:()=>running||demoRunning||ai.isBusy()});
+  ai=createAiController(vscode,context,ui,{otherBusy:()=>running||demoRunning||claims?.isBusy(),onBusyChange:()=>controls?.refresh()});
+  claims=createClaimController(vscode,context,ui,{otherBusy:()=>running||demoRunning||ai.isBusy(),onBusyChange:()=>controls?.refresh()});
+  controls=createScanControls(vscode,context,{review,aiReview:folder=>ai.reviewFolder(folder),getReview:()=>ui.getState(),getConnection:()=>ui.getAiConnection(),isBusy:()=>running||demoRunning||ai.isBusy()||claims.isBusy()});
   function showDetails(){output.show(true);}
   async function selectFolder(){
     const chosen=await vscode.window.showOpenDialog({title:'Select the exact folder to review',openLabel:'Review This Folder',canSelectFolders:true,canSelectFiles:false,canSelectMany:false});
@@ -29,7 +31,7 @@ function activate(context) {
     void notify(message,'Show Details','Select Folder…').then(choice=>{if(choice==='Show Details')showDetails();else if(choice==='Select Folder…')void selectFolder();});
   }
   async function review(explicitFolder,{demo=false,mode='changes',selection:selectionOverride}={}) {
-    if(ai?.isBusy()||running||(demoRunning&&!demo)){vscode.window.showInformationMessage('A local review is already running.');return;}
+    if(ai?.isBusy()||claims?.isBusy()||running||(demoRunning&&!demo)){vscode.window.showInformationMessage('A local review is already running.');return;}
     const folders=(vscode.workspace.workspaceFolders||[]).filter(f=>f.uri.scheme==='file');
     if(!folders.length&&!explicitFolder){
       const reason='No local workspace folder is open.';const id=ui.begin(null);ui.fail(id,reason);
@@ -61,7 +63,7 @@ function activate(context) {
     finally{running=false;controls.refresh();}
   }
   async function reviewProject(){
-    if(ai?.isBusy()||running||demoRunning){vscode.window.showInformationMessage('A local review is already running.');return;}
+    if(ai?.isBusy()||claims?.isBusy()||running||demoRunning){vscode.window.showInformationMessage('A local review is already running.');return;}
     const folders=(vscode.workspace.workspaceFolders||[]).filter(f=>f.uri.scheme==='file');
     let folder;
     if(folders.length===1)folder=folders[0].uri;
@@ -72,7 +74,7 @@ function activate(context) {
     if(mode)await review(folder.fsPath,{mode:mode.mode,selection:folders.length?'workspace':'explicit_folder_picker'});
   }
   async function runDemo(){
-    if(ai?.isBusy()||running||demoRunning){vscode.window.showInformationMessage('A local review is already running.');return;}
+    if(ai?.isBusy()||claims?.isBusy()||running||demoRunning){vscode.window.showInformationMessage('A local review is already running.');return;}
     demoRunning=true;
     try{
       const protectedFolders=(vscode.workspace.workspaceFolders||[]).filter(f=>f.uri.scheme==='file').map(f=>f.uri.fsPath);

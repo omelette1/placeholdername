@@ -1,0 +1,56 @@
+{
+  "version": "0.13.0",
+  "base_commit": "5319fa6e7787f78908d18d2bcb627175b11eee94",
+  "automated_checks": {
+    "tests": 179,
+    "passed": 179,
+    "failed": 0,
+    "skipped": 0,
+    "real_checkov": "3.4.5",
+    "extension_build": "passed",
+    "review_api_build": "passed",
+    "extension_package": "passed",
+    "packaged_api_harness": {
+      "status": "passed",
+      "sidebar_action": true,
+      "bundled_cli": true,
+      "evidence_navigation": true,
+      "reused_panels": 1,
+      "native_editor": false
+    }
+  },
+  "controlled_claim_benchmark": {
+    "cases": 24,
+    "expected_statuses_matched": 24,
+    "outcomes": {
+      "matched": 7,
+      "contradicted": 5,
+      "unverified": 12
+    },
+    "real_world_accuracy_established": false
+  },
+  "package": {
+    "path": "changeproof-local-0.13.0.vsix",
+    "sha256": "18387a67bdc950d7fc928345e2cf05ccec390ffccc9886cf29c32ff88a0a8782",
+    "files": 30,
+    "secret_or_dependency_paths_in_package": false,
+    "bundled_source_match": true
+  },
+  "live_provider_requests_this_milestone": 0,
+  "target_code_executed_by_claim_audit": false,
+  "automatic_chat_history_access": false,
+  "behavioral_or_test_claim_verification": false,
+  "native_visual_verification": "not performed",
+  "cursor": "untested",
+  "limitations": [
+    "Exact supported backtick-quoted file/function assertion forms only; arbitrary prose remains unverified.",
+    "Function definitions and file changes do not prove correctness, security or test success.",
+    "HEAD is a repository baseline, not a captured before-agent snapshot.",
+    "Controlled authored fixtures and mock editor APIs do not establish real-world accuracy or native rendering."
+  ],
+  "preserved_pending_work": [
+    "Bounded fixture-contract verification and selected-case evaluation tooling.",
+    "Review API socket timeout now outlasts its provider deadline.",
+    "Existing partial live-verification records preserved; no new live model evaluation performed."
+  ]
+}

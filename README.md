@@ -1,4 +1,4 @@
-# Changeproof 0.12.0
+# Changeproof 0.13.0
 
 Review saved JavaScript/TypeScript and supported infrastructure configuration
 in VS Code. Read potential issues, follow their evidence, and see what could
@@ -15,6 +15,21 @@ an Optional AI section with a visible context-size dropdown and preview action.
 Folder and mode persist for this workspace; changing options never starts a scan.
 No Command Palette is needed for this normal workflow.
 
+## Check an assistant's delivery claims
+
+Choose a project in the sidebar and click **Check assistant claims…**. Paste a
+completion message, then click **Check claims**. This local audit compares
+explicit file/function assertions with saved artifacts and, where available,
+HEAD. It reports **matched**, **contradicted** or **unverified**, with clickable
+saved evidence. It does not automatically read Codex or other assistants' chat.
+The pasted response stays in memory and is cleared when the view is closed or
+replaced. No model request or command execution is involved.
+
+This is a bounded evidence check, not universal hallucination prevention.
+Behavior, security and test-success claims remain unverified; a stub can satisfy
+a function-presence check. Unsupported prose is shown as unverified rather than
+silently passed. See [supported assertions and validation](docs/claim-audit-0.13.0.md).
+
 ## Review dashboard
 
 Completed reviews now open **Changeproof Review** automatically in the existing
@@ -25,7 +40,7 @@ layout toolbar button. One tab is reused for dashboard, finding and AI views.
 
 ## Use the extension
 
-1. Install `artifacts/changeproof-local-0.12.0.vsix` using **Extensions: Install
+1. Install `artifacts/changeproof-local-0.13.0.vsix` using **Extensions: Install
    from VSIX…**. Reload the **existing** window once after updating.
 2. Open the project folder you want to inspect. Save your files.
 3. Click the **Changeproof shield icon** on the left, then select your project
