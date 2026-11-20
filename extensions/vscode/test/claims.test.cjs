@@ -42,3 +42,14 @@ test('rendered webview wires draft, audit and evidence buttons to fixed messages
  input.oninput();audit.onclick();evidence.onclick();
  assert.deepEqual(JSON.parse(JSON.stringify(sent)),[{type:'claims_draft',token:'registered-token',response:input.value},{type:'claims_audit',token:'registered-token',response:input.value},{type:'claims_navigate',token:'registered-token',index:2,evidence:1}]);
 });
+test('body evidence warns on empty definitions while implementation and test claims stay unverified',async t=>{
+ const x=fixture(t);await x.claims.check(x.root);
+ await send(x,'claims_audit',{response:'Function `visible` exists in `app.ts`.\nImplemented function `visible` in `app.ts`.\nAll tests passed.'});
+ const r=x.claims.getState().report;assert.deepEqual(r.counts,{matched:1,contradicted:0,unverified:2});assert.equal(r.implementation_warnings,2);assert.equal(r.claims[0].implementation.kind,'empty_body');
+ const html=x.ui.getPanel().webview.html;assert.match(html,/Presence matches are not behavior passes/);assert.match(html,/Implementation evidence: Empty function body/);assert.match(html,/Behavior verified: false/);
+ await send(x,'claims_navigate',{index:1,evidence:0});assert.equal(x.fake.editors[0].document.uri.fsPath,path.join(x.root,'app.ts'));
+});
+test('claim view explains unsupported source input and rejects invented implementation verification',async t=>{
+ const x=fixture(t);await x.claims.check(x.root);await send(x,'claims_audit',{response:'function visible() {\nreturn 1;\n}'});assert.match(x.ui.getPanel().webview.html,/No supported file\/function assertion was found/);assert.match(x.ui.getPanel().webview.html,/What can be checked/);
+ const r=await runClaimAudit(process.execPath,x.context.asAbsolutePath('out/claims.cjs'),x.root,'Function `visible` exists in `app.ts`.');r.claims[0].implementation.behavior_verified=true;assert.throws(()=>validateClaimReport(r));
+});

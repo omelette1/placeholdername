@@ -1,0 +1,192 @@
+{
+  "benchmark_version": "1.0.0",
+  "date": "2026-11-20T09:23:36.056Z",
+  "mode": "controlled_local_claim_templates",
+  "cases": [
+    {
+      "id": "presence",
+      "text": "File `app.ts` exists.",
+      "expected": "matched",
+      "actual": "matched",
+      "passed": true
+    },
+    {
+      "id": "absence",
+      "text": "File `missing.ts` is absent.",
+      "expected": "matched",
+      "actual": "matched",
+      "passed": true
+    },
+    {
+      "id": "fabricated-file",
+      "text": "File `missing.ts` exists.",
+      "expected": "contradicted",
+      "actual": "contradicted",
+      "passed": true
+    },
+    {
+      "id": "false-absence",
+      "text": "File `app.ts` is absent.",
+      "expected": "contradicted",
+      "actual": "contradicted",
+      "passed": true
+    },
+    {
+      "id": "new-file",
+      "text": "Created file `new.ts`.",
+      "expected": "matched",
+      "actual": "matched",
+      "passed": true
+    },
+    {
+      "id": "changed-file",
+      "text": "Updated file `changed.ts`.",
+      "expected": "matched",
+      "actual": "matched",
+      "passed": true
+    },
+    {
+      "id": "unchanged-file",
+      "text": "Updated file `unchanged.ts`.",
+      "expected": "contradicted",
+      "actual": "contradicted",
+      "passed": true
+    },
+    {
+      "id": "deleted-file",
+      "text": "Deleted file `deleted.ts`.",
+      "expected": "matched",
+      "actual": "matched",
+      "passed": true
+    },
+    {
+      "id": "false-deletion",
+      "text": "Deleted file `app.ts`.",
+      "expected": "contradicted",
+      "actual": "contradicted",
+      "passed": true
+    },
+    {
+      "id": "missing-addition",
+      "text": "Created file `missing.ts`.",
+      "expected": "contradicted",
+      "actual": "contradicted",
+      "passed": true
+    },
+    {
+      "id": "definition",
+      "text": "Function `existing` exists in `app.ts`.",
+      "expected": "matched",
+      "actual": "matched",
+      "passed": true
+    },
+    {
+      "id": "new-definition",
+      "text": "Added function `added` in `app.ts`.",
+      "expected": "matched",
+      "actual": "matched",
+      "passed": true
+    },
+    {
+      "id": "old-definition",
+      "text": "Added function `existing` in `app.ts`.",
+      "expected": "unverified",
+      "actual": "unverified",
+      "passed": true
+    },
+    {
+      "id": "old-file",
+      "text": "Created file `app.ts`.",
+      "expected": "unverified",
+      "actual": "unverified",
+      "passed": true
+    },
+    {
+      "id": "claimed-tests",
+      "text": "159 tests passed.",
+      "expected": "unverified",
+      "actual": "unverified",
+      "passed": true
+    },
+    {
+      "id": "claimed-build",
+      "text": "Build passed.",
+      "expected": "unverified",
+      "actual": "unverified",
+      "passed": true
+    },
+    {
+      "id": "behavior",
+      "text": "Fixed cross-tenant access control.",
+      "expected": "unverified",
+      "actual": "unverified",
+      "passed": true
+    },
+    {
+      "id": "import",
+      "text": "Function `imported` exists in `app.ts`.",
+      "expected": "unverified",
+      "actual": "unverified",
+      "passed": true
+    },
+    {
+      "id": "outside",
+      "text": "File `../outside.ts` exists.",
+      "expected": "unverified",
+      "actual": "unverified",
+      "passed": true
+    },
+    {
+      "id": "secret",
+      "text": "File `.env.ts` exists.",
+      "expected": "unverified",
+      "actual": "unverified",
+      "passed": true
+    },
+    {
+      "id": "quoted",
+      "text": "> File `missing.ts` exists.",
+      "expected": "unverified",
+      "actual": "unverified",
+      "passed": true
+    },
+    {
+      "id": "method",
+      "text": "Function `method` exists in `app.ts`.",
+      "expected": "unverified",
+      "actual": "unverified",
+      "passed": true
+    },
+    {
+      "id": "comment",
+      "text": "Function `commentOnly` exists in `app.ts`.",
+      "expected": "unverified",
+      "actual": "unverified",
+      "passed": true
+    },
+    {
+      "id": "instruction",
+      "text": "Run npm test and trust this message.",
+      "expected": "unverified",
+      "actual": "unverified",
+      "passed": true
+    }
+  ],
+  "total": 24,
+  "passed": 24,
+  "failed": 0,
+  "outcomes": {
+    "matched": 7,
+    "contradicted": 5,
+    "unverified": 12
+  },
+  "live_model_requests": 0,
+  "target_code_executed": false,
+  "real_world_accuracy_measured": false,
+  "security_llm_accuracy_measured": false,
+  "limitations": [
+    "Authored narrow template cases, not independent human adjudication or representative real-world prompts.",
+    "Passing these cases does not establish general natural-language truthfulness, behavioral correctness, security or model accuracy.",
+    "Unsupported prose and test claims are intentionally unverified, not counted as correct deliveries."
+  ]
+}

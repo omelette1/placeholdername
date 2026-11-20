@@ -1,0 +1,56 @@
+{
+  "version": "0.14.0",
+  "base_commit": "a05435b78750da54ce10c3f281b4b2746e7525af",
+  "automated_checks": {
+    "tests": 187,
+    "passed": 187,
+    "failed": 0,
+    "skipped": 0,
+    "real_checkov": "3.4.5",
+    "extension_build": "passed",
+    "api_build": "passed",
+    "extension_package": "passed",
+    "packaged_editor_api_harness": {
+      "sidebar_action": "passed",
+      "real_bundled_cli": "passed",
+      "empty_body_observation": "passed",
+      "placeholder_throw_observation": "passed",
+      "body_content_not_behavior_pass": "passed",
+      "evidence_navigation": "passed",
+      "panels_created": 1,
+      "native_editor": false
+    }
+  },
+  "controlled_claim_regression": {
+    "cases": 24,
+    "expected_statuses_matched": 24,
+    "real_world_accuracy_established": false
+  },
+  "new_test_coverage": [
+    "Empty/comment/directive bodies and bare returns.",
+    "Legitimate constants and ordinary/conditional exceptions are not confirmed stubs.",
+    "Implementation assertions remain unverified for both empty and filled bodies.",
+    "Unresolved, duplicate and malformed definitions do not fabricate body evidence.",
+    "Target files are never executed and body evidence does not expose source literals.",
+    "Sidebar UI, source-input guidance, navigation and invalid verification rejection."
+  ],
+  "package": {
+    "file": "changeproof-local-0.14.0.vsix",
+    "sha256": "fb32afda0114bde5c0b2799fb8c65275deff20841d5e524cf3c0556969be0979",
+    "bundle_and_source_match": true,
+    "secret_or_dependency_paths_in_package": false
+  },
+  "live_model_requests": 0,
+  "target_code_execution_added": false,
+  "test_build_runner_added": false,
+  "general_behavior_verification_added": false,
+  "native_visual_verification": "not performed",
+  "cursor": "untested",
+  "limitations": [
+    "Only selected whole-body syntax patterns in uniquely resolved top-level JS/TS functions.",
+    "Intentional no-ops may be flagged; hidden stubs or wrong bodies can be missed.",
+    "Implementation observation counts are per claim, not an accuracy or vulnerability score.",
+    "Existing file/declaration matches remain narrow facts, not behavioral passes.",
+    "No independent test/build execution receipt or behavioral contract verifier is implemented."
+  ]
+}

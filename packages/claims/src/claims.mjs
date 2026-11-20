@@ -3,6 +3,7 @@ import path from 'node:path';
 import ts from 'typescript';
 import {git,safeRead,text,exclusion,MAX_FILE,eligible} from '../../engine/src/io.mjs';
 import {redact} from '../../ai/src/redact.mjs';
+import {bodyEvidence} from './body-evidence.mjs';
 export const CLAIM_LIMITS=Object.freeze({responseBytes:32768,claims:60,files:20,contentBytes:4*1024*1024});
 const location=(file,line=1,column=1,endLine=line,endColumn=column)=>({file,start:{line,column},end:{line:endLine,column:endColumn}});
 const signature=s=>[s.dev,s.ino,s.size,s.mtimeNs,s.ctimeNs,s.mode].join(':');
@@ -24,6 +25,7 @@ export function parseClaims(response){
       if(m[2]||fileLike(m[3]))claim={...claim,kind:/created|added/i.test(m[1])?'file_added':/updated|modified/i.test(m[1])?'file_changed':'file_deleted',file:m[3]};
     }else if(m=line.match(/^Function\s+`([A-Za-z_$][\w$]*)`\s+exists in\s+`([^`]+)`\.?$/i))claim={...claim,kind:'function_exists',symbol:m[1],file:m[2]};
     else if(m=line.match(/^(?:Added|Created)\s+(?:a\s+)?function\s+`([A-Za-z_$][\w$]*)`\s+in\s+`([^`]+)`\.?$/i))claim={...claim,kind:'function_added',symbol:m[1],file:m[2]};
+    else if(m=line.match(/^Implemented\s+(?:the\s+)?function\s+`([A-Za-z_$][\w$]*)`\s+in\s+`([^`]+)`\.?$/i))claim={...claim,kind:'function_implemented',symbol:m[1],file:m[2]};
     else if(/\b(test|tests|build|checks)\b.*\b(passed|pass|successful|succeeded|green)\b/i.test(line))claim={...claim,kind:'execution_claim',reason:'No independently captured execution evidence. Pasted success text or an agent report is not proof.'};
     rows.push(claim);
   }
@@ -33,12 +35,12 @@ function declarations(file,source,name){
   if(!eligible(file))throw new Error('unsupported_language');
   const tree=ts.createSourceFile(file,source,ts.ScriptTarget.Latest,true);if(tree.parseDiagnostics.length)throw new Error('parse_error');
   const found=[];
-  const add=node=>{const a=tree.getLineAndCharacterOfPosition(node.getStart(tree)),b=tree.getLineAndCharacterOfPosition(node.end);found.push(location(file,a.line+1,a.character+1,b.line+1,b.character+1));};
+  const add=(node,body)=>{const a=tree.getLineAndCharacterOfPosition(node.getStart(tree)),b=tree.getLineAndCharacterOfPosition(node.end);found.push({location:location(file,a.line+1,a.character+1,b.line+1,b.character+1),implementation:bodyEvidence(body)});};
   for(const node of tree.statements){
-    if(ts.isFunctionDeclaration(node)&&node.name?.text===name&&node.body)add(node);
+    if(ts.isFunctionDeclaration(node)&&node.name?.text===name&&node.body)add(node,node.body);
     if(ts.isVariableStatement(node))for(const d of node.declarationList.declarations){
       let init=d.initializer;while(init&&(ts.isParenthesizedExpression(init)||ts.isAsExpression(init)||ts.isSatisfiesExpression(init)))init=init.expression;
-      if(ts.isIdentifier(d.name)&&d.name.text===name&&init&&(ts.isArrowFunction(init)||ts.isFunctionExpression(init)))add(d);
+      if(ts.isIdentifier(d.name)&&d.name.text===name&&init&&(ts.isArrowFunction(init)||ts.isFunctionExpression(init)))add(d,init.body);
     }
   }
   return found;
@@ -95,7 +97,9 @@ export function auditClaims(project,response){
       buffers(claim.file,data,claim.kind==='function_added');const found=declarations(claim.file,text(now.bytes),claim.symbol);
       if(!found.length)return finish('unverified','No supported top-level definition was found. Imported, method or dynamic bindings are not resolved.','Top-level function declarations/arrow or function-expression bindings only; absence of a supported declaration is not proof of missing runtime behavior.');
       if(found.length!==1)return finish('unverified','Multiple matching definitions; binding identity is ambiguous.','Declaration identity only.');
-      row.evidence.push({kind:'function_declaration',revision:'saved',location:found[0],note:'A definition with a body exists. Its behavior is not checked.'});
+      row.implementation=found[0].implementation;
+      row.evidence.push({kind:'function_declaration',revision:'saved',location:found[0].location,note:'A definition with a body exists. '+row.implementation.summary+'. Its behavior is not checked.'});
+      if(claim.kind==='function_implemented')return finish('unverified',row.implementation.attention?'A definition exists, but the body has an empty/placeholder observation. See implementation evidence.':'A definition and body exist, but no behavioral contract was verified.','Implementation syntax observations only; no behavioral correctness or test success established.');
       if(claim.kind==='function_exists')return finish('matched','A supported top-level function definition was found.','Declaration presence only; a stub can match.');
       if(!old.known)return finish('unverified','Function exists, but no HEAD baseline establishes that it was added.','Declaration observed; addition unverified.');
       const existed=old.present&&declarations(claim.file,text(old.bytes),claim.symbol).length;
@@ -105,5 +109,5 @@ export function auditClaims(project,response){
   let stale=false;
   for(const [file,snapshot] of snapshots){try{if((current(file,false).snapshot??null)!==snapshot)stale=true;}catch{stale=true;}}
   if(head){try{if(git(gitRoot,['rev-parse','--verify','HEAD^{commit}']).toString().trim()!==head)stale=true;}catch{stale=true;}}
-  return {schema_version:'1.0.0',kind:'assistant_claim_audit',repository:root,git_repository:gitRoot,compared_revision:head,claims,snapshots:[...snapshots].map(([file,snapshot])=>({file,snapshot})),stale,omitted_lines:parsed.omitted_lines,counts:{matched:claims.filter(c=>c.status==='matched').length,contradicted:claims.filter(c=>c.status==='contradicted').length,unverified:claims.filter(c=>c.status==='unverified').length},runtime_verification:false,limitations:['Local audit of explicit supported assertions, not a universal hallucination detector.','Saved files only; before/after reads are not an atomic repository snapshot.','Tests, builds, security policies and general behavior are not independently executed or verified.','Named function declarations can be empty stubs or incorrect implementations.','Unsupported prose, excluded inputs and unavailable baselines remain unverified.','Pasted text is not treated as instructions, command output or execution evidence.']};
+  return {schema_version:'1.1.0',kind:'assistant_claim_audit',repository:root,git_repository:gitRoot,compared_revision:head,claims,snapshots:[...snapshots].map(([file,snapshot])=>({file,snapshot})),stale,omitted_lines:parsed.omitted_lines,counts:{matched:claims.filter(c=>c.status==='matched').length,contradicted:claims.filter(c=>c.status==='contradicted').length,unverified:claims.filter(c=>c.status==='unverified').length},implementation_warnings:claims.filter(c=>c.implementation?.attention).length,runtime_verification:false,limitations:['Local audit of explicit supported assertions, not a universal hallucination detector.','Saved files only; before/after reads are not an atomic repository snapshot.','Tests, builds, security policies and general behavior are not independently executed or verified.','Selected whole-body empty/placeholder patterns are observed; intended no-ops may match and hidden stubs may be missed.','Body content and constant returns do not establish correctness; function implementation claims remain unverified.','Unsupported prose, excluded inputs and unavailable baselines remain unverified.','Pasted text is not treated as instructions, command output or execution evidence.']};
 }

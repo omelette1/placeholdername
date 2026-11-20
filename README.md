@@ -1,4 +1,4 @@
-# Changeproof 0.13.0
+# Changeproof 0.14.0
 
 Review saved JavaScript/TypeScript and supported infrastructure configuration
 in VS Code. Read potential issues, follow their evidence, and see what could
@@ -27,8 +27,10 @@ replaced. No model request or command execution is involved.
 
 This is a bounded evidence check, not universal hallucination prevention.
 Behavior, security and test-success claims remain unverified; a stub can satisfy
-a function-presence check. Unsupported prose is shown as unverified rather than
+a function-presence check. Version 0.14 adds separate empty/placeholder body
+observations and does not turn body presence into a behavioral pass. Unsupported prose is shown as unverified rather than
 silently passed. See [supported assertions and validation](docs/claim-audit-0.13.0.md).
+See [implementation evidence and remaining limits](docs/implementation-evidence-0.14.0.md).
 
 ## Review dashboard
 
@@ -40,7 +42,7 @@ layout toolbar button. One tab is reused for dashboard, finding and AI views.
 
 ## Use the extension
 
-1. Install `artifacts/changeproof-local-0.13.0.vsix` using **Extensions: Install
+1. Install `artifacts/changeproof-local-0.14.0.vsix` using **Extensions: Install
    from VSIX…**. Reload the **existing** window once after updating.
 2. Open the project folder you want to inspect. Save your files.
 3. Click the **Changeproof shield icon** on the left, then select your project

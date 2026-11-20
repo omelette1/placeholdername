@@ -1,9 +1,11 @@
 const {execFile}=require('node:child_process');
 const path=require('node:path');
 function validateClaimReport(r){
- if(r?.schema_version!=='1.0.0'||r.kind!=='assistant_claim_audit'||typeof r.repository!=='string'||!path.isAbsolute(r.repository)||r.runtime_verification!==false||typeof r.stale!=='boolean'||!Array.isArray(r.claims)||r.claims.length>60||!Array.isArray(r.snapshots)||r.snapshots.length>20||!Array.isArray(r.limitations)||!Number.isSafeInteger(r.omitted_lines)||r.omitted_lines<0)throw new Error('Invalid claim report.');
+ if(!['1.0.0','1.1.0'].includes(r?.schema_version)||r.kind!=='assistant_claim_audit'||typeof r.repository!=='string'||!path.isAbsolute(r.repository)||r.runtime_verification!==false||typeof r.stale!=='boolean'||!Array.isArray(r.claims)||r.claims.length>60||!Array.isArray(r.snapshots)||r.snapshots.length>20||!Array.isArray(r.limitations)||!Number.isSafeInteger(r.omitted_lines)||r.omitted_lines<0)throw new Error('Invalid claim report.');
  const validFile=file=>typeof file==='string'&&!path.isAbsolute(file)&&!file.includes('\\')&&!file.split('/').some(p=>!p||p==='.'||p==='..');
  for(const row of r.claims){if(!['matched','contradicted','unverified'].includes(row.status)||!Number.isSafeInteger(row.index)||!Number.isSafeInteger(row.input_line)||row.input_line<1||!['text','reason','scope'].every(k=>typeof row[k]==='string')||!Array.isArray(row.evidence))throw new Error('Invalid claim.');for(const ev of row.evidence){if(ev.location){const loc=ev.location;if(!validFile(loc.file))throw new Error('Invalid evidence.');for(const p of [loc.start,loc.end])if(!Number.isSafeInteger(p?.line)||p.line<1||!Number.isSafeInteger(p?.column)||p.column<1)throw new Error('Invalid evidence.');}}}
+ for(const row of r.claims){const i=row.implementation;if(i&&(!['empty_body','bare_return','placeholder_throw','constant_return','undefined_return','body_present'].includes(i.kind)||typeof i.attention!=='boolean'||i.behavior_verified!==false||typeof i.summary!=='string'||typeof i.detail!=='string'))throw new Error('Invalid implementation observation.');}
+ if(r.schema_version==='1.1.0'&&r.implementation_warnings!==r.claims.filter(c=>c.implementation?.attention).length)throw new Error('Invalid implementation counts.');
  for(const s of r.snapshots)if(!validFile(s.file)||!(s.snapshot===null||typeof s.snapshot==='string'))throw new Error('Invalid snapshot.');
  for(const key of ['matched','contradicted','unverified'])if(r.counts?.[key]!==r.claims.filter(c=>c.status===key).length)throw new Error('Invalid counts.');
  return r;
