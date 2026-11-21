@@ -1,10 +1,12 @@
-# Changeproof 0.18.0
+# Patch 0.19.0
 
-The sidebar now has **Verify AI output**: paste assistant claims, run local
-evidence-guard examples, or open the last AI evidence. AI result pages offer
-**Recheck saved evidence** without another model request. See the
-[UI guide](docs/verify-ai-output-0.18.0.md). These checks do not prove an AI
-interpretation or measure its real-world accuracy.
+**Review AI-written code. Check the evidence.** Scan saved code for supported security patterns,
+check an assistant’s file/function claims, and inspect source quotations behind
+AI findings. Patch separates matched source evidence from conclusions that still
+need human review.
+
+Start with **Scan project**, **Check an assistant answer**, or **Review code with
+AI** in the sidebar. See the [demo guide](docs/demo-guide-0.19.0.md).
 
 Review saved JavaScript/TypeScript and supported infrastructure configuration
 in VS Code. Read potential issues, follow their evidence, and see what could
@@ -24,7 +26,7 @@ quotes are rejected. A quote confirms only that exact text occurs at the stated
 location; its interpretation and security conclusion remain unverified. See
 [evidence receipts and accuracy](docs/evidence-receipts-and-accuracy-0.17.0.md).
 
-AI findings can now include a bounded line-replacement proposal. Changeproof
+AI findings can now include a bounded line-replacement proposal. Patch
 checks the exact saved text and JavaScript/TypeScript syntax, shows the proposed
 replacement, and applies it only when you click **Apply this patch**. It then
 reruns the local static checks. This is not a behavior or security proof and
@@ -32,16 +34,16 @@ does not execute project tests or scripts.
 
 ## Sidebar controls
 
-Click the **Changeproof shield icon** in the left Activity Bar. Choose a project
-folder, select Current files or Changes since HEAD, and click **Scan project**.
-The Scan view has folder/mode controls, Open results and Settings buttons, and
-an Optional AI section with a visible context-size dropdown and preview action.
+Click the **Patch shield icon** in the left Activity Bar. Choose a project
+folder, select Saved project files or Changes since last commit, and click **Scan project**.
+The Scan view has folder/mode controls, View scan results and Settings buttons, and
+a Review code with AI section with a visible context-size dropdown and preview action.
 Folder and mode persist for this workspace; changing options never starts a scan.
 No Command Palette is needed for this normal workflow.
 
 ## Check an assistant's delivery claims
 
-Choose a project in the sidebar and click **Check assistant claims…**. Paste a
+Choose a project in the sidebar and click **Check an assistant answer…**. Paste a
 completion message, then click **Check claims**. This local audit compares
 explicit file/function assertions with saved artifacts and, where available,
 HEAD. It reports **matched**, **contradicted** or **unverified**, with clickable
@@ -58,26 +60,26 @@ See [implementation evidence and remaining limits](docs/implementation-evidence-
 
 ## Review dashboard
 
-Completed reviews now open **Changeproof Review** automatically in the existing
+Completed reviews now open **Patch Review** automatically in the existing
 window: summary cards, searchable Code/Configuration filters, selectable findings
 and an evidence trail with editor navigation. The sidebar remains a secondary
-outline. Reopen the dashboard using **Changeproof: Open Review Dashboard** or its
+outline. Reopen the dashboard using **Patch: Open Review Dashboard** or its
 layout toolbar button. One tab is reused for dashboard, finding and AI views.
 
 ## Use the extension
 
-1. Install `artifacts/changeproof-local-0.18.0.vsix` using **Extensions: Install
+1. Install `artifacts/patch-local-0.19.0.vsix` using **Extensions: Install
    from VSIX…**. Reload the **existing** window once after updating.
 2. Open the project folder you want to inspect. Save your files.
-3. Click the **Changeproof shield icon** on the left, then select your project
+3. Click the **Patch shield icon** on the left, then select your project
    folder in the **Scan** view.
-4. Choose **Current files** or **Changes since HEAD** and click **Scan project**.
+4. Choose **Saved project files** or **Changes since last commit** and click **Scan project**.
 5. Use the automatically opened dashboard, select a finding, then click an
    evidence step in the reusable details panel to navigate and highlight it.
 
-**Current files** reviews eligible saved tracked/untracked JS/TS and supported
+**Saved project files** (current-files mode) reviews eligible saved tracked/untracked JS/TS and supported
 configuration. It works without Git or an initial commit. Newness is not
-applicable because there is no baseline. **Changes since HEAD** reviews saved
+applicable because there is no baseline. **Changes since last commit** (HEAD) reviews saved
 tracked JS/TS against HEAD; it lists untracked files without analyzing them.
 Infrastructure comparison against HEAD is unsupported: use Current files.
 
@@ -155,7 +157,7 @@ For a fresh setup:
    ignored server/evaluation env files and preserves an existing Groq key.
 2. Put `GROQ_API_KEY` only in `services/review-api/.env`. Start the backend with
    `npm run start:review-api` (loopback port 4318 by default).
-3. Run **Changeproof: Set AI Review Access Token** with the server's
+3. Run **Patch: Set AI Review Access Token** with the server's
    `REVIEW_ACCESS_TOKEN`, not its Groq key. It is stored in VS Code SecretStorage.
 4. Run **AI Review Changes**, inspect the exact redacted payload, profile and
    destination, then explicitly approve transmission if appropriate.

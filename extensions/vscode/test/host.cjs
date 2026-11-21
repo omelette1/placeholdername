@@ -17,7 +17,7 @@ async function run(){
  async function waitFor(predicate,message){for(let i=0;i<100;i++){if(predicate())return;await new Promise(resolve=>setTimeout(resolve,20));}throw new Error(message);}
  const latest=phase=>records().filter(r=>r.phase===phase).at(-1);
  const file=path.join(folder.uri.fsPath,'app.ts'),uri=vscode.Uri.file(file);
- const diagnostics=()=>vscode.languages.getDiagnostics().flatMap(([uri,items])=>items.filter(d=>d.source==='Changeproof (static)').map(d=>({uri,d})));
+ const diagnostics=()=>vscode.languages.getDiagnostics().flatMap(([uri,items])=>items.filter(d=>d.source==='Patch (static)').map(d=>({uri,d})));
  await vscode.commands.executeCommand('changeproof.reviewLocalChanges');assert.equal(diagnostics().length,1);assert.equal(diagnostics()[0].d.code,'CP002');assert.equal(diagnostics()[0].d.range.start.line,3);
  const review=latest('review_presented');assert.equal(review.coverage,'analyzed');
  const groups=provider.getChildren();assert.ok(groups.some(g=>g.label==='Findings (1)'));assert.ok(groups.some(g=>g.label==='Coverage: analyzed'));assert.ok(!groups.find(g=>g.label==='Findings (1)').children.some(c=>c.label.startsWith('Coverage:')));

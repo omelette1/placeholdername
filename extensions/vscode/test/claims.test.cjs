@@ -19,7 +19,7 @@ test('dirty buffers and filesystem events mark claim reports stale without autom
 test('closing/replacing the claim page clears pasted text; stale tokens and message paths cannot navigate',async t=>{
  const x=fixture(t);await x.claims.check(x.root);const old=token(x);await send(x,'claims_audit',{response:'File `app.ts` exists.'});
  await x.ui.getPanel().messages.listeners[0]({type:'claims_navigate',token:old,index:0,evidence:0,path:'/etc/passwd'});assert.equal(x.fake.editors.length,0);
- const previous=x.claims.getState();await x.fake.commands.get('changeproof.openDashboard')();assert.equal(x.claims.getState(),undefined);assert.equal(previous.response,'');assert.equal(previous.report,null);assert.equal(x.fake.panels.length,1);assert.equal(x.ui.getPanel().title,'Changeproof Review');
+ const previous=x.claims.getState();await x.fake.commands.get('changeproof.openDashboard')();assert.equal(x.claims.getState(),undefined);assert.equal(previous.response,'');assert.equal(previous.report,null);assert.equal(x.fake.panels.length,1);assert.equal(x.ui.getPanel().title,'Patch Review');
 });
 test('claim UI escapes assistant prose and file metadata; report validator rejects hostile counts/paths',async t=>{
  const x=fixture(t);const report=await runClaimAudit(process.execPath,x.context.asAbsolutePath('out/claims.cjs'),x.root,'File `app.ts` exists.\n<script>bad()</script>');

@@ -1,8 +1,8 @@
 {
   "name": "changeproof-local",
-  "displayName": "Changeproof Local Review",
-  "description": "Local static checks and opt-in AI assessment with explicit patch proposals; no runtime verification.",
-  "version": "0.18.0",
+  "displayName": "Patch",
+  "description": "Inspect potential code risks and check AI delivery claims against saved source evidence.",
+  "version": "0.19.0",
   "publisher": "changeproof-local",
   "license": "UNLICENSED",
   "engines": {
@@ -37,81 +37,81 @@
       {
         "command": "changeproof.reviewProject",
         "title": "Review Project",
-        "category": "Changeproof",
+        "category": "Patch",
         "icon": "$(shield)"
       },
       {
         "command": "changeproof.runDemo",
         "title": "Run Demo",
-        "category": "Changeproof"
+        "category": "Patch"
       },
       {
         "command": "changeproof.reviewLocalChanges",
         "title": "Review Local Changes",
-        "category": "Changeproof"
+        "category": "Patch"
       },
       {
         "command": "changeproof.showReviewDetails",
         "title": "Show Review Details",
-        "category": "Changeproof"
+        "category": "Patch"
       },
       {
         "command": "changeproof.selectFolderToReview",
         "title": "Select Folder to Review",
-        "category": "Changeproof"
+        "category": "Patch"
       },
       {
         "command": "changeproof.rerunReview",
         "title": "Rerun Reviewed Folder",
-        "category": "Changeproof",
+        "category": "Patch",
         "icon": "$(refresh)"
       },
       {
         "command": "changeproof.aiReviewChanges",
         "title": "AI Review Changes",
-        "category": "Changeproof",
+        "category": "Patch",
         "icon": "$(sparkle)"
       },
       {
         "command": "changeproof.setAiAccessToken",
         "title": "Set AI Review Access Token",
-        "category": "Changeproof"
+        "category": "Patch"
       },
       {
         "command": "changeproof.checkAiConnection",
         "title": "Check AI Connection",
-        "category": "Changeproof"
+        "category": "Patch"
       },
       {
         "command": "changeproof.refreshAiStatus",
         "title": "Refresh AI Status",
-        "category": "Changeproof"
+        "category": "Patch"
       },
       {
         "command": "changeproof.showAiSetup",
         "title": "AI Setup Guide",
-        "category": "Changeproof"
+        "category": "Patch"
       },
       {
         "command": "changeproof.openDashboard",
         "title": "Open Review Dashboard",
-        "category": "Changeproof",
+        "category": "Patch",
         "icon": "$(layout)"
       },
       {
         "command": "changeproof.openControls",
-        "title": "Open Changeproof",
-        "category": "Changeproof"
+        "title": "Open Patch",
+        "category": "Patch"
       },
       {
         "command": "changeproof.checkClaims",
         "title": "Check Assistant Claims",
-        "category": "Changeproof"
+        "category": "Patch"
       },
       {
         "command": "changeproof.testEvidenceGuard",
         "title": "Test Evidence Guard",
-        "category": "Changeproof"
+        "category": "Patch"
       }
     ],
     "views": {
@@ -129,7 +129,7 @@
       ]
     },
     "configuration": {
-      "title": "Changeproof",
+      "title": "Patch",
       "properties": {
         "changeproof.nodePath": {
           "type": "string",
@@ -179,7 +179,7 @@
       "activitybar": [
         {
           "id": "changeproof",
-          "title": "Changeproof",
+          "title": "Patch",
           "icon": "media/activity.svg"
         }
       ]
@@ -187,5 +187,9 @@
   },
   "scripts": {
     "build": "node build.mjs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/omelette1/placeholdername.git"
   }
 }

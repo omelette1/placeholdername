@@ -34,7 +34,7 @@ function sidebar(state) {
     {label:'Review Project…',tooltip:'Choose Current files or Changes since HEAD. Runs local checks; does not send code to AI.',command:{command:'changeproof.reviewProject',title:'Review Project'}},
     ...(state?.folder?[{label:'Rerun reviewed folder',tooltip:'Explicitly rerun the same folder and mode.',command:{command:'changeproof.rerunReview',title:'Rerun reviewed folder'}}]:[]),
   ]);
-  if (!state) return [{label:'No review yet. Run Changeproof: Review Project.'},actions];
+  if (!state) return [{label:'No review yet. Run Patch: Review Project.'},actions];
   const review = group('Review', [{label:`${state.demo ? 'Synthetic demo' : state.selection === 'explicit_folder_picker' ? 'Explicit folder review' : 'Workspace review'}: ${state.folder || 'No local folder'}`},
     {label:'Mode: '+(state.mode==='current'?'Current files (no baseline)':'Changes since HEAD')},
     {label:state.stale ? 'STALE — files changed; rerun explicitly.' : state.loading ? 'Review running…' : state.error || state.report?.analysis_errors?.length ? 'Processing incomplete; see errors.' : state.report?.coverage?.status === 'partial' ? 'Processing finished with partial analysis coverage.' : !state.report ? 'No deterministic review yet; AI progress and results are separate.' : 'Processing finished; coverage is separate.'}]);

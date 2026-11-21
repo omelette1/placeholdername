@@ -1,4 +1,4 @@
-# Changeproof development AI review API (0.18.0)
+# Patch development AI review API (0.19.0)
 
 Requires Node 22+, Git for context collection, and root `npm ci`. From the repository root:
 

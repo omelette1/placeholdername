@@ -4,7 +4,7 @@ const os = require('node:os');
 const {execFile} = require('node:child_process');
 const {promisify} = require('node:util');
 const execute = promisify(execFile);
-const BASELINE = '// Synthetic demo: Changeproof never executes this file.\nfunction reviewRequest(req) {\n  const raw = "public diagnostic value";\n  const payload = raw;\n  console.log(payload);\n}\n';
+const BASELINE = '// Synthetic demo: Patch never executes this file.\nfunction reviewRequest(req) {\n  const raw = "public diagnostic value";\n  const payload = raw;\n  console.log(payload);\n}\n';
 const CHANGED = BASELINE.replace('"public diagnostic value"', 'req.headers.authorization');
 
 function canonicalCandidate(candidate) {
@@ -33,7 +33,7 @@ async function createDemo(storageDirectory, protectedFolders = [], progress = ()
   const env = Object.fromEntries(Object.entries(process.env).filter(([key]) => !key.startsWith('GIT_')));
   Object.assign(env, {GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: os.devNull, GIT_TERMINAL_PROMPT: '0', GIT_NO_LAZY_FETCH: '1', GIT_OPTIONAL_LOCKS: '0'});
   const git = args => execute('git', ['--no-optional-locks', '-c', 'core.fsmonitor=false', '-c', 'core.hooksPath=' + os.devNull,
-    '-c', 'commit.gpgSign=false', '-c', 'user.name=Changeproof Synthetic Demo', '-c', 'user.email=demo@example.invalid', '-C', directory, ...args],
+    '-c', 'commit.gpgSign=false', '-c', 'user.name=Patch Synthetic Demo', '-c', 'user.email=demo@example.invalid', '-C', directory, ...args],
   {env, timeout: 15000, maxBuffer: 1024 * 1024, windowsHide: true});
   try {
     progress('Creating a synthetic repository in dedicated demo storage');

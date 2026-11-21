@@ -51,7 +51,7 @@ function createFindingsView(vscode, context, {record,rerun,aiAction=()=>{},onCha
   function clearSelection() {const previous=auxiliary;auxiliary=undefined;previous?.onClose?.();selected=null;aiSelected=null;showingAi=false;showingStatus=false;clearDecorations();}
   function renderPanel() {
     if (!panel) return;
-    panel.title=auxiliary?.title||'Changeproof Review';
+    panel.title=auxiliary?.title||'Patch Review';
     dashboardToken=crypto.randomBytes(18).toString('hex');
     if(auxiliary)panel.webview.html=auxiliary.render(crypto.randomBytes(18).toString('hex'));
     else if(showingStatus)panel.webview.html=statusHtml(connection,crypto.randomBytes(18).toString('hex'));
@@ -125,11 +125,11 @@ function createFindingsView(vscode, context, {record,rerun,aiAction=()=>{},onCha
       applyDecorations();
       record({phase:'evidence_navigated',review_id:reviewId,role:step.role,file:step.location.file,line:step.location.start.line});
       return true;
-    } catch(error) {vscode.window.showWarningMessage('Changeproof: '+error.message);return false;}
+    } catch(error) {vscode.window.showWarningMessage('Patch: '+error.message);return false;}
   }
   function ensurePanel(){
     if (!panel) {
-      panel=vscode.window.createWebviewPanel('changeproof.findingDetails','Changeproof Review',vscode.ViewColumn.One,{enableScripts:true,localResourceRoots:[]});
+      panel=vscode.window.createWebviewPanel('changeproof.findingDetails','Patch Review',vscode.ViewColumn.One,{enableScripts:true,localResourceRoots:[]});
       context.subscriptions.push(panel);
       panel.onDidDispose(()=>{panel=undefined;clearSelection();});
       panel.webview.onDidReceiveMessage(async message=>{
@@ -196,7 +196,7 @@ function createFindingsView(vscode, context, {record,rerun,aiAction=()=>{},onCha
     }catch{
       // A superseded navigation must not invalidate the newly selected review.
       if(state?.ai?.token!==token||state.ai.selectionToken!==selectionToken)return false;
-      state.ai.stale=true;clearDecorations();refresh();vscode.window.showWarningMessage('Changeproof: AI reference is unavailable, stale or not a current-file reference. Refresh AI preview explicitly.');return false;
+      state.ai.stale=true;clearDecorations();refresh();vscode.window.showWarningMessage('Patch: AI reference is unavailable, stale or not a current-file reference. Refresh AI preview explicitly.');return false;
     }
   }
   function watch(folder) {
@@ -235,7 +235,7 @@ function createFindingsView(vscode, context, {record,rerun,aiAction=()=>{},onCha
       try {
         const target=validatedTarget(f.location),uri=vscode.Uri.file(target);
         const diagnostic=new vscode.Diagnostic(range(f.location),f.explanation+'\nHEAD newness: '+String(f.newly_introduced)+'\nRuntime verification: '+String(f.runtime_verification)+'\n'+f.limitations.join('\n'),vscode.DiagnosticSeverity.Warning);
-        diagnostic.source='Changeproof (static)';diagnostic.code=f.rule_id;
+        diagnostic.source='Patch (static)';diagnostic.code=f.rule_id;
         if(f.rule_id==='CP002')diagnostic.relatedInformation=stepsFor(f).filter(s=>s.role!=='logging').map(s=>new vscode.DiagnosticRelatedInformation(new vscode.Location(vscode.Uri.file(validatedTarget(s.location)),range(s.location)),s.label));
         const entry=byFile.get(target)||{uri,values:[]};entry.values.push(diagnostic);byFile.set(target,entry);
       }catch{stale('A recorded evidence target could not be safely resolved.');break;}

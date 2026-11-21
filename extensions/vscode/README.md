@@ -1,13 +1,13 @@
-# Changeproof Local Review — 0.18.0
+# Patch Local Review — 0.19.0
 
 Review saved JS/TS and supported infrastructure configuration in this VS Code
-window. Click the **Changeproof shield icon** in the left Activity Bar. The
+window. Click the **Patch shield icon** in the left Activity Bar. The
 **Scan** view has a project-folder selector, review-mode dropdown, **Scan project**,
-**Open results** and **Settings** buttons. **Optional AI** includes its context-size
+**View scan results** and **Settings** buttons. **Review code with AI** includes its context-size
 dropdown, backend check/setup and preview action. Folder/mode choices persist
 for the workspace; options never trigger an automatic scan.
 
-**Check assistant claims…** compares supported completion-message assertions
+**Check an assistant answer…** compares supported completion-message assertions
 with local saved file/function evidence. Named functions also receive separate
 body observations: empty bodies, bare returns, explicit placeholder throws,
 literal returns or other body content. A declaration match is not a behavior
@@ -17,7 +17,7 @@ is read automatically and no pasted command or target code is executed.
 
 A completed review now automatically opens a dashboard with summary
 cards, searchable findings and evidence controls. Reopen it with
-**Changeproof: Open Review Dashboard**; one tab is reused. Choose **Current files** or **Changes since HEAD** in the sidebar, click
+**Patch: Open Review Dashboard**; one tab is reused. Choose **Saved project files** or **Changes since last commit** in the sidebar, click
 **Scan project**,
 and click findings to inspect and navigate their recorded evidence.
 
@@ -54,10 +54,10 @@ meaning or security correctness of the finding.
 
 Suggested AI edits are bounded line replacements checked against the exact
 saved text and JavaScript/TypeScript syntax. Review the before/after preview and
-click **Apply this patch** to apply and save; Changeproof then reruns local
+click **Apply this patch** to apply and save; Patch then reruns local
 static checks. It does not execute project tests or claim the patch is correct.
 
-Install `changeproof-local-0.18.0.vsix`, reload the existing window once, and
+Install `patch-local-0.19.0.vsix`, reload the existing window once, and
 review your project. Trusted Node 20.19+ is required; configure user-level
 `changeproof.nodePath` / `changeproof.checkovPath` if needed. Normal reviews do
 not open additional editor windows or create demos. **Run Demo** remains a

@@ -21,7 +21,7 @@ function createClaimController(vscode,context,ui,{otherBusy=()=>false,onBusyChan
   if(!folder)folder=(await vscode.window.showOpenDialog({title:'Choose project for assistant claim audit',canSelectFiles:false,canSelectFolders:true,canSelectMany:false}))?.[0]?.fsPath;
   if(!folder)return;
   const state={folder,response:'',report:null,running:false,stale:false,error:null};
-  state.page={title:'Changeproof Claim Audit',render(nonce){state.token=crypto.randomBytes(18).toString('hex');return claimHtml(state,nonce,state.token);},onMessage:message=>handle(state,message),onClose(){if(current===state){controller?.abort();stopWatching();state.response='';state.report=null;current=undefined;}}};
+  state.page={title:'Patch Claim Audit',render(nonce){state.token=crypto.randomBytes(18).toString('hex');return claimHtml(state,nonce,state.token);},onMessage:message=>handle(state,message),onClose(){if(current===state){controller?.abort();stopWatching();state.response='';state.report=null;current=undefined;}}};
   ui.showAuxiliary(state.page);current=state;
  }
  async function handle(state,message){

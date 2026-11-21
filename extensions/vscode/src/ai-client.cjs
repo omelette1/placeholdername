@@ -17,7 +17,7 @@ function createAiController(vscode,context,ui,{otherBusy=()=>false,onBusyChange=
  const setBusy=value=>{busy=value;onBusyChange();};
  const shared=()=>require(context.asAbsolutePath('out/ai-client.cjs'));
  const secretKey='changeproof.aiDevelopmentAccessToken';
- async function setToken(){const token=await vscode.window.showInputBox({title:'Changeproof development backend access token',prompt:'Must match server REVIEW_ACCESS_TOKEN. Stored in VS Code SecretStorage; never sent to Groq.',password:true,ignoreFocusOut:true,validateInput:value=>value.length<32||/\s/.test(value)?'Use at least 32 non-whitespace characters.':null});if(token!==undefined){if(token.length<32||/\s/.test(token))return;await context.secrets.store(secretKey,token);}}
+ async function setToken(){const token=await vscode.window.showInputBox({title:'Patch development backend access token',prompt:'Must match server REVIEW_ACCESS_TOKEN. Stored in VS Code SecretStorage; never sent to Groq.',password:true,ignoreFocusOut:true,validateInput:value=>value.length<32||/\s/.test(value)?'Use at least 32 non-whitespace characters.':null});if(token!==undefined){if(token.length<32||/\s/.test(token))return;await context.secrets.store(secretKey,token);}}
  function nodePath(){const value=vscode.workspace.getConfiguration('changeproof').inspect('nodePath')?.globalValue||'node';if(value!=='node'&&!path.isAbsolute(value))throw new Error('changeproof.nodePath must be an absolute trusted Node executable.');return value;}
  function dirty(folder){return (vscode.workspace.textDocuments||[]).some(d=>d.isDirty&&d.uri.scheme==='file'&&(()=>{const rel=path.relative(folder,d.uri.fsPath);return rel!== '..'&&!rel.startsWith('..'+path.sep)&&!path.isAbsolute(rel);})());}
  async function progress(title,work){controller=new AbortController();return vscode.window.withProgress({location:vscode.ProgressLocation.Notification,title,cancellable:true},async(_progress,token)=>{const cancel=token?.onCancellationRequested(()=>controller?.abort());try{return await work(controller.signal);}finally{cancel?.dispose();controller=undefined;}});}
@@ -37,7 +37,7 @@ function createAiController(vscode,context,ui,{otherBusy=()=>false,onBusyChange=
    ui.setAiConnection({...status,checking_smoke:true});
    try{
     const access=await context.secrets.get(secretKey);if(!access)throw new Error('missing_development_token');
-    const smoke=await progress('Changeproof: synthetic AI connection check (no workspace code)',signal=>shared().runSyntheticSmoke(status.url,access,status.health,{signal}));
+    const smoke=await progress('Patch: synthetic AI connection check (no workspace code)',signal=>shared().runSyntheticSmoke(status.url,access,status.health,{signal}));
     lastSmoke={...smoke,url:status.url};ui.setAiConnection({...status,smoke:lastSmoke,checking_smoke:false});
    }catch(error){
     const known={invalid_reference:'Invalid provider code references.',missing_comparison_references:'Provider omitted before/after references.',invalid_model_output:'Provider output failed schema validation.',invalid_response:'Provider response failed schema or request identity validation.',provider_auth:'Groq authentication failed. Check the server-side key.',provider_configuration:'Provider rejected the configured model/schema.',unauthorized:'Backend access token rejected. Set AI Review Access Token.',provider_quota:'Provider throttled or quota exhausted. No retry attempted.',throttled:'Backend/provider quota exhausted. No retry attempted.',provider_timeout:'Provider timed out.',provider_unavailable:'Provider unavailable.',provider_changed:'Backend provider/model changed during the check; refresh status.',missing_development_token:'Set AI Review Access Token. Do not enter the Groq key.'};
@@ -55,7 +55,7 @@ function createAiController(vscode,context,ui,{otherBusy=()=>false,onBusyChange=
    const url=shared().backendUrl(vscode.workspace.getConfiguration('changeproof').inspect('aiBackendUrl')?.globalValue||'http://127.0.0.1:4318');
    const configuredProfile=vscode.workspace.getConfiguration('changeproof').inspect('aiProfile')?.globalValue;
    const profile=['demo','full'].includes(configuredProfile)?configuredProfile:'demo';
-   const envelope=await progress('Changeproof: preparing local AI transmission preview',signal=>collect(nodePath(),context.asAbsolutePath('out/ai-context.cjs'),folder,signal,profile));
+   const envelope=await progress('Patch: preparing local AI transmission preview',signal=>collect(nodePath(),context.asAbsolutePath('out/ai-context.cjs'),folder,signal,profile));
    if(!envelope.request.files.length){ui.aiUpdate(token,{phase:'empty',error:'No eligible saved tracked JS/TS changes against HEAD. Nothing was sent.'});await ui.selectAi(token);return;}
    shared().checkRequest(envelope.request);ui.aiUpdate(token,{phase:'preview',envelope,url});await ui.selectAi(token);
   }catch{ui.aiUpdate(token,{phase:'error',error:'AI preview could not be collected. A readable Git HEAD baseline and trusted Node are required; check excluded, oversized or unsupported input. Local Current files review still works without Git. Nothing was sent.'});await ui.selectAi(token);}
@@ -68,7 +68,7 @@ function createAiController(vscode,context,ui,{otherBusy=()=>false,onBusyChange=
    const folder=ui.getState()?.folder;
    ui.aiUpdate(ai.token,{verification:{status:'checking'}});
    try{
-    await progress('Changeproof: rechecking saved AI evidence (no model request)',async signal=>{
+    await progress('Patch: rechecking saved AI evidence (no model request)',async signal=>{
      const node=nodePath(),snapshot=await collect(node,context.asAbsolutePath('out/ai-context.cjs'),folder,signal,ai.envelope.profile||'full');
      if(dirty(folder)||!sameSnapshot(ai.envelope,snapshot)||ui.getState()?.ai?.token!==ai.token||ai.stale)throw Error('stale');
      const verification=await verifyAiResponse(node,context.asAbsolutePath('out/ai-verify.cjs'),folder,ai.envelope.request,ai.response,signal);
@@ -102,11 +102,11 @@ function createAiController(vscode,context,ui,{otherBusy=()=>false,onBusyChange=
     edited=true;
     for(const document of documents.values())if(!await document.save())throw new Error('Patch applied in the editor but could not be saved. Save it manually before rerunning checks.');
     applied=true;
-    vscode.window.showInformationMessage('Changeproof applied the selected patch and is rerunning local static checks. Behavior and security correctness remain unverified.');
+    vscode.window.showInformationMessage('Patch applied the selected patch and is rerunning local static checks. Behavior and security correctness remain unverified.');
    }catch(error){
     const message=edited
-     ?'Changeproof applied the patch in the editor, but could not save it. Save manually; local checks were not rerun.'
-     :'Changeproof did not apply the proposed patch: '+(error.message||'saved-source validation failed.');
+     ?'Patch applied the patch in the editor, but could not save it. Save manually; local checks were not rerun.'
+     :'Patch did not apply the proposed patch: '+(error.message||'saved-source validation failed.');
     vscode.window.showWarningMessage(message);
    }
    finally{setBusy(false);}
@@ -117,10 +117,10 @@ function createAiController(vscode,context,ui,{otherBusy=()=>false,onBusyChange=
   if(type!=='ai_approve'||busy||otherBusy()||ai.phase!=='preview')return;
   setBusy(true);
   try{
-   const access=await context.secrets.get(secretKey);if(!access)throw new Error('Set AI Review Access Token using the Changeproof command. No source was sent.');
+   const access=await context.secrets.get(secretKey);if(!access)throw new Error('Set AI Review Access Token using the Patch command. No source was sent.');
    const node=nodePath();const folder=ui.getState().folder;
    ui.aiUpdate(ai.token,{phase:'checking'});
-   await progress('Changeproof: checking approved snapshot and requesting AI assessment',async signal=>{
+   await progress('Patch: checking approved snapshot and requesting AI assessment',async signal=>{
     const refreshed=await collect(node,context.asAbsolutePath('out/ai-context.cjs'),folder,signal,ai.envelope.profile||'full');
     if(dirty(folder)||!sameSnapshot(ai.envelope,refreshed)||ui.getState()?.ai?.token!==ai.token||signal.aborted)throw new Error('Project or saved inputs changed. Run AI Review Changes again and approve a refreshed preview. Nothing was sent.');
     // The exact approved object is serialized; refreshed content is never substituted.

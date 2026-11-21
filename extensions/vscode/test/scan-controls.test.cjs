@@ -24,7 +24,7 @@ function activate(fake,context){
 }
 test('manifest contributes a dedicated activity-bar icon, Scan webview and collapsed Results outline',()=>{
  const manifest=require('../package.json'),container=manifest.contributes.viewsContainers.activitybar.find(v=>v.id==='changeproof');
- assert.ok(container);assert.equal(container.title,'Changeproof');assert.ok(fs.readFileSync(path.resolve(__dirname,'..',container.icon),'utf8').includes('<svg'));
+ assert.ok(container);assert.equal(container.title,'Patch');assert.ok(fs.readFileSync(path.resolve(__dirname,'..',container.icon),'utf8').includes('<svg'));
  const views=manifest.contributes.views.changeproof;assert.ok(views.some(v=>v.id==='changeproof.controls'&&v.type==='webview'));assert.ok(views.some(v=>v.id==='changeproof.findings'&&v.visibility==='collapsed'));assert.ok(!manifest.contributes.views.explorer);
 });
 test('visible folder/mode/scan controls reuse a selected folder without a mode picker and persist the choice',async t=>{
@@ -49,7 +49,7 @@ test('profile changes write only the user setting and optional AI uses the selec
 });
 test('Verify AI output is visible outside optional review and dispatches only registered evidence actions',async t=>{
  const x=fixture(t),html=x.view.webview.html;
- assert.ok(html.indexOf('Verify AI output')<html.indexOf('id="ai"'));
+ assert.ok(html.indexOf('Check an assistant answer')<html.indexOf('id="ai"'));
  assert.match(html,/Test evidence guard/);assert.match(html,/Open last AI evidence/);
  assert.match(html,/Leave Small selected to start/);
  await x.send('guard');assert.deepEqual(x.fake.executedCommands.at(-1),['changeproof.testEvidenceGuard']);
