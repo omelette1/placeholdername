@@ -1,0 +1,9 @@
+{
+  "header-leak": "01-authorization-header-in-logs",
+  "password-log": "02-password-in-logs",
+  "safe-logging": "03-safe-logging-control",
+  "tls-bypass": "04-tls-check-disabled",
+  "dynamic-eval": "05-risky-eval",
+  "empty-function": "06-empty-function",
+  "ownership-change": "07-ownership-check-removed-manual-review"
+}

@@ -34,6 +34,12 @@ does not execute project tests or scripts.
 
 ## Demo profiles
 
+For regular folders you can select directly, use
+[samples/demo-projects](samples/demo-projects/README.md). Choose one issue-labeled
+folder, select **Saved project files**, and click **Scan project**. No demo picker
+or extension update is required for these source samples.
+
+
 Expand **Try a sample project** and click **Choose a sample profile…**. Seven
 isolated authored profiles cover header logging, password-shaped logging, a
 safe logging control, TLS bypass, direct eval, an empty implementation claim,

@@ -8,6 +8,7 @@ const {fakeVscode}=require('./mock-vscode.cjs');
 test('seven packaged sample profiles match authored scanner and claim outcomes without running sample code',async t=>{
  const root=fs.mkdtempSync(path.join(os.tmpdir(),'patch-sample-profiles-'));t.after(()=>fs.rmSync(root,{recursive:true,force:true}));
  const expectedIndex=JSON.parse(fs.readFileSync(path.resolve(__dirname,'../../../samples/profiles/index.json'),'utf8'));
+ const plainRoot=path.resolve(__dirname,'../../../samples/demo-projects'),plainFolders=JSON.parse(fs.readFileSync(path.join(plainRoot,'index.json'),'utf8'));
  assert.deepEqual(listDemoProfiles().map(p=>p.id),expectedIndex.map(p=>p.id));
  const tlsBefore=process.env.NODE_TLS_REJECT_UNAUTHORIZED;
  for(const p of listDemoProfiles()){
@@ -15,6 +16,12 @@ test('seven packaged sample profiles match authored scanner and claim outcomes w
   const directory=await createDemo(root,[],()=>{},p.id);
   assert.equal(fs.readFileSync(path.join(directory,'app.ts'),'utf8'),fs.readFileSync(path.join(sample,'after.ts'),'utf8'));
   assert.equal(fs.readFileSync(path.join(directory,'claims.txt'),'utf8'),fs.readFileSync(path.join(sample,'claims.txt'),'utf8'));
+  const plain=path.join(plainRoot,plainFolders[p.id]);
+  assert.equal(fs.readFileSync(path.join(plain,'app.ts'),'utf8'),fs.readFileSync(path.join(sample,'after.ts'),'utf8'));
+  const plainReport=await runEngine(process.execPath,path.resolve(__dirname,'../out/cli.cjs'),plain,()=>{},{mode:'current'});
+  assert.equal(plainReport.analysis_complete,true,p.id+' plain folder');
+  assert.deepEqual([...new Set(plainReport.findings.map(f=>f.rule_id))].sort(),expected.local_rule_ids,p.id+' plain folder');
+  assert.equal(plainReport.runtime_verification,false);
   for(const mode of ['current','changes']){
    const report=await runEngine(process.execPath,path.resolve(__dirname,'../out/cli.cjs'),directory,()=>{},{mode});
    assert.equal(report.analysis_complete,true,p.id+' '+mode);

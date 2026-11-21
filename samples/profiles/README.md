@@ -1,5 +1,8 @@
 # Patch sample profiles
 
+For ordinary folders to select directly in **Choose folder…**, use
+[demo-projects](../demo-projects/README.md) and **Saved project files** mode.
+
 In the sidebar, expand **Try a sample project** and click **Choose a sample
 profile…**. The same picker is available through **Patch: Run Demo**.
 
