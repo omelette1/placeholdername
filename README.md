@@ -1,4 +1,10 @@
-# Changeproof 0.17.0
+# Changeproof 0.18.0
+
+The sidebar now has **Verify AI output**: paste assistant claims, run local
+evidence-guard examples, or open the last AI evidence. AI result pages offer
+**Recheck saved evidence** without another model request. See the
+[UI guide](docs/verify-ai-output-0.18.0.md). These checks do not prove an AI
+interpretation or measure its real-world accuracy.
 
 Review saved JavaScript/TypeScript and supported infrastructure configuration
 in VS Code. Read potential issues, follow their evidence, and see what could
@@ -60,7 +66,7 @@ layout toolbar button. One tab is reused for dashboard, finding and AI views.
 
 ## Use the extension
 
-1. Install `artifacts/changeproof-local-0.17.0.vsix` using **Extensions: Install
+1. Install `artifacts/changeproof-local-0.18.0.vsix` using **Extensions: Install
    from VSIX…**. Reload the **existing** window once after updating.
 2. Open the project folder you want to inspect. Save your files.
 3. Click the **Changeproof shield icon** on the left, then select your project

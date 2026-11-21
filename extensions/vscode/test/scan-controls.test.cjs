@@ -47,6 +47,15 @@ test('profile changes write only the user setting and optional AI uses the selec
  const folder=path.join(x.directory,'ai-project');fs.mkdirSync(folder);x.fake.setDialog([x.fake.vscode.Uri.file(folder)]);await x.send('browse');await x.send('ai');assert.deepEqual(x.ais,[folder]);assert.equal(x.ui.model().mode,'current');
  await x.send('health');assert.deepEqual(x.fake.executedCommands.at(-1),['changeproof.refreshAiStatus']);assert.ok(!x.fake.executedCommands.some(([name])=>name==='changeproof.checkAiConnection'));
 });
+test('Verify AI output is visible outside optional review and dispatches only registered evidence actions',async t=>{
+ const x=fixture(t),html=x.view.webview.html;
+ assert.ok(html.indexOf('Verify AI output')<html.indexOf('id="ai"'));
+ assert.match(html,/Test evidence guard/);assert.match(html,/Open last AI evidence/);
+ assert.match(html,/Leave Small selected to start/);
+ await x.send('guard');assert.deepEqual(x.fake.executedCommands.at(-1),['changeproof.testEvidenceGuard']);
+ await x.send('evidence');assert.deepEqual(x.fake.executedCommands.at(-1),['changeproof.showAiSummary']);
+ assert.equal(x.scans.length,0);assert.equal(x.ais.length,0);
+});
 test('busy scans disable controls and duplicate clicks cannot start concurrent work or rewrite settings',async t=>{
  let release,entered;const started=new Promise(r=>entered=r),calls=[];
  const x=fixture(t,{review:async(...args)=>{calls.push(args);entered();await new Promise(r=>release=r);}});

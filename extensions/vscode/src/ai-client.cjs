@@ -62,9 +62,27 @@ function createAiController(vscode,context,ui,{otherBusy=()=>false,onBusyChange=
   finally{setBusy(false);}
  }
  async function action(type,ai,message){
+  if(type==='ai_recheck'){
+   if(busy||otherBusy()||ai.phase!=='completed'||ai.stale||!ai.response)return;
+   setBusy(true);
+   const folder=ui.getState()?.folder;
+   ui.aiUpdate(ai.token,{verification:{status:'checking'}});
+   try{
+    await progress('Changeproof: rechecking saved AI evidence (no model request)',async signal=>{
+     const node=nodePath(),snapshot=await collect(node,context.asAbsolutePath('out/ai-context.cjs'),folder,signal,ai.envelope.profile||'full');
+     if(dirty(folder)||!sameSnapshot(ai.envelope,snapshot)||ui.getState()?.ai?.token!==ai.token||ai.stale)throw Error('stale');
+     const verification=await verifyAiResponse(node,context.asAbsolutePath('out/ai-verify.cjs'),folder,ai.envelope.request,ai.response,signal);
+     const final=await collect(node,context.asAbsolutePath('out/ai-context.cjs'),folder,signal,ai.envelope.profile||'full');
+     if(dirty(folder)||!sameSnapshot(ai.envelope,final)||ui.getState()?.ai?.token!==ai.token||ai.stale)throw Error('stale');
+     ui.aiUpdate(ai.token,{verification});
+    });
+   }catch(error){ui.aiUpdate(ai.token,{...(error.message==='stale'?{stale:true}:{}),verification:{status:error.message==='stale'?'stale':'unavailable',reason:'Saved evidence could not be established. Refresh the preview if inputs changed. No corroboration is established.'}});}
+   finally{setBusy(false);}
+   return;
+  }
   if(type==='ai_apply_patch'){
    const index=message?.index,patch=ai.verification?.findings?.[index]?.patch;
-   if(busy||otherBusy()||ai.phase!=='completed'||ai.stale||patch?.status!=='ready'||!Number.isSafeInteger(index))return;
+   if(busy||otherBusy()||ai.phase!=='completed'||ai.stale||ai.verification?.status!=='completed'||patch?.status!=='ready'||!Number.isSafeInteger(index))return;
    setBusy(true);let edited=false,applied=false;
    try{
     const folder=ui.getState()?.folder,node=nodePath(),current=await collect(node,context.asAbsolutePath('out/ai-context.cjs'),folder,undefined,ai.envelope.profile||'full');
@@ -122,7 +140,7 @@ function createAiController(vscode,context,ui,{otherBusy=()=>false,onBusyChange=
     ui.aiUpdate(ai.token,{phase:'completed',response,stale:finalStale,verification});
    });
    await ui.selectAi(ai.token);
-  }catch(error){const safeMessages=['Set AI Review Access Token','Project or saved inputs changed','Authentication failed','Review quota','Review service','Review provider','Provider output','Review request','AI review cancelled','AI review timed out','AI review service'];const message=safeMessages.some(p=>error.message.startsWith(p))?error.message:'AI review failed validation or could not complete. No valid assessment is available.';ui.aiUpdate(ai.token,{phase:'error',error:message,response:undefined});await ui.selectAi(ai.token);}
+  }catch(error){const safeMessages=['Set AI Review Access Token','Project or saved inputs changed','Authentication failed','Review quota','Review service','Review provider','Provider output','Review request','AI review cancelled','AI review timed out','AI review service'];const message=safeMessages.some(p=>error.message.startsWith(p))?error.message:'AI review failed validation or could not complete. No valid assessment is available.';ui.aiUpdate(ai.token,{phase:'error',error:message,errorCode:['invalid_evidence_quote','invalid_reference','invalid_response','invalid_model_output'].includes(error.code||error.message)?(error.code||error.message):null,response:undefined,verification:undefined});await ui.selectAi(ai.token);}
   finally{setBusy(false);}
  }
  if(vscode.workspace.onDidChangeConfiguration)context.subscriptions.push(vscode.workspace.onDidChangeConfiguration(event=>{if(event.affectsConfiguration('changeproof.aiBackendUrl')){statusGeneration++;lastSmoke=null;controller?.abort();ui.setAiConnection({state:'not_checked'});}}));

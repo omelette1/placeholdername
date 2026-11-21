@@ -52,7 +52,7 @@ export function validateReferences(assessment,request){
    const chunk=file.chunks.find(c=>c.revision===quote.revision&&c.revision_id===quote.revision_id&&quote.start_line>=c.start_line&&quote.end_line<=c.end_line);
    if(!chunk)throw new Error('invalid_evidence_quote');
    const actual=chunk.text.split('\n').slice(quote.start_line-chunk.start_line,quote.end_line-chunk.start_line+1).map(line=>line.replace(/\r$/,'')).join('\n');
-   if(actual!==quote.quote)throw new Error('invalid_evidence_quote');
+   if(!quote.quote.trim()||actual!==quote.quote)throw new Error('invalid_evidence_quote');
    quoteRevisions.add(quote.revision);
   }
   if(!quoteRevisions.has('after'))throw new Error('missing_current_quote');

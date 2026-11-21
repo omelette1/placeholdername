@@ -13,6 +13,27 @@ async function setup(t,{provider,withGit=true,baselineCode,updatedCode,rerun}={}
  return {root,file,fake,context,ui,ai,records,calls:()=>calls,url,secrets};
 }
 async function waitFor(fn){for(let i=0;i<200;i++){if(fn())return;await new Promise(resolve=>setTimeout(resolve,20));}throw new Error('UI operation did not complete');}
+test('UI rechecks saved evidence without another model request and invalidates edited snapshots',async t=>{
+ const x=await setup(t);await x.ai.reviewFolder(x.root);const ai=x.ui.getState().ai;
+ await x.ai.action('ai_approve',ai);assert.equal(x.calls(),1);
+ assert.match(x.ui.getPanel().webview.html,/AI evidence status/);
+ assert.match(x.ui.getPanel().webview.html,/Recheck saved evidence/);
+ await x.ui.getPanel().messages.listeners[0]({type:'ai_recheck',token:ai.token});
+ assert.equal(ai.verification.status,'completed');assert.equal(x.calls(),1);
+ fs.appendFileSync(x.file,'// changed after review\n');
+ await x.ui.getPanel().messages.listeners[0]({type:'ai_recheck',token:ai.token});
+ assert.equal(ai.stale,true);assert.equal(ai.verification.status,'stale');assert.equal(x.calls(),1);
+ assert.match(x.ui.getPanel().webview.html,/STALE/);
+});
+test('fabricated provider evidence is visibly rejected and discarded, with no patch to apply',async t=>{
+ const {mockProvider}=await import('../../../services/review-api/src/providers.mjs');
+ const {assessmentFixture}=await import('../../../packages/ai/test/fixtures.mjs');
+ const x=await setup(t,{provider:mockProvider(request=>{const a=assessmentFixture(request);a.findings[0].evidence_quotes[0].quote='invented source';return a;})});
+ await x.ai.reviewFolder(x.root);const ai=x.ui.getState().ai;await x.ai.action('ai_approve',ai);
+ assert.equal(ai.phase,'error');assert.equal(ai.errorCode,'invalid_evidence_quote');assert.equal(ai.response,undefined);
+ assert.match(x.ui.getPanel().webview.html,/REJECTED — AI evidence failed validation/);
+ assert.ok(!x.ui.getPanel().webview.html.includes('data-ai-patch'));
+});
 test('the app automatically cross-checks its model response once, exposes static support and navigates from its summary',async t=>{
  const {mockProvider}=await import('../../../services/review-api/src/providers.mjs');const {assessmentFixture}=await import('../../../packages/ai/test/fixtures.mjs');let requests=0;
  const x=await setup(t,{baselineCode:'function route(req){\n const value="synthetic";\n console.log(value);\n}\n',updatedCode:'function route(req){\n const value=req.headers.authorization;\n console.log(value);\n}\n',provider:mockProvider(req=>{requests++;return assessmentFixture(req,'sensitive_data_exposure');})});

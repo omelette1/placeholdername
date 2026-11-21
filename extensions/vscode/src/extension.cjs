@@ -7,6 +7,7 @@ const {createDemo} = require('./demo.cjs');
 const {createFindingsView} = require('./findings-view.cjs');
 const {createScanControls}=require('./scan-controls.cjs');
 const {createClaimController}=require('./claim-controller.cjs');
+const {createEvidenceGuard}=require('./evidence-guard-ui.cjs');
 function activate(context) {
   let running=false, demoRunning=false;
   const output=vscode.window.createOutputChannel('Changeproof Review Details');
@@ -21,6 +22,7 @@ function activate(context) {
   ai=createAiController(vscode,context,ui,{otherBusy:()=>running||demoRunning||claims?.isBusy(),onBusyChange:()=>controls?.refresh(),rerun:(folder,options)=>review(folder,options)});
   claims=createClaimController(vscode,context,ui,{otherBusy:()=>running||demoRunning||ai.isBusy(),onBusyChange:()=>controls?.refresh()});
   controls=createScanControls(vscode,context,{review,aiReview:folder=>ai.reviewFolder(folder),getReview:()=>ui.getState(),getConnection:()=>ui.getAiConnection(),isBusy:()=>running||demoRunning||ai.isBusy()||claims.isBusy()});
+  createEvidenceGuard(vscode,context,ui);
   function showDetails(){output.show(true);}
   async function selectFolder(){
     const chosen=await vscode.window.showOpenDialog({title:'Select the exact folder to review',openLabel:'Review This Folder',canSelectFolders:true,canSelectFiles:false,canSelectMany:false});
