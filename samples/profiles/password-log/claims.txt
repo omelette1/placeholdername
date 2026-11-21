@@ -1,0 +1,4 @@
+Function `signIn` exists in `app.ts`.
+Implemented function `signIn` in `app.ts`.
+File `not-delivered.ts` exists.
+All tests passed.

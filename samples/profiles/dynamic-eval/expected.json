@@ -1,0 +1,15 @@
+{
+  "profile": "dynamic-eval",
+  "local_rule_ids": [
+    "CP004"
+  ],
+  "claim_counts": {
+    "matched": 1,
+    "contradicted": 1,
+    "unverified": 2
+  },
+  "empty_body_observations": 0,
+  "notes": "Flag direct eval syntax. The sample does not establish attacker control.",
+  "runtime_verification": false,
+  "real_world_accuracy_measured": false
+}

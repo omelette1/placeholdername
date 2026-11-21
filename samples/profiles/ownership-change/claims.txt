@@ -1,0 +1,4 @@
+Function `readDocument` exists in `app.ts`.
+Implemented function `readDocument` in `app.ts`.
+File `not-delivered.ts` exists.
+All tests passed.

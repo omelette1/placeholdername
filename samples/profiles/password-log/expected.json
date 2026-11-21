@@ -1,0 +1,15 @@
+{
+  "profile": "password-log",
+  "local_rule_ids": [
+    "CP001"
+  ],
+  "claim_counts": {
+    "matched": 1,
+    "contradicted": 1,
+    "unverified": 2
+  },
+  "empty_body_observations": 0,
+  "notes": "Show the narrow sensitive-name logging rule. No real password is supplied.",
+  "runtime_verification": false,
+  "real_world_accuracy_measured": false
+}

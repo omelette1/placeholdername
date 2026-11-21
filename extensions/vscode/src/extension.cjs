@@ -3,7 +3,7 @@ const path = require('node:path');
 const fs = require('node:fs');
 const {runEngine} = require('./client.cjs');
 const {createAiController}=require('./ai-client.cjs');
-const {createDemo} = require('./demo.cjs');
+const {createDemo,listDemoProfiles} = require('./demo.cjs');
 const {createFindingsView} = require('./findings-view.cjs');
 const {createScanControls}=require('./scan-controls.cjs');
 const {createClaimController}=require('./claim-controller.cjs');
@@ -75,17 +75,23 @@ function activate(context) {
     const mode=await vscode.window.showQuickPick([{label:'Current files',description:'Saved JS/TS files, including eligible untracked files. No Git or commit required.',mode:'current'},{label:'Changes since HEAD',description:'Tracked staged and unstaged changes compared with HEAD. Requires a Git baseline.',mode:'changes'}],{title:'Patch: Review Project',placeHolder:folder.fsPath,ignoreFocusOut:true});
     if(mode)await review(folder.fsPath,{mode:mode.mode,selection:folders.length?'workspace':'explicit_folder_picker'});
   }
-  async function runDemo(){
+  async function runDemo(profileId){
     if(ai?.isBusy()||claims?.isBusy()||running||demoRunning){vscode.window.showInformationMessage('A local review is already running.');return;}
     demoRunning=true;
     try{
+      const profiles=listDemoProfiles();
+      const choice=typeof profileId==='string'?profiles.find(p=>p.id===profileId):await vscode.window.showQuickPick(profiles.map(p=>({label:p.label,description:p.description,detail:p.expectedRules.length?'Expected local patterns: '+p.expectedRules.join(', '):'Expected: no supported local pattern. This does not establish safety.',profile:p.id})),{title:'Patch: Choose a sample profile',placeHolder:'Authored examples only. No real credentials, target execution or model calls.',ignoreFocusOut:true});
+      if(!choice)return;
+      const selected=profiles.find(p=>p.id===(choice.profile||choice.id));if(!selected)throw Error('Unknown sample profile.');
       const protectedFolders=(vscode.workspace.workspaceFolders||[]).filter(f=>f.uri.scheme==='file').map(f=>f.uri.fsPath);
-      const directory=await vscode.window.withProgress({location:vscode.ProgressLocation.Notification,title:'Patch: creating synthetic demo',cancellable:false},progress=>createDemo(path.join(context.globalStorageUri.fsPath,'demos'),protectedFolders,message=>progress.report({message})));
+      const directory=await vscode.window.withProgress({location:vscode.ProgressLocation.Notification,title:'Patch: creating synthetic demo',cancellable:false},progress=>createDemo(path.join(context.globalStorageUri.fsPath,'demos'),protectedFolders,message=>progress.report({message}),selected.id));
+      controls.setSelection(directory,'changes');
       const result=await review(directory,{demo:true});
       if(!result||!result.analysis_complete)return;
-      if(!result.findings.some(f=>f.rule_id==='CP002')){offerDetails(`Patch demo reviewed ${directory}, but no CP002 finding was produced. See review details.`);return;}
-      await ui.openFirst();
-      record({phase:'demo_opened',selected_folder:directory,selection:'synthetic_demo',finding_rule:result.findings[0].rule_id,finding_line:result.findings[0].location.start.line,details_open:true,coverage:result.coverage.status,runtime_verification:false});
+      const actual=[...new Set(result.findings.map(f=>f.rule_id))].sort(),expected=[...selected.expectedRules].sort();
+      if(JSON.stringify(actual)!==JSON.stringify(expected)){offerDetails('Patch sample results differed from their authored expectations. Inspect the review details.');return;}
+      if(result.findings.length)await ui.openFirst();
+      record({phase:'demo_opened',sample_profile:selected.id,selected_folder:directory,selection:'synthetic_demo',finding_rule:result.findings[0]?.rule_id||null,finding_line:result.findings[0]?.location.start.line||null,details_open:result.findings.length>0,coverage:result.coverage.status,runtime_verification:false});
     }catch(error){record({phase:'demo_error',reason:error.message});offerDetails('Patch demo failed: '+error.message,true);}
     finally{demoRunning=false;}
   }

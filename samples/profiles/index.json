@@ -1,0 +1,37 @@
+[
+  {
+    "id": "header-leak",
+    "label": "Authorization header in logs",
+    "description": "Trace a newly logged authorization header through two assignments."
+  },
+  {
+    "id": "password-log",
+    "label": "Password-shaped value in logs",
+    "description": "Show the narrow sensitive-name logging rule. No real password is supplied."
+  },
+  {
+    "id": "safe-logging",
+    "label": "Safe logging control",
+    "description": "A constant diagnostic message should produce no supported findings."
+  },
+  {
+    "id": "tls-bypass",
+    "label": "TLS verification disabled",
+    "description": "Detect an explicit Node TLS verification bypass without making network requests."
+  },
+  {
+    "id": "dynamic-eval",
+    "label": "Dynamic code execution",
+    "description": "Flag direct eval syntax. The sample does not establish attacker control."
+  },
+  {
+    "id": "empty-function",
+    "label": "Empty implementation claim",
+    "description": "The function exists, but its empty body cannot establish implementation correctness."
+  },
+  {
+    "id": "ownership-change",
+    "label": "Ownership check removed",
+    "description": "General authorization policy needs AI/manual review. Local rules do not prove this regression."
+  }
+]

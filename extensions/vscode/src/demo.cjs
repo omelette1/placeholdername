@@ -4,8 +4,8 @@ const os = require('node:os');
 const {execFile} = require('node:child_process');
 const {promisify} = require('node:util');
 const execute = promisify(execFile);
-const BASELINE = '// Synthetic demo: Patch never executes this file.\nfunction reviewRequest(req) {\n  const raw = "public diagnostic value";\n  const payload = raw;\n  console.log(payload);\n}\n';
-const CHANGED = BASELINE.replace('"public diagnostic value"', 'req.headers.authorization');
+function profiles(){return JSON.parse(fs.readFileSync(path.join(__dirname,'../out/demo-profiles.json'),'utf8'));}
+function listDemoProfiles(){return profiles().map(({id,label,description,expected})=>({id,label,description,expectedRules:expected.local_rule_ids}));}
 
 function canonicalCandidate(candidate) {
   let parent = path.resolve(candidate);
@@ -22,14 +22,16 @@ function inside(parent, child) {
   const relative = path.relative(parent, child);
   return relative === '' || (!relative.startsWith('..' + path.sep) && relative !== '..' && !path.isAbsolute(relative));
 }
-async function createDemo(storageDirectory, protectedFolders = [], progress = () => {}) {
+async function createDemo(storageDirectory, protectedFolders = [], progress = () => {}, profileId = 'header-leak') {
+  const profile=profiles().find(p=>p.id===profileId);
+  if(!profile)throw new Error('Unknown built-in sample profile.');
   const storage = canonicalCandidate(storageDirectory);
   // Check before creating anything; never initialize a repository in an actual workspace.
   for (const folder of protectedFolders) {
     if (inside(canonicalCandidate(folder), storage)) throw new Error('Demo storage is inside the current workspace; refusing to modify that project.');
   }
   fs.mkdirSync(storage, {recursive: true});
-  const directory = fs.mkdtempSync(path.join(storage, 'authorization-'));
+  const directory = fs.mkdtempSync(path.join(storage, profileId==='header-leak'?'authorization-':profileId+'-'));
   const env = Object.fromEntries(Object.entries(process.env).filter(([key]) => !key.startsWith('GIT_')));
   Object.assign(env, {GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: os.devNull, GIT_TERMINAL_PROMPT: '0', GIT_NO_LAZY_FETCH: '1', GIT_OPTIONAL_LOCKS: '0'});
   const git = args => execute('git', ['--no-optional-locks', '-c', 'core.fsmonitor=false', '-c', 'core.hooksPath=' + os.devNull,
@@ -38,11 +40,17 @@ async function createDemo(storageDirectory, protectedFolders = [], progress = ()
   try {
     progress('Creating a synthetic repository in dedicated demo storage');
     await git(['init', '--quiet', '--template=', '--initial-branch=demo']);
-    fs.writeFileSync(path.join(directory, 'app.ts'), BASELINE, {flag: 'wx'});
+    // Exclude the sample's answer/expectation metadata from the code review.
+    // These two documentation files remain available for the user to open.
+    fs.mkdirSync(path.join(directory,'.git','info'),{recursive:true});
+    fs.writeFileSync(path.join(directory,'.git','info','exclude'),'claims.txt\nexpected.json\n',{flag:'wx'});
+    fs.writeFileSync(path.join(directory, 'app.ts'), profile.before, {flag: 'wx'});
+    fs.writeFileSync(path.join(directory, 'claims.txt'), profile.claims, {flag: 'wx'});
+    fs.writeFileSync(path.join(directory, 'expected.json'), JSON.stringify(profile.expected,null,2)+'\n', {flag: 'wx'});
     progress('Committing the synthetic baseline only');
     await git(['add', '--', 'app.ts']);
     await git(['commit', '--quiet', '-m', 'Synthetic safe baseline']);
-    fs.writeFileSync(path.join(directory, 'app.ts'), CHANGED);
+    fs.writeFileSync(path.join(directory, 'app.ts'), profile.after);
     return directory;
   } catch {
     // This was a freshly allocated directory, never a user's existing repository.
@@ -51,7 +59,7 @@ async function createDemo(storageDirectory, protectedFolders = [], progress = ()
   }
 }
 function demoEvidence(directory, finding) {
-  const lines = ['CHANGEPROOF — SYNTHETIC DEMO', '', 'Reviewed folder: ' + directory, '', finding.rule_id + ': ' + finding.title,
+  const lines = ['PATCH — SYNTHETIC DEMO', '', 'Reviewed folder: ' + directory, '', finding.rule_id + ': ' + finding.title,
     'Potential exposure; not a confirmed runtime leak.', '', 'SOURCE → ASSIGNMENT → LOGGING'];
   for (const flow of finding.evidence.paths) {
     const at = loc => loc.file + ':' + loc.start.line;
@@ -63,4 +71,4 @@ function demoEvidence(directory, finding) {
   lines.push('Runtime verification: false', '', 'LIMITATIONS', ...finding.limitations.map(text => '• ' + text));
   return lines.join('\n');
 }
-module.exports = {createDemo, demoEvidence};
+module.exports = {createDemo, demoEvidence, listDemoProfiles};

@@ -1,4 +1,4 @@
-# Patch development AI review API (0.19.0)
+# Patch development AI review API (0.20.0)
 
 Requires Node 22+, Git for context collection, and root `npm ci`. From the repository root:
 

@@ -36,7 +36,7 @@ async function run(){
  fs.writeFileSync(file,'console.log(password');await vscode.commands.executeCommand('changeproof.reviewLocalChanges');assert.equal(diagnostics().length,0);assert.ok(provider.getChildren().some(g=>g.label==='Setup / processing errors (1)'));
  function snapshot(root){const rows=[];function walk(dir){for(const item of fs.readdirSync(dir,{withFileTypes:true})){const file=path.join(dir,item.name);if(item.isDirectory())walk(file);else if(item.isFile())rows.push([path.relative(root,file),crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex')]);}}walk(root);return rows.sort();}
  const before=snapshot(folder.uri.fsPath),workspaceBefore=vscode.workspace.workspaceFolders.map(f=>f.uri.toString());
- await vscode.commands.executeCommand('changeproof.runDemo');
+ await vscode.commands.executeCommand('changeproof.runDemo','header-leak');
  const demo=latest('demo_opened'),presented=latest('review_presented');assert.ok(demo);assert.equal(demo.coverage,'analyzed');assert.equal(diagnostics().length,1);assert.equal(diagnostics()[0].d.code,'CP002');assert.equal(vscode.window.activeTextEditor.selection.start.line,4);assert.equal(vscode.window.activeTextEditor.document.uri.fsPath,path.join(demo.selected_folder,'app.ts'));
  assert.match(panel.webview.html,/Synthetic demo/);assert.match(panel.webview.html,/Source → assignments \/ calls → logging/);assert.ok(panel.webview.html.includes('declaration: raw'));assert.ok(panel.webview.html.includes('declaration: payload'));assert.match(panel.webview.html,/CP002/);assert.match(panel.webview.html,/Runtime verification/);assert.match(panel.webview.html,/analyzed/);
  assert.ok(provider.getChildren().find(g=>g.label==='Review').children.some(i=>i.label.startsWith('Synthetic demo:')));

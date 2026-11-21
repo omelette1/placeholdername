@@ -1,0 +1,4 @@
+Function `configureClient` exists in `app.ts`.
+Implemented function `configureClient` in `app.ts`.
+File `not-delivered.ts` exists.
+All tests passed.

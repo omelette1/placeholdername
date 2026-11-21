@@ -1,0 +1,13 @@
+{
+  "profile": "ownership-change",
+  "local_rule_ids": [],
+  "claim_counts": {
+    "matched": 1,
+    "contradicted": 1,
+    "unverified": 2
+  },
+  "empty_body_observations": 0,
+  "notes": "General authorization policy needs AI/manual review. Local rules do not prove this regression.",
+  "runtime_verification": false,
+  "real_world_accuracy_measured": false
+}

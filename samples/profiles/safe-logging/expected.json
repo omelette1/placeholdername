@@ -1,0 +1,13 @@
+{
+  "profile": "safe-logging",
+  "local_rule_ids": [],
+  "claim_counts": {
+    "matched": 1,
+    "contradicted": 1,
+    "unverified": 2
+  },
+  "empty_body_observations": 0,
+  "notes": "A constant diagnostic message should produce no supported findings.",
+  "runtime_verification": false,
+  "real_world_accuracy_measured": false
+}

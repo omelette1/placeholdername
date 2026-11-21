@@ -13,7 +13,7 @@ function controlsHtml(model,nonce,token){
   <label for="folder">1. Choose your project</label><select id="folder" ${disabled} aria-label="Project folder"><option value="">Choose a project…</option>${model.folders.map((folder,i)=>`<option value="${i}" ${folder.path===model.folder?'selected':''}>${e(folder.label)}</option>`).join('')}</select><p class="path">${e(model.folder||'No project selected')}</p><button data-action="browse" ${disabled}>Choose folder…</button>
   <label for="mode">2. Choose scan scope</label><select id="mode" ${disabled}><option value="current" ${model.mode==='current'?'selected':''}>Saved project files · start here</option><option value="changes" ${model.mode==='changes'?'selected':''}>Changes since last commit</option></select><p class="help">${e(modeHelp)}</p>
   <button class="primary" data-action="scan" ${model.busy||!model.folder?'disabled':''}>${model.busy?'Working…':'Scan project'}</button><p class="foot">Local checks · no code uploads · saved files only. Save your edits before scanning.</p>
-  <div class="row"><button data-action="results">View scan results</button><button data-action="settings">Settings</button></div>
+  <details><summary>Try a sample project</summary><p class="help">Choose an authored example with expected findings and a sample assistant answer. Patch creates a separate sample folder and leaves your project files unchanged.</p><button data-action="demo" ${disabled}>Choose a sample profile…</button></details><div class="row"><button data-action="results">View scan results</button><button data-action="settings">Settings</button></div>
   <section class="section" aria-label="Verify AI output"><h2>Check an assistant answer</h2><p class="help">Paste an AI completion message. Check supported file and function claims against your saved project.</p><button class="secondary" data-action="claims" ${model.busy||!model.folder?'disabled':''}>Check an assistant answer…</button><p class="help">Local only · no AI backend needed. Check assistant claims about files and functions; test success and behavior remain unverified.</p><details><summary>Try the evidence checks</summary><p class="help">See how invented source quotations are rejected using built-in examples. No project code or model calls.</p><button data-action="guard" ${disabled}>Test evidence guard</button></details><button data-action="evidence" ${model.busy||!model.review?.ai?'disabled':''}>Open last AI evidence</button><p class="help">${e(model.review?.ai?.stale?'Saved inputs changed. Previous evidence is stale.':model.review?.ai?.verification?.status==='completed'?'Quote receipts available. AI interpretations remain unverified.':model.review?.ai?.phase==='error'?'AI review failed or was rejected. Open the result for details.':'An AI review adds its quote receipts here.')}</p></section>
   <div class="status" role="status" aria-live="polite"><strong>${e(review?.stale?'STALE — save and scan again':review?.loading?'Scanning saved files…':review?.error?'Scan could not finish':review?.report?'Last review':'Ready to scan')}</strong><p class="help">${e(review?.error|| (review?.report?`${review.report.findings.length} finding(s) · Header-flow coverage: ${review.report.coverage.status} (CP002)`:'Results and code evidence open in the editor.'))}</p>${review?.folder?'<p class="path">'+e(review.folder)+'</p>':''}</div>
   ${model.error?'<p id="error" role="alert">'+e(model.error)+'</p>':''}
@@ -49,7 +49,7 @@ function createScanControls(vscode,context,{review,aiReview,getReview=()=>null,g
   async function handle(message){
     if(!message||message.token!==token||typeof message.action!=='string'||busy())return;
     const action=message.action;
-    const allowed=['scan','browse','folder','mode','profile','results','settings','ai','health','setup','token','claims','guard','evidence'];
+    const allowed=['scan','browse','folder','mode','profile','results','settings','ai','health','setup','token','claims','guard','evidence','demo'];
     if(!allowed.includes(action))return;
     // Resolve only registered folder indices; never accept a webview-supplied path.
     const folders=model().folders;
@@ -70,6 +70,7 @@ function createScanControls(vscode,context,{review,aiReview,getReview=()=>null,g
       }else if(action==='scan'){
         if(!folder||!fs.statSync(folder).isDirectory())throw new Error();await persist();await review(folder,{mode,selection:'controls'});
       }else if(action==='claims'){if(!folder)throw new Error();await vscode.commands.executeCommand('changeproof.checkClaims',folder);}
+      else if(action==='demo')await vscode.commands.executeCommand('changeproof.runDemo');
       else if(action==='guard')await vscode.commands.executeCommand('changeproof.testEvidenceGuard');
       else if(action==='evidence')await vscode.commands.executeCommand('changeproof.showAiSummary');
       else if(action==='results')await vscode.commands.executeCommand('changeproof.openDashboard');

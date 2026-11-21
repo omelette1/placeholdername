@@ -1,0 +1,13 @@
+{
+  "profile": "empty-function",
+  "local_rule_ids": [],
+  "claim_counts": {
+    "matched": 1,
+    "contradicted": 1,
+    "unverified": 2
+  },
+  "empty_body_observations": 2,
+  "notes": "The function exists, but its empty body cannot establish implementation correctness.",
+  "runtime_verification": false,
+  "real_world_accuracy_measured": false
+}

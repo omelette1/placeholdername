@@ -1,0 +1,4 @@
+Function `validateOwner` exists in `app.ts`.
+Implemented function `validateOwner` in `app.ts`.
+File `not-delivered.ts` exists.
+All tests passed.

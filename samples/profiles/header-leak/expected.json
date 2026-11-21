@@ -1,0 +1,15 @@
+{
+  "profile": "header-leak",
+  "local_rule_ids": [
+    "CP002"
+  ],
+  "claim_counts": {
+    "matched": 1,
+    "contradicted": 1,
+    "unverified": 2
+  },
+  "empty_body_observations": 0,
+  "notes": "Trace a newly logged authorization header through two assignments.",
+  "runtime_verification": false,
+  "real_world_accuracy_measured": false
+}

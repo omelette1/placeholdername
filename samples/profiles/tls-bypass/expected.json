@@ -1,0 +1,15 @@
+{
+  "profile": "tls-bypass",
+  "local_rule_ids": [
+    "CP003"
+  ],
+  "claim_counts": {
+    "matched": 1,
+    "contradicted": 1,
+    "unverified": 2
+  },
+  "empty_body_observations": 0,
+  "notes": "Detect an explicit Node TLS verification bypass without making network requests.",
+  "runtime_verification": false,
+  "real_world_accuracy_measured": false
+}

@@ -1,0 +1,4 @@
+Function `evaluateInput` exists in `app.ts`.
+Implemented function `evaluateInput` in `app.ts`.
+File `not-delivered.ts` exists.
+All tests passed.

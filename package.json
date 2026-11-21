@@ -1,6 +1,6 @@
 {
   "name": "changeproof-local",
-  "version": "0.19.0",
+  "version": "0.20.0",
   "private": true,
   "description": "VS Code extension for evidence-backed local security reviews and cautious AI patch proposals",
   "type": "module",

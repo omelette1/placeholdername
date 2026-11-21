@@ -1,0 +1,4 @@
+Function `recordRequest` exists in `app.ts`.
+Implemented function `recordRequest` in `app.ts`.
+File `not-delivered.ts` exists.
+All tests passed.

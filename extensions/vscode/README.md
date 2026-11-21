@@ -1,4 +1,4 @@
-# Patch Local Review — 0.19.0
+# Patch Local Review — 0.20.0
 
 Review saved JS/TS and supported infrastructure configuration in this VS Code
 window. Click the **Patch shield icon** in the left Activity Bar. The
@@ -57,7 +57,7 @@ saved text and JavaScript/TypeScript syntax. Review the before/after preview and
 click **Apply this patch** to apply and save; Patch then reruns local
 static checks. It does not execute project tests or claim the patch is correct.
 
-Install `patch-local-0.19.0.vsix`, reload the existing window once, and
+Install `patch-local-0.20.0.vsix`, reload the existing window once, and
 review your project. Trusted Node 20.19+ is required; configure user-level
 `changeproof.nodePath` / `changeproof.checkovPath` if needed. Normal reviews do
 not open additional editor windows or create demos. **Run Demo** remains a

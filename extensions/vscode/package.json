@@ -2,7 +2,7 @@
   "name": "changeproof-local",
   "displayName": "Patch",
   "description": "Inspect potential code risks and check AI delivery claims against saved source evidence.",
-  "version": "0.19.0",
+  "version": "0.20.0",
   "publisher": "changeproof-local",
   "license": "UNLICENSED",
   "engines": {
