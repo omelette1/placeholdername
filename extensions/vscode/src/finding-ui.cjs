@@ -43,6 +43,7 @@ function sidebar(state) {
   if (!r) return [actions,review,group(state.error?'Setup / processing errors':'Deterministic checks', [{label:state.error || 'No deterministic review in this folder yet. Run Review Project; AI results are separate.'}])];
   const findings = r.findings.flatMap((f,index) => f.rule_id.startsWith('CKV')||f.rule_id==='DEP001'||f.evidence?.kind==='container_vulnerability'?[]:[({label:`${f.rule_id} · ${f.title}`,description:`${f.location.file}:${f.location.start.line}`,tooltip:f.explanation,
     command:{command:'changeproof.openFinding',title:'Open finding details',arguments:[state.id,index]}})]);
+  const findingCount=findings.length;
   if (!findings.length) findings.push({label:r.analysis_errors.length ? 'No findings produced; processing is incomplete.' : 'No potential exposures found within processed checks; this does not establish safety.'});
   const infra=r.infrastructure;
   const infrastructure=infra?group('Infrastructure: '+infra.status,[{label:infra.reason},{label:'Scanner: Checkov '+infra.scanner.version+' · current snapshot only'},...infra.frameworks.map(f=>({label:`${f.framework}: ${f.status} · ${f.checks} checks · ${f.failed} failed · ${f.skipped} suppressed`})),...r.findings.flatMap((f,index)=>f.rule_id.startsWith('CKV')?[{label:f.rule_id+' · '+f.title,description:f.location.file+':'+f.location.start.line,command:{command:'changeproof.openFinding',title:'Open configuration finding',arguments:[state.id,index]}}]:[]),...infra.errors.map(e=>({label:e.code,tooltip:e.message})),...infra.skipped_files.map(e=>({label:'Skipped: '+e.file+' · '+e.reason}))]):group('Infrastructure: not assessed',[]);
@@ -61,7 +62,7 @@ function sidebar(state) {
     ...(images?.errors||[]).map(e=>({label:e.code,tooltip:e.message})),
     ...(images?.skipped||[]).map(e=>({label:'Skipped: '+e.file+':'+e.line+' · '+e.reason}))
   ]);
-  return [actions,review,infrastructure,dependencyGroup,imageGroup,group(`Findings (${findings.length})`,findings),
+  return [actions,review,infrastructure,dependencyGroup,imageGroup,group(`Findings (${findingCount})`,findings),
     group(`Coverage: ${r.coverage.status}`, [{label:(r.coverage.scope||'CP002 bounded checks')+'; analyzed is not a security guarantee.'},
       ...r.files_inspected.map(f=>group(`${f.file}: ${f.coverage.status}`,f.coverage.scopes.map(s=>({label:`${s.kind} · line ${s.location.start.line}: ${s.status}`,tooltip:`Supported steps: ${s.supported_steps}`}))))]),
     group(`Limitations (${r.analysis_limitations.length+(r.input_limitations||[]).length})`,(r.input_limitations||[]).map(message=>({label:message})).concat(r.analysis_limitations.map(n=>({label:`${n.code} · ${n.location.file}:${n.location.start.line} (${n.revision})`,tooltip:n.message}))).concat([{label:'Static checks only. No runtime verification or proof of application-wide security.'}])),
