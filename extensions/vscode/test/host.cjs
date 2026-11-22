@@ -40,7 +40,7 @@ async function run(){
  const before=snapshot(folder.uri.fsPath),workspaceBefore=vscode.workspace.workspaceFolders.map(f=>f.uri.toString());
  await vscode.commands.executeCommand('changeproof.runDemo','header-leak');
  const demo=latest('demo_opened'),presented=latest('review_presented');assert.ok(demo);assert.equal(demo.coverage,'analyzed');assert.equal(diagnostics().length,1);assert.equal(diagnostics()[0].d.code,'CP002');assert.equal(vscode.window.activeTextEditor.selection.start.line,4);assert.equal(vscode.window.activeTextEditor.document.uri.fsPath,path.join(demo.selected_folder,'app.ts'));
- assert.match(panel.webview.html,/Synthetic demo/);assert.match(panel.webview.html,/Source → assignments \/ calls → logging/);assert.ok(panel.webview.html.includes('declaration: raw'));assert.ok(panel.webview.html.includes('declaration: payload'));assert.match(panel.webview.html,/CP002/);assert.match(panel.webview.html,/Runtime verification/);assert.match(panel.webview.html,/analyzed/);
+ assert.match(panel.webview.html,/Review workspace/);assert.match(panel.webview.html,/Evidence trail/);assert.ok(panel.webview.html.includes('declaration: raw'));assert.ok(panel.webview.html.includes('declaration: payload'));assert.match(panel.webview.html,/CP002/);assert.match(panel.webview.html,/runtime not tested/);assert.match(panel.webview.html,/analyzed/);
  assert.ok(provider.getChildren().find(g=>g.label==='Review').children.some(i=>i.label.startsWith('Synthetic demo:')));
  assert.deepEqual(snapshot(folder.uri.fsPath),before);assert.deepEqual(vscode.workspace.workspaceFolders.map(f=>f.uri.toString()),workspaceBefore);
  const completed=records().filter(r=>r.phase==='completed'&&r.selection==='synthetic_demo').at(-1);assert.equal(completed.arguments[1],demo.selected_folder);assert.equal(completed.exit_code,0);
@@ -63,7 +63,7 @@ async function run(){
    await vscode.commands.executeCommand('changeproof.reviewProject');
    const current=latest('review_presented');assert.equal(current.review_mode,'current');assert.equal(diagnostics().length,1);assert.ok(!fs.existsSync(path.join(plainProject,'.git')),'current mode did not initialize Git');
    const item=provider.getChildren().find(g=>g.label==='Findings (1)').children[0];await vscode.commands.executeCommand(item.command.command,...item.command.arguments);assert.equal(panel,reusedPanel,'details panel reused across projects and modes');
-   assert.match(panel.webview.html,/Current files — no baseline/);assert.match(panel.webview.html,/Not applicable — current files/);assert.match(panel.webview.html,/Call output/);assert.match(panel.webview.html,/Parameter value/);
+   assert.match(panel.webview.html,/Not applicable — current files, no baseline/);assert.match(panel.webview.html,/Not applicable — current files/);assert.match(panel.webview.html,/Call output/);assert.match(panel.webview.html,/Parameter value/);
    const presentedBefore=latest('review_presented').review_id;
    for(const [step,line] of [[0,1],[1,1],[2,1],[3,1],[4,0],[5,0],[6,0]]){assert.equal(await vscode.commands.executeCommand('changeproof.openEvidenceStep',presentedBefore,step),true);assert.equal(vscode.window.activeTextEditor.document.uri.fsPath,plainFile);assert.equal(vscode.window.activeTextEditor.selection.start.line,line);}
    await vscode.commands.executeCommand('changeproof.rerunReview');assert.equal(latest('review_presented').review_mode,'current');assert.equal(pickedModes.length,1,'rerun retains mode without another prompt');
