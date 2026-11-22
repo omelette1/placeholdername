@@ -29,6 +29,34 @@ jobs:
           npm run package:extension
           node scripts/ci-package-smoke.mjs
           unzip -l artifacts/patch-local-0.20.0.vsix | grep -q 'extension/src/monitor.cjs'
+      - name: Upload quick-smoke VSIX for native test
+        uses: actions/upload-artifact@v4
+        with:
+          name: patch-native-candidate
+          path: artifacts/patch-local-0.20.0.vsix
+  native-vsix:
+    needs: quick-smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - uses: actions/download-artifact@v4
+        with:
+          name: patch-native-candidate
+          path: artifacts
+      - name: Download trusted VS Code desktop binary for isolated host test
+        run: |
+          curl --fail --location --retry 2 --silent --show-error https://update.code.visualstudio.com/latest/linux-x64/stable -o /tmp/code.tar.gz
+          mkdir -p /tmp/patch-vscode
+          tar -xzf /tmp/code.tar.gz -C /tmp/patch-vscode
+          test -x /tmp/patch-vscode/VSCode-linux-x64/code
+      - name: Install VSIX and run native editor-host checks
+        run: xvfb-run -a node extensions/vscode/test/run-host.mjs /tmp/patch-vscode/VSCode-linux-x64/code artifacts/patch-local-0.20.0.vsix
   test-package:
     runs-on: ubuntu-latest
     timeout-minutes: 20
