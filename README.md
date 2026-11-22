@@ -1,4 +1,4 @@
-# Patch 0.20.0
+# Patch 0.20.0 — security monitoring feature branch
 
 **Review AI-written code. Check the evidence.** Scan saved code for supported security patterns,
 check an assistant’s file/function claims, and inspect source quotations behind
@@ -31,6 +31,12 @@ checks the exact saved text and JavaScript/TypeScript syntax, shows the proposed
 replacement, and applies it only when you click **Apply this patch**. It then
 reruns the local static checks. This is not a behavior or security proof and
 does not execute project tests or scripts.
+
+## Dependency advisories and background monitoring (feature branch)
+
+Patch now includes opt-in npm dependency advisory scanning and background saved-file monitoring. In the shield sidebar, enable **Continuous security monitoring** to scan on changes and about every 30 minutes while VS Code is open; enable **OSV advisory lookup** separately to send npm package names and versions to OSV. No source text is sent to OSV, and no project scripts execute. Dependency findings are advisory matches, not verified exploitability. The current implementation supports npm lockfile v2/v3 only; unsupported formats and failures are explicitly unassessed.
+
+Two additional bounded checks observe credential-shaped hardcoded literals (CP005) and nonliteral direct Node shell commands (CP006). These are hypotheses, not exploit proofs. See [security monitoring and evaluation](docs/monitoring-and-evaluation.md) for scope, limitations, benchmarking provenance, testing and CI.
 
 ## Demo profiles
 

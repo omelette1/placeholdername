@@ -1,6 +1,7 @@
 import ts from 'typescript';
 import {inspectFlows} from './flow.mjs';
 import {inspectRiskySyntax} from './risky-syntax.mjs';
+import {inspectAdditional} from './additional-rules.mjs';
 export const RULE_ID = 'CP001';
 export const LIMITATIONS = ['Names alone cannot establish sensitive data flow or a confirmed leak.', 'Only direct console calls and direct named arguments are inspected; aliases, nested objects, computed calls and general access control are not analyzed.', 'The global console binding is assumed; shadowed bindings can produce false positives.', 'Static analysis only; no runtime verification occurred.'];
 const sensitive = new Set(['accesstoken', 'refreshtoken', 'password', 'authorization']);
@@ -64,7 +65,7 @@ export function inspectDetailed(file, before, after, ranges) {
     resolved.evidence.sensitive_names = f.evidence.sensitive_names;
     return false;
   });
-  return {findings: [...remaining, ...flow.findings, ...inspectRiskySyntax(file,before,after,ranges)].sort((a, b) => a.location.start.line - b.location.start.line || a.location.start.column - b.location.start.column), limitations: flow.limitations, coverage: flow.coverage};
+  return {findings: [...remaining, ...flow.findings, ...inspectRiskySyntax(file,before,after,ranges), ...inspectAdditional(file,before,after,ranges)].sort((a, b) => a.location.start.line - b.location.start.line || a.location.start.column - b.location.start.column), limitations: flow.limitations, coverage: flow.coverage};
 }
 export function inspect(file, before, after, ranges) {
   return inspectDetailed(file, before, after, ranges).findings;

@@ -1,0 +1,44 @@
+name: Patch security validation
+on:
+  push:
+    branches: [main, "feat/**"]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test-package:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install dependencies without lifecycle scripts
+        run: npm ci --ignore-scripts
+      - name: Unit and integration tests (network disabled)
+        run: npm test
+      - name: Validate local evaluation fixtures
+        run: |
+          npm run evaluate:rules
+          node evaluation/claims-benchmark.mjs
+          npm run verify:fixtures
+          node evaluation/independent-sample-benchmark.mjs
+      - name: Build review backend and bundled extension
+        run: |
+          npm run build:review-api
+          npm run package:extension
+      - name: Validate VSIX contents and packaged CLI
+        run: |
+          test -s artifacts/patch-local-0.20.0.vsix
+          unzip -l artifacts/patch-local-0.20.0.vsix | grep -q 'extension/out/cli.cjs'
+          unzip -l artifacts/patch-local-0.20.0.vsix | grep -q 'extension/src/monitor.cjs'
+          unzip -p artifacts/patch-local-0.20.0.vsix extension/package.json | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{const p=JSON.parse(s);if(p.displayName!=='Patch'||!p.contributes.configuration.properties['changeproof.backgroundMonitorEnabled'])process.exit(1)})"
+          node scripts/ci-package-smoke.mjs
+      - name: Upload tested VSIX
+        uses: actions/upload-artifact@v4
+        with:
+          name: patch-extension
+          path: artifacts/patch-local-0.20.0.vsix

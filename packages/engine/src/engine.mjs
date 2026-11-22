@@ -5,6 +5,7 @@ import {inspectDetailed} from './rule.mjs';
 import {MAX_FILE,git,safeRead,text,exclusion,DEFAULT_EXCLUSIONS,eligible} from './io.mjs';
 import {currentInputs} from './current-files.mjs';
 import {emptyInfrastructure} from '../../infrastructure/src/scanner.mjs';
+import {emptyDependencies} from '../../dependencies/src/scanner.mjs';
 export {exclusion,DEFAULT_EXCLUSIONS} from './io.mjs';
 export function lineRanges(before, after) {
   const changes = diffLines(before, after, {timeout:1000});
@@ -26,7 +27,7 @@ export function lineRanges(before, after) {
   return ranges;
 }
 export function emptyReport() {
-  return {schema_version:'5.0.0', tool:{name:'changeproof',version:'0.20.0'}, infrastructure:emptyInfrastructure('changes'), repository:null, git_repository:null, review_mode:'changes', input_limitations:[], compared_revision:null, comparison:'HEAD_to_tracked_working_tree', runtime_verification:false, analysis_complete:false, coverage:{status:'not_analyzed', scope:'CP002 on changed tracked JS/TS files only', analyzed_scopes:0, partial_scopes:0, unsupported_scopes:0, unassessed_files:0}, files_inspected:[], untracked_files:[], skipped_files:[], findings:[], analysis_errors:[], analysis_limitations:[], default_exclusions:DEFAULT_EXCLUSIONS, limitations:['Initial local static-analysis prototype; no AI reasoning or general access-control analysis.', 'Only saved working-tree content is read; untracked and ignored files are not analyzed.', 'Git-ignored untracked files are excluded by Git. Concurrent edits are not an atomic snapshot.', 'Names and file paths are metadata; literal source values and source snippets are omitted.']};
+  return {schema_version:'5.0.0', tool:{name:'changeproof',version:'0.20.0'}, infrastructure:emptyInfrastructure('changes'), dependencies:emptyDependencies('changes'), repository:null, git_repository:null, review_mode:'changes', input_limitations:[], compared_revision:null, comparison:'HEAD_to_tracked_working_tree', runtime_verification:false, analysis_complete:false, coverage:{status:'not_analyzed', scope:'CP002 on changed tracked JS/TS files only', analyzed_scopes:0, partial_scopes:0, unsupported_scopes:0, unassessed_files:0}, files_inspected:[], untracked_files:[], skipped_files:[], findings:[], analysis_errors:[], analysis_limitations:[], default_exclusions:DEFAULT_EXCLUSIONS, limitations:['Initial local static-analysis prototype; no AI reasoning or general access-control analysis.', 'Only saved working-tree content is read; untracked and ignored files are not analyzed.', 'Git-ignored untracked files are excluded by Git. Concurrent edits are not an atomic snapshot.', 'Names and file paths are metadata; literal source values and source snippets are omitted.']};
 }
 function analyzeChanges(repository) {
   const report=emptyReport();
