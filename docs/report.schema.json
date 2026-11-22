@@ -439,6 +439,96 @@
         "guard",
         "limitations"
       ]
+    },
+    "dependencies": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "status",
+        "reason",
+        "source",
+        "ecosystem",
+        "online_lookup",
+        "files_inspected",
+        "packages_checked",
+        "advisories",
+        "findings",
+        "errors",
+        "skipped_files",
+        "limitations"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "not_assessed",
+            "not_applicable",
+            "assessed",
+            "partial"
+          ]
+        },
+        "reason": {
+          "type": "string"
+        },
+        "source": {
+          "const": "OSV"
+        },
+        "ecosystem": {
+          "const": "npm"
+        },
+        "online_lookup": {
+          "type": "boolean"
+        },
+        "files_inspected": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "file": {
+                "type": "string"
+              },
+              "package_count": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "file",
+              "package_count"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "packages_checked": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "advisories": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "findings": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/finding"
+          }
+        },
+        "errors": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "skipped_files": {
+          "type": "array"
+        },
+        "limitations": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
     }
   },
   "required": [
@@ -1109,6 +1199,157 @@
                 "framework",
                 "policy_id",
                 "source_values_included"
+              ]
+            }
+          },
+          "required": [
+            "rule_id",
+            "title",
+            "severity",
+            "explanation",
+            "location",
+            "newly_introduced",
+            "runtime_verification",
+            "limitations",
+            "evidence"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "rule_id": {
+              "enum": [
+                "CP005",
+                "CP006"
+              ]
+            },
+            "title": {
+              "type": "string"
+            },
+            "severity": {
+              "const": "warning"
+            },
+            "explanation": {
+              "type": "string"
+            },
+            "location": {
+              "$ref": "#/$defs/location"
+            },
+            "newly_introduced": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "runtime_verification": {
+              "const": false
+            },
+            "limitations": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "evidence": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "kind": {
+                  "const": "additional_syntax"
+                },
+                "pattern": {
+                  "enum": [
+                    "credential_literal",
+                    "credential_property_literal",
+                    "credential_assignment_literal",
+                    "dynamic_shell_command"
+                  ]
+                },
+                "source_values_included": {
+                  "const": false
+                }
+              },
+              "required": [
+                "kind",
+                "pattern",
+                "source_values_included"
+              ]
+            }
+          },
+          "required": [
+            "rule_id",
+            "title",
+            "severity",
+            "explanation",
+            "location",
+            "newly_introduced",
+            "runtime_verification",
+            "limitations",
+            "evidence"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "rule_id": {
+              "const": "DEP001"
+            },
+            "title": {
+              "type": "string"
+            },
+            "severity": {
+              "const": "warning"
+            },
+            "explanation": {
+              "type": "string"
+            },
+            "location": {
+              "$ref": "#/$defs/location"
+            },
+            "newly_introduced": {
+              "const": null
+            },
+            "runtime_verification": {
+              "const": false
+            },
+            "limitations": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "evidence": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "kind": {
+                  "const": "dependency_advisory"
+                },
+                "source": {
+                  "const": "OSV"
+                },
+                "advisory_id": {
+                  "type": "string"
+                },
+                "package_name": {
+                  "type": "string"
+                },
+                "installed_version": {
+                  "type": "string"
+                },
+                "advisory_url": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "kind",
+                "source",
+                "advisory_id",
+                "package_name",
+                "installed_version",
+                "advisory_url"
               ]
             }
           },

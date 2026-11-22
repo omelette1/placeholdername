@@ -22,7 +22,7 @@ function validateReport(report,folder){
   for(const note of report.analysis_limitations)validLocation(note.location);
   for(const f of report.findings){
     const file=f.location?.file;
-    if(typeof file!=='string'||path.isAbsolute(file)||file.split(/[\\/]/).some(p=>p==='..'||!p)||typeof f.explanation!=='string'||!['CP001','CP002','CP003','CP004'].includes(f.rule_id)&&!/^CKV2?_[A-Z0-9]+_\d+$/.test(f.rule_id)||!Array.isArray(f.limitations))throw new Error('Invalid finding.');
+    if(typeof file!=='string'||path.isAbsolute(file)||file.split(/[\\/]/).some(p=>p==='..'||!p)||typeof f.explanation!=='string'||!['CP001','CP002','CP003','CP004','CP005','CP006','DEP001'].includes(f.rule_id)&&!/^CKV2?_[A-Z0-9]+_\d+$/.test(f.rule_id)||!Array.isArray(f.limitations))throw new Error('Invalid finding.');
     for(const pos of [f.location.start,f.location.end])if(!Number.isSafeInteger(pos?.line)||pos.line<1||!Number.isSafeInteger(pos?.column)||pos.column<1)throw new Error('Invalid finding location.');
     if(report.review_mode==='current'&&f.newly_introduced!==null)throw new Error('Current-files newness must be not applicable.');
     if(f.runtime_verification!==false||![true,false,null].includes(f.newly_introduced))throw new Error('Invalid finding verification status.');
@@ -43,13 +43,20 @@ function validateReport(report,folder){
     if(['CP003','CP004'].includes(f.rule_id)&&f.evidence?.kind!=='risky_syntax')throw new Error('Invalid risky-syntax evidence.');
     if(f.rule_id.startsWith('CKV')&&(f.newly_introduced!==null||f.evidence?.kind!=='infrastructure_policy'||f.evidence?.scanner!=='Checkov'||f.evidence.policy_id!==f.rule_id))throw new Error('Invalid infrastructure evidence.');
   }
+  const deps=report.dependencies;
+  if(!deps)return report;
+  if(!deps||!['not_assessed','not_applicable','assessed','partial'].includes(deps.status)||!Array.isArray(deps.files_inspected)||!Array.isArray(deps.findings)||!Array.isArray(deps.errors)||!Number.isSafeInteger(deps.packages_checked)||deps.online_lookup!==true&&deps.online_lookup!==false)throw new Error('Invalid dependency status.');
+  for(const finding of report.findings)if(finding.rule_id==='DEP001'){
+    const e=finding.evidence;
+    if(finding.newly_introduced!==null||e?.kind!=='dependency_advisory'||e.source!=='OSV'||typeof e.package_name!=='string'||typeof e.installed_version!=='string'||!/^[-A-Za-z0-9_]{3,100}$/.test(e.advisory_id)||e.advisory_url!=='https://osv.dev/vulnerability/'+e.advisory_id)throw new Error('Invalid dependency finding.');
+  }
   return report;
 }
-function runEngine(node,cli,folder,onExecution=()=>{},{mode='changes',checkovPath}={}){
+function runEngine(node,cli,folder,onExecution=()=>{},{mode='changes',checkovPath,advisories=false}={}){
   return new Promise((resolve,reject)=>{
     const env={...process.env};
     delete env.NODE_OPTIONS;delete env.NODE_PATH;
-    const invocation={executable:node,arguments:[cli,folder,...(mode==='current'?['--mode','current']:[]),...(checkovPath?['--checkov',checkovPath]:[])],review_mode:mode,cwd:path.dirname(cli)};
+    const invocation={executable:node,arguments:[cli,folder,...(mode==='current'?['--mode','current']:[]),...(checkovPath?['--checkov',checkovPath]:[]),...(advisories?['--advisories']:[])],review_mode:mode,cwd:path.dirname(cli)};
     const emit=record=>{try{onExecution({...invocation,...record});}catch{/* Observability must not change analysis results. */}};
     emit({phase:'started',exit_code:null});
     execFile(node,invocation.arguments,{cwd:invocation.cwd,env,windowsHide:true,timeout:120000,maxBuffer:16*1024*1024},(error,stdout)=>{
