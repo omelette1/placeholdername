@@ -23,6 +23,7 @@ jobs:
           node --check packages/engine/src/additional-rules.mjs
           node --check extensions/vscode/src/monitor.cjs
           node --test packages/dependencies/test/scanner.test.mjs packages/engine/test/additional-rules.test.mjs
+          node --test extensions/vscode/test/findings-ui.test.cjs extensions/vscode/test/notification.test.cjs
           node evaluation/independent-sample-benchmark.mjs
       - name: Build and smoke installed bundle interfaces
         run: |
