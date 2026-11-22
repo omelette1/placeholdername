@@ -40,7 +40,7 @@ function validateReport(report,folder){
   const infra=report.infrastructure;
   if(!infra||!['not_assessed','assessed','partial','not_applicable'].includes(infra.status)||!Array.isArray(infra.files_inspected)||!Array.isArray(infra.findings)||!Array.isArray(infra.frameworks)||!Array.isArray(infra.errors))throw new Error('Invalid infrastructure assessment.');
   const images=report.container_images;
-  if(!images||!['not_assessed','assessed','partial','not_applicable'].includes(images.status)||!Array.isArray(images.images)||!Array.isArray(images.findings)||!Array.isArray(images.errors)||!Array.isArray(images.skipped))throw new Error('Invalid container image assessment.');
+  if(!images||!['not_assessed','assessed','partial','not_applicable'].includes(images.status)||!Array.isArray(images.images)||!Array.isArray(images.files_inspected)||!Array.isArray(images.findings)||!Array.isArray(images.errors)||!Array.isArray(images.skipped))throw new Error('Invalid container image assessment.');
   for(const f of report.findings){
     if(f.evidence?.kind==='container_vulnerability' && (f.newly_introduced!==null||f.evidence.scanner!=='Trivy'||f.evidence.vulnerability_id!==f.rule_id||!images.findings.some(entry=>entry.rule_id===f.rule_id&&entry.location.file===f.location.file)))throw new Error('Invalid container vulnerability evidence.');
     if((/^CVE-|^GHSA-/).test(f.rule_id)&&f.evidence?.kind!=='container_vulnerability')throw new Error('Missing container scanner evidence.');
