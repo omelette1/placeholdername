@@ -56,7 +56,7 @@ function runEngine(node,cli,folder,onExecution=()=>{},{mode='changes',checkovPat
     const invocation={executable:node,arguments:[cli,folder,...(mode==='current'?['--mode','current']:[]),...(checkovPath?['--checkov',checkovPath]:[]),...(scanImages?['--scan-images']:[]),...(trivyPath?['--trivy',trivyPath]:[])],review_mode:mode,cwd:path.dirname(cli)};
     const emit=record=>{try{onExecution({...invocation,...record});}catch{/* Observability must not change analysis results. */}};
     emit({phase:'started',exit_code:null});
-    execFile(node,invocation.arguments,{cwd:invocation.cwd,env,windowsHide:true,timeout:300000,maxBuffer:16*1024*1024},(error,stdout)=>{
+    execFile(node,invocation.arguments,{cwd:invocation.cwd,env,windowsHide:true,timeout:600000,maxBuffer:16*1024*1024},(error,stdout)=>{
       let parsed;
       try{parsed=JSON.parse(stdout);}catch{/* Never log raw stdout/stderr or source text. */}
       const returnedErrors=Array.isArray(parsed?.analysis_errors)?parsed.analysis_errors.map(e=>({code:e.code,file:e.file,message:e.message})):[];
