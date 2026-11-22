@@ -7,7 +7,7 @@ import {safeRead,text} from '../../engine/src/io.mjs';
 
 const IMAGE_LIMIT=8, FINDING_LIMIT=120;
 const IMAGE=/^[a-zA-Z0-9_][a-zA-Z0-9_./:@-]{0,240}$/;
-const VULN=/^(?:CVE-\d{4}-\d{4,}|GHSA-[a-z0-9-]{14,})$/i;
+const VULN=/^(?:CVE-\d{4}-\d{4,}|GHSA-[a-z0-9]{4}(?:-[a-z0-9]{4}){2})$/i;
 const local=(root,file)=>{const rel=path.relative(root,file);return rel!==''&&rel!=='..'&&!rel.startsWith('..'+path.sep)&&!path.isAbsolute(rel);};
 const imageFile=file=>/(?:^|\/)Dockerfile(?:\.[^/]+)?$|\.dockerfile$|\.ya?ml$/i.test(file);
 const truncated=(value,max=160)=>String(value??'').replace(/[\r\n\x00-\x1f]/g,' ').slice(0,max);
