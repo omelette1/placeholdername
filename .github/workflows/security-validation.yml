@@ -7,6 +7,28 @@ on:
 permissions:
   contents: read
 jobs:
+  quick-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - name: Check syntax and focused security tests
+        run: |
+          node --check packages/dependencies/src/scanner.mjs
+          node --check packages/engine/src/additional-rules.mjs
+          node --check extensions/vscode/src/monitor.cjs
+          node --test packages/dependencies/test/scanner.test.mjs packages/engine/test/additional-rules.test.mjs
+          node evaluation/independent-sample-benchmark.mjs
+      - name: Build and smoke installed bundle interfaces
+        run: |
+          npm run package:extension
+          node scripts/ci-package-smoke.mjs
+          unzip -l artifacts/patch-local-0.20.0.vsix | grep -q 'extension/src/monitor.cjs'
   test-package:
     runs-on: ubuntu-latest
     timeout-minutes: 20
