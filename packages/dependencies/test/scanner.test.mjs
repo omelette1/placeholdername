@@ -44,3 +44,15 @@ test('symlinked lockfiles are never read',async t=>{
  const r=await scanDependencies(root,{enabled:true,fetcher:()=>{throw Error('should not run');}});
  assert.notEqual(r.status,'assessed');assert.equal(r.packages_checked,0);
 });
+
+test('lockfile mutation during an advisory request invalidates all findings',async t=>{
+ const root=fs.mkdtempSync(path.join(os.tmpdir(),'patch-deps-'));t.after(()=>fs.rmSync(root,{recursive:true,force:true}));
+ const filename=path.join(root,'package-lock.json');fs.writeFileSync(filename,JSON.stringify(lock,null,2));
+ const fetcher=async(url,options)=>{
+  fs.writeFileSync(filename,JSON.stringify({...lock,name:'changed-during-lookup'},null,2));
+  return {ok:true,json:async()=>({results:JSON.parse(options.body).queries.map(()=>({vulns:[{id:'GHSA-aaaa-bbbb-cccc'}]}))})};
+ };
+ const result=await scanDependencies(root,{enabled:true,fetcher});
+ assert.equal(result.status,'not_assessed');assert.equal(result.findings.length,0);
+ assert.ok(result.errors.some(e=>e.code==='stale_lockfile'));
+});

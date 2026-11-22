@@ -83,11 +83,12 @@ export async function scanDependencies(project,{mode='current',enabled=false,fet
  const inputs=currentInputs(root,{accept:file=>LOCK.test(file),maxFiles:30});
  result.skipped_files=inputs.skipped.filter(entry=>LOCK.test(entry.file));
  if(inputs.errors.length)result.errors.push({code:'enumeration_incomplete',message:'Some project files could not be enumerated.'});
- const found=[],packageSet=new Set();
+ const found=[],packageSet=new Set(),snapshots=new Map();
  for(const file of inputs.files){
   try{
    const source=safeLockRead(root,file);
    const packages=parseNpmLock(source,file);
+   snapshots.set(file,source);
    result.files_inspected.push({file,package_count:packages.length});
    for(const pkg of packages){const key=pkg.name+'@'+pkg.version;if(!packageSet.has(key)){packageSet.add(key);found.push(pkg);if(found.length>MAX_PACKAGES)throw Error('package_limit');}}
   }catch{result.errors.push({code:'lock_unreadable',file,message:'Lockfile could not be safely read or is unsupported (requires npm lockfile v2/v3).'});}
@@ -113,13 +114,14 @@ export async function scanDependencies(project,{mode='current',enabled=false,fet
     }
    }
   }
+  // An advisory response must not be associated with a lockfile that changed during the lookup.
+  for(const [file,source] of snapshots)if(safeLockRead(root,file)!==source)throw Error('stale_lockfile');
   result.advisories=result.findings.length;
   result.status=result.errors.length?'partial':'assessed';
   result.reason='Queried OSV for concrete npm dependency versions in supported lockfiles.';
- }catch{
-  result.status=result.packages_checked?'partial':'not_assessed';
-  result.errors.push({code:'advisory_lookup_failed',message:'OSV lookup timed out, failed, or returned invalid data; unqueried packages remain unassessed.'});
-  result.reason='Dependency advisory lookup was incomplete.';
+ }catch(error){
+  if(error?.message==='stale_lockfile'){result.findings=[];result.advisories=0;result.status='not_assessed';result.errors.push({code:'stale_lockfile',message:'Lockfile changed during advisory lookup; discard stale findings and scan again.'});result.reason='Dependency input changed during lookup.';}
+  else{result.status=result.packages_checked?'partial':'not_assessed';result.errors.push({code:'advisory_lookup_failed',message:'OSV lookup timed out, failed, or returned invalid data; unqueried packages remain unassessed.'});result.reason='Dependency advisory lookup was incomplete.';}
  }
  return result;
 }

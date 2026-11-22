@@ -219,7 +219,7 @@ function createFindingsView(vscode, context, {record,rerun,aiAction=()=>{},onCha
     if (id!==state?.id) return;
     state.report=report;state.mode=report.review_mode||state.mode;state.loading=false;
     if(report.repository){
-      for(const entry of [...report.files_inspected,...(report.infrastructure?.files_inspected||[]),...report.untracked_files,...report.skipped_files]){
+      for(const entry of [...report.files_inspected,...(report.infrastructure?.files_inspected||[]),...(report.dependencies?.files_inspected||[]),...report.untracked_files,...report.skipped_files]){
         const file=metadataKey(path.join(report.repository,entry.file));
         const captured=entry.snapshot!==undefined?entry.snapshot:fingerprint(file);
         metadata.set(file,captured);
