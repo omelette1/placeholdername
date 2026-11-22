@@ -167,14 +167,14 @@ coverage. Inspect `infrastructure.status` / `infrastructure.errors` separately.
 Patch now offers a separate, **disabled-by-default** check for known vulnerabilities in packages inside locally available Docker images. This complements Checkov configuration checks; it does not replace them. The feature scans image references in saved Dockerfiles and Kubernetes-style YAML in **Saved project files** mode only. It handles explicit tags and image digests; unsupported, templated or mutable references are marked skipped, not safe.
 
 1. Install a trusted [Trivy](https://trivy.dev/) executable **outside the reviewed project**. Have Docker running, with the referenced images already pulled or built locally. Populate Trivy's vulnerability database separately when online; the Patch scan will not download one.
-2. In VS Code **User settings** (not project settings), enable \`changeproof.scanContainerImages\`. Optionally set \`changeproof.trivyPath\` to the trusted executable's absolute path.
+2. In VS Code **User settings** (not project settings), enable `changeproof.scanContainerImages`. Optionally set `changeproof.trivyPath` to the trusted executable's absolute path.
 3. Open Patch, choose **Saved project files**, and run **Scan project**. Review the *Container images* section and high/critical CVEs in the same findings dashboard. The source location identifies the image reference, and the details identify the image, package, installed version, and any listed fixed version.
 
 The CLI equivalent is:
 
-\`\`\`sh
+```sh
 node packages/engine/src/cli.mjs /absolute/path/to/project --mode current --scan-images --trivy /absolute/path/to/trivy
-\`\`\`
+```
 
 The Trivy invocation restricts image sources to local Docker and requests offline scanning, no database/check updates, and no telemetry. It is a **trusted external executable**, not an OS-level sandbox. At most eight distinct images and 120 high/critical findings are reported per scan. Missing images, a missing or incompatible vulnerability DB, missing Trivy, scanner failures, unsupported references, or changing source snapshots produce visible incomplete/not-assessed results instead of "clean". Database freshness is not verified; cached reports can miss recent CVEs.
 
