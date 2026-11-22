@@ -29,6 +29,7 @@ jobs:
         run: |
           npm run package:extension
           node scripts/ci-package-smoke.mjs
+          npm run verify:demo
           unzip -l artifacts/patch-local-0.20.0.vsix | grep -q 'extension/src/monitor.cjs'
       - name: Upload quick-smoke VSIX for native test
         uses: actions/upload-artifact@v4
