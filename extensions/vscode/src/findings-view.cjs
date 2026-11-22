@@ -234,7 +234,7 @@ function createFindingsView(vscode, context, {record,rerun,aiAction=()=>{},onCha
     if (!state.stale) for (const f of report.findings) {
       try {
         const target=validatedTarget(f.location),uri=vscode.Uri.file(target);
-        const diagnostic=new vscode.Diagnostic(range(f.location),f.explanation+'\nHEAD newness: '+String(f.newly_introduced)+'\nRuntime verification: '+String(f.runtime_verification)+'\n'+f.limitations.join('\n'),vscode.DiagnosticSeverity.Warning);
+        const diagnostic=new vscode.Diagnostic(range(f.location),f.explanation+'\nHEAD newness: '+String(f.newly_introduced)+'\nRuntime verification: '+String(f.runtime_verification)+'\n'+f.limitations.join('\n'),f.severity==='critical'?vscode.DiagnosticSeverity.Error:vscode.DiagnosticSeverity.Warning);
         diagnostic.source='Patch (static)';diagnostic.code=f.rule_id;
         if(f.rule_id==='CP002')diagnostic.relatedInformation=stepsFor(f).filter(s=>s.role!=='logging').map(s=>new vscode.DiagnosticRelatedInformation(new vscode.Location(vscode.Uri.file(validatedTarget(s.location)),range(s.location)),s.label));
         const entry=byFile.get(target)||{uri,values:[]};entry.values.push(diagnostic);byFile.set(target,entry);
