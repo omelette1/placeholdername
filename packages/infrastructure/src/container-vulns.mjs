@@ -66,7 +66,7 @@ export function normalizeTrivy(raw,reference,output){
       if(output.findings.length>=FINDING_LIMIT)throw new Error('finding_limit');
       output.findings.push({rule_id:id.toUpperCase(),title:id.toUpperCase()+' in '+pkg,severity:severity==='CRITICAL'?'critical':'warning',
         explanation:'Trivy reports a '+severity+' vulnerability in an installed image package ('+pkg+' '+installed+'). '+(fixed?'Fixed version listed: '+fixed+'. ':'No fixed version was listed. ')+'This is a cached-database image scan, not evidence the deployed service is exploitable.',
-        location:{file:reference.file,start:{line,column:1},end:{line,column:1}},
+        location:{file:reference.file,start:{line,column:1},end:{line,column:2}},
         newly_introduced:null,runtime_verification:false,
         evidence:{kind:'container_vulnerability',scanner:'Trivy',vulnerability_id:id.toUpperCase(),image:reference.image,package:pkg,installed_version:installed,fixed_version:fixed,reported_severity:severity,source:'locally available Docker image',database_freshness:'unverified'},
         limitations:[...output.limitations,'The source location identifies the image reference, not the code responsible for the vulnerable package.']});
@@ -107,7 +107,7 @@ export async function scanContainerImages(project,{mode='current',enabled=false,
     if(!distinct.has(ref.image))distinct.set(ref.image,[]);
     distinct.get(ref.image).push(ref);
   }
-  if(!distinct.size){output.status=output.errors.length?'partial':'not_applicable';output.reason='No resolvable tagged or digested container references were found.';return output;}
+  if(!distinct.size){output.status=output.errors.length||output.skipped.length?'partial':'not_applicable';output.reason=output.skipped.length?'Container references were found but could not be resolved to explicitly tagged or digested images.':'No supported container references were found.';return output;}
   let exe;
   try{exe=trustedTrivy(trivyPath,root);}
   catch(e){output.reason='A trusted Trivy executable is unavailable or inside the selected project; image CVEs were not assessed.';output.errors.push({code:['missing_trivy','project_executable','invalid_executable'].includes(e.message)?e.message:'missing_trivy',message:output.reason});return output;}
