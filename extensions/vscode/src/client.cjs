@@ -22,7 +22,7 @@ function validateReport(report,folder){
   for(const note of report.analysis_limitations)validLocation(note.location);
   for(const f of report.findings){
     const file=f.location?.file;
-    if(typeof file!=='string'||path.isAbsolute(file)||file.split(/[\\/]/).some(p=>p==='..'||!p)||typeof f.explanation!=='string'||!['CP001','CP002','CP003','CP004'].includes(f.rule_id)&&!/^CKV2?_[A-Z0-9]+_\d+$/.test(f.rule_id)&&!/^CVE-\d{4}-\d{4,}$/.test(f.rule_id)&&!/^GHSA-[A-Z0-9-]{14,}$/.test(f.rule_id)||!Array.isArray(f.limitations))throw new Error('Invalid finding.');
+    if(typeof file!=='string'||path.isAbsolute(file)||file.split(/[\\/]/).some(p=>p==='..'||!p)||typeof f.explanation!=='string'||!['CP001','CP002','CP003','CP004'].includes(f.rule_id)&&!/^CKV2?_[A-Z0-9]+_\d+$/.test(f.rule_id)&&!/^CVE-\d{4}-\d{4,}$/.test(f.rule_id)&&!/^GHSA-[A-Z0-9]{4}(?:-[A-Z0-9]{4}){2}$/.test(f.rule_id)||!Array.isArray(f.limitations))throw new Error('Invalid finding.');
     for(const pos of [f.location.start,f.location.end])if(!Number.isSafeInteger(pos?.line)||pos.line<1||!Number.isSafeInteger(pos?.column)||pos.column<1)throw new Error('Invalid finding location.');
     if(report.review_mode==='current'&&f.newly_introduced!==null)throw new Error('Current-files newness must be not applicable.');
     if(f.runtime_verification!==false||![true,false,null].includes(f.newly_introduced))throw new Error('Invalid finding verification status.');
