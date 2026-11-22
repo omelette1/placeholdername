@@ -22,7 +22,7 @@ function validateReport(report,folder){
   for(const note of report.analysis_limitations)validLocation(note.location);
   for(const f of report.findings){
     const file=f.location?.file;
-    if(typeof file!=='string'||path.isAbsolute(file)||file.split(/[\\/]/).some(p=>p==='..'||!p)||typeof f.explanation!=='string'||!['CP001','CP002','CP003','CP004'].includes(f.rule_id)&&!/^CKV2?_[A-Z0-9]+_\d+$/.test(f.rule_id)||!Array.isArray(f.limitations))throw new Error('Invalid finding.');
+    if(typeof file!=='string'||path.isAbsolute(file)||file.split(/[\\/]/).some(p=>p==='..'||!p)||typeof f.explanation!=='string'||!['CP001','CP002','CP003','CP004'].includes(f.rule_id)&&!/^CKV2?_[A-Z0-9]+_\d+$/.test(f.rule_id)&&!/^CVE-\d{4}-\d{4,}$/.test(f.rule_id)&&!/^GHSA-[A-Z0-9-]{14,}$/.test(f.rule_id)||!Array.isArray(f.limitations))throw new Error('Invalid finding.');
     for(const pos of [f.location.start,f.location.end])if(!Number.isSafeInteger(pos?.line)||pos.line<1||!Number.isSafeInteger(pos?.column)||pos.column<1)throw new Error('Invalid finding location.');
     if(report.review_mode==='current'&&f.newly_introduced!==null)throw new Error('Current-files newness must be not applicable.');
     if(f.runtime_verification!==false||![true,false,null].includes(f.newly_introduced))throw new Error('Invalid finding verification status.');
@@ -39,20 +39,24 @@ function validateReport(report,folder){
   }
   const infra=report.infrastructure;
   if(!infra||!['not_assessed','assessed','partial','not_applicable'].includes(infra.status)||!Array.isArray(infra.files_inspected)||!Array.isArray(infra.findings)||!Array.isArray(infra.frameworks)||!Array.isArray(infra.errors))throw new Error('Invalid infrastructure assessment.');
+  const images=report.container_images;
+  if(!images||!['not_assessed','assessed','partial','not_applicable'].includes(images.status)||!Array.isArray(images.images)||!Array.isArray(images.findings)||!Array.isArray(images.errors)||!Array.isArray(images.skipped))throw new Error('Invalid container image assessment.');
   for(const f of report.findings){
+    if(f.evidence?.kind==='container_vulnerability' && (f.newly_introduced!==null||f.evidence.scanner!=='Trivy'||f.evidence.vulnerability_id!==f.rule_id||!images.findings.some(entry=>entry.rule_id===f.rule_id&&entry.location.file===f.location.file)))throw new Error('Invalid container vulnerability evidence.');
+    if((/^CVE-|^GHSA-/).test(f.rule_id)&&f.evidence?.kind!=='container_vulnerability')throw new Error('Missing container scanner evidence.');
     if(['CP003','CP004'].includes(f.rule_id)&&f.evidence?.kind!=='risky_syntax')throw new Error('Invalid risky-syntax evidence.');
     if(f.rule_id.startsWith('CKV')&&(f.newly_introduced!==null||f.evidence?.kind!=='infrastructure_policy'||f.evidence?.scanner!=='Checkov'||f.evidence.policy_id!==f.rule_id))throw new Error('Invalid infrastructure evidence.');
   }
   return report;
 }
-function runEngine(node,cli,folder,onExecution=()=>{},{mode='changes',checkovPath}={}){
+function runEngine(node,cli,folder,onExecution=()=>{},{mode='changes',checkovPath,trivyPath,scanImages=false}={}){
   return new Promise((resolve,reject)=>{
     const env={...process.env};
     delete env.NODE_OPTIONS;delete env.NODE_PATH;
-    const invocation={executable:node,arguments:[cli,folder,...(mode==='current'?['--mode','current']:[]),...(checkovPath?['--checkov',checkovPath]:[])],review_mode:mode,cwd:path.dirname(cli)};
+    const invocation={executable:node,arguments:[cli,folder,...(mode==='current'?['--mode','current']:[]),...(checkovPath?['--checkov',checkovPath]:[]),...(scanImages?['--scan-images']:[]),...(trivyPath?['--trivy',trivyPath]:[])],review_mode:mode,cwd:path.dirname(cli)};
     const emit=record=>{try{onExecution({...invocation,...record});}catch{/* Observability must not change analysis results. */}};
     emit({phase:'started',exit_code:null});
-    execFile(node,invocation.arguments,{cwd:invocation.cwd,env,windowsHide:true,timeout:120000,maxBuffer:16*1024*1024},(error,stdout)=>{
+    execFile(node,invocation.arguments,{cwd:invocation.cwd,env,windowsHide:true,timeout:300000,maxBuffer:16*1024*1024},(error,stdout)=>{
       let parsed;
       try{parsed=JSON.parse(stdout);}catch{/* Never log raw stdout/stderr or source text. */}
       const returnedErrors=Array.isArray(parsed?.analysis_errors)?parsed.analysis_errors.map(e=>({code:e.code,file:e.file,message:e.message})):[];
