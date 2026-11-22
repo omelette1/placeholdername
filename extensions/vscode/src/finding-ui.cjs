@@ -54,7 +54,7 @@ function sidebar(state) {
     ...(images?.errors||[]).map(e=>({label:e.code,tooltip:e.message})),
     ...(images?.skipped||[]).map(e=>({label:'Skipped: '+e.file+':'+e.line+' · '+e.reason}))
   ]);
-  return [actions,review,infrastructure,imageGroup,group(`Findings (${r.findings.filter(f=>!f.rule_id.startsWith('CKV')).length})`,findings),
+  return [actions,review,infrastructure,imageGroup,group(`Code findings (${findings.length})`,findings),
     group(`Coverage: ${r.coverage.status}`, [{label:(r.coverage.scope||'CP002 bounded checks')+'; analyzed is not a security guarantee.'},
       ...r.files_inspected.map(f=>group(`${f.file}: ${f.coverage.status}`,f.coverage.scopes.map(s=>({label:`${s.kind} · line ${s.location.start.line}: ${s.status}`,tooltip:`Supported steps: ${s.supported_steps}`}))))]),
     group(`Limitations (${r.analysis_limitations.length+(r.input_limitations||[]).length})`,(r.input_limitations||[]).map(message=>({label:message})).concat(r.analysis_limitations.map(n=>({label:`${n.code} · ${n.location.file}:${n.location.start.line} (${n.revision})`,tooltip:n.message}))).concat([{label:'Static checks only. No runtime verification or proof of application-wide security.'}])),
