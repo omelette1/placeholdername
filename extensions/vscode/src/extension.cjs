@@ -53,8 +53,11 @@ function activate(context) {
     running=true;
     controls.refresh();
     try{
-      const checkovPath=vscode.workspace.getConfiguration('changeproof').inspect('checkovPath')?.globalValue||undefined;
-      const result=await vscode.window.withProgress({location:vscode.ProgressLocation.Notification,title:'Patch: '+(mode==='current'?'current files':'changes since HEAD')+' — '+selectedFolder,cancellable:false},()=>runEngine(node,context.asAbsolutePath('out/cli.cjs'),selectedFolder,trace,{mode,checkovPath}));
+      const cfg=vscode.workspace.getConfiguration('changeproof');
+      const checkovPath=cfg.inspect('checkovPath')?.globalValue||undefined;
+      const trivyPath=cfg.inspect('trivyPath')?.globalValue||undefined;
+      const scanImages=cfg.inspect('scanContainerImages')?.globalValue===true;
+      const result=await vscode.window.withProgress({location:vscode.ProgressLocation.Notification,title:'Patch: '+(mode==='current'?'current files':'changes since HEAD')+' — '+selectedFolder,cancellable:false},()=>runEngine(node,context.asAbsolutePath('out/cli.cjs'),selectedFolder,trace,{mode,checkovPath,trivyPath,scanImages}));
       ui.finish(id,result);
       if(result.analysis_errors.length){
         const reason=result.analysis_errors.map(e=>`${e.code}${e.file?' ('+e.file+')':''}: ${e.message}`).join(' ');
