@@ -55,6 +55,11 @@ jobs:
           mkdir -p /tmp/patch-vscode
           tar -xzf /tmp/code.tar.gz -C /tmp/patch-vscode
           test -x /tmp/patch-vscode/VSCode-linux-x64/code
+          # Chromium refuses to start when the extracted SUID sandbox helper
+          # lacks the required root ownership and setuid mode.
+          sudo chown root:root /tmp/patch-vscode/VSCode-linux-x64/chrome-sandbox
+          sudo chmod 4755 /tmp/patch-vscode/VSCode-linux-x64/chrome-sandbox
+          test "$(stat -c '%a' /tmp/patch-vscode/VSCode-linux-x64/chrome-sandbox)" = 4755
       - name: Install VSIX and run native editor-host checks
         run: xvfb-run -a node extensions/vscode/test/run-host.mjs /tmp/patch-vscode/VSCode-linux-x64/code artifacts/patch-local-0.20.0.vsix
   test-package:
