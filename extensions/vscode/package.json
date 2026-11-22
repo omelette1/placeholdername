@@ -149,6 +149,18 @@
           "scope": "machine",
           "description": "User-level absolute path to trusted Checkov 3.4.5 outside reviewed projects. Empty searches the extension host PATH. No installation during reviews."
         },
+        "changeproof.backgroundMonitorEnabled": {
+          "type": "boolean",
+          "default": false,
+          "scope": "application",
+          "description": "Opt in to periodic and save-triggered local security scans. No project scripts are executed; advisory lookups require a separate opt-in."
+        },
+        "changeproof.dependencyAdvisoriesEnabled": {
+          "type": "boolean",
+          "default": false,
+          "scope": "application",
+          "description": "Opt in to sending only npm dependency names and installed versions to OSV for known-vulnerability lookup. Never sends source code or lockfile text."
+        },
         "changeproof.aiProfile": {
           "type": "string",
           "enum": [

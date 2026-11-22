@@ -13,7 +13,8 @@ function controlsHtml(model,nonce,token){
   <label for="folder">1. Choose your project</label><select id="folder" ${disabled} aria-label="Project folder"><option value="">Choose a project…</option>${model.folders.map((folder,i)=>`<option value="${i}" ${folder.path===model.folder?'selected':''}>${e(folder.label)}</option>`).join('')}</select><p class="path">${e(model.folder||'No project selected')}</p><button data-action="browse" ${disabled}>Choose folder…</button>
   <label for="mode">2. Choose scan scope</label><select id="mode" ${disabled}><option value="current" ${model.mode==='current'?'selected':''}>Saved project files · start here</option><option value="changes" ${model.mode==='changes'?'selected':''}>Changes since last commit</option></select><p class="help">${e(modeHelp)}</p>
   <label for="images">3. Optional container CVE scan</label><select id="images" ${disabled} aria-label="Container image vulnerability scan"><option value="disabled" ${!model.scanImages?'selected':''}>Off · configuration checks only</option><option value="enabled" ${model.scanImages?'selected':''}>On · scan locally cached Docker images</option></select><p class="help">Saved project files only. Requires trusted Trivy, locally available images and a cached vulnerability database. No image downloads during the scan. Missing coverage is reported, not considered safe.</p>
-   <button class="primary" data-action="scan" ${model.busy||!model.folder?'disabled':''}>${model.busy?'Working…':'Scan project'}</button><p class="foot">Local checks · no code uploads · saved files only. Save your edits before scanning.</p>
+  <button class="primary" data-action="scan" ${model.busy||!model.folder?'disabled':''}>${model.busy?'Working…':'Scan project'}</button><p class="foot">Local checks · no code uploads · saved files only. Save your edits before scanning.</p>
+  <section class="section"><h2>Continuous security monitoring</h2><p class="help">Opt in to saved-file scans on changes and every 30 minutes. No project code executes. Status bar and editor diagnostics show findings.</p><button data-action="monitor" ${disabled}>${model.monitor?'Disable background monitoring':'Enable background monitoring'}</button><p class="help">Separately enable dependency lookups: sends npm package names and versions only to OSV, not source code.</p><button data-action="advisories" ${disabled}>${model.advisories?'Disable OSV advisory lookup':'Enable OSV advisory lookup'}</button></section>
   <details><summary>Try a sample project</summary><p class="help">Choose an authored example with expected findings and a sample assistant answer. Patch creates a separate sample folder and leaves your project files unchanged.</p><button data-action="demo" ${disabled}>Choose a sample profile…</button></details><div class="row"><button data-action="results">View scan results</button><button data-action="settings">Settings</button></div>
   <section class="section" aria-label="Verify AI output"><h2>Check an assistant answer</h2><p class="help">Paste an AI completion message. Check supported file and function claims against your saved project.</p><button class="secondary" data-action="claims" ${model.busy||!model.folder?'disabled':''}>Check an assistant answer…</button><p class="help">Local only · no AI backend needed. Check assistant claims about files and functions; test success and behavior remain unverified.</p><details><summary>Try the evidence checks</summary><p class="help">See how invented source quotations are rejected using built-in examples. No project code or model calls.</p><button data-action="guard" ${disabled}>Test evidence guard</button></details><button data-action="evidence" ${model.busy||!model.review?.ai?'disabled':''}>Open last AI evidence</button><p class="help">${e(model.review?.ai?.stale?'Saved inputs changed. Previous evidence is stale.':model.review?.ai?.verification?.status==='completed'?'Quote receipts available. AI interpretations remain unverified.':model.review?.ai?.phase==='error'?'AI review failed or was rejected. Open the result for details.':'An AI review adds its quote receipts here.')}</p></section>
   <div class="status" role="status" aria-live="polite"><strong>${e(review?.stale?'STALE — save and scan again':review?.loading?'Scanning saved files…':review?.error?'Scan could not finish':review?.report?'Last review':'Ready to scan')}</strong><p class="help">${e(review?.error|| (review?.report?`${review.report.findings.length} finding(s) · Header-flow coverage: ${review.report.coverage.status} (CP002)`:'Results and code evidence open in the editor.'))}</p>${review?.folder?'<p class="path">'+e(review.folder)+'</p>':''}</div>
@@ -44,7 +45,7 @@ function createScanControls(vscode,context,{review,aiReview,getReview=()=>null,g
     const config=vscode.workspace.getConfiguration('changeproof');
     const configured=config.inspect('aiProfile')?.globalValue;
     const scanImages=config.inspect('scanContainerImages')?.globalValue===true;
-    return {folder,folders,mode,scanImages,profile:configured==='full'?'full':'demo',busy:busy(),error,review:getReview(),connection:getConnection()};
+    return {folder,folders,mode,scanImages,profile:configured==='full'?'full':'demo',monitor:vscode.workspace.getConfiguration('changeproof').inspect('backgroundMonitorEnabled')?.globalValue===true,advisories:vscode.workspace.getConfiguration('changeproof').inspect('dependencyAdvisoriesEnabled')?.globalValue===true,busy:busy(),error,review:getReview(),connection:getConnection()};
   }
   function refresh(){
     if(view){token=crypto.randomBytes(18).toString('hex');view.webview.html=controlsHtml(model(),crypto.randomBytes(18).toString('hex'),token);}
@@ -52,7 +53,7 @@ function createScanControls(vscode,context,{review,aiReview,getReview=()=>null,g
   async function handle(message){
     if(!message||message.token!==token||typeof message.action!=='string'||busy())return;
     const action=message.action;
-    const allowed=['scan','browse','folder','mode','profile','images','results','settings','ai','health','setup','token','claims','guard','evidence','demo'];
+    const allowed=['scan','browse','folder','mode','profile','results','settings','ai','health','setup','token','claims','guard','evidence','demo','monitor','advisories','images'];
     if(!allowed.includes(action))return;
     // Resolve only registered folder indices; never accept a webview-supplied path.
     const folders=model().folders;
@@ -67,12 +68,15 @@ function createScanControls(vscode,context,{review,aiReview,getReview=()=>null,g
         await persist();
       }else if(action==='mode'){
         if(!MODES.has(message.value))throw new Error();mode=message.value;await persist();
-      }else if(action==='images'){
-        if(!['enabled','disabled'].includes(message.value))throw new Error();
-        await vscode.workspace.getConfiguration('changeproof').update('scanContainerImages',message.value==='enabled',vscode.ConfigurationTarget.Global);
       }else if(action==='profile'){
         if(!['demo','full'].includes(message.value))throw new Error();
         await vscode.workspace.getConfiguration('changeproof').update('aiProfile',message.value,vscode.ConfigurationTarget.Global);
+      }else if(action==='images'){
+        if(!['enabled','disabled'].includes(message.value))throw new Error();
+        await vscode.workspace.getConfiguration('changeproof').update('scanContainerImages',message.value==='enabled',vscode.ConfigurationTarget.Global);
+      }else if(action==='monitor'||action==='advisories'){
+        const key=action==='monitor'?'backgroundMonitorEnabled':'dependencyAdvisoriesEnabled';
+        await vscode.workspace.getConfiguration('changeproof').update(key,!(vscode.workspace.getConfiguration('changeproof').inspect(key)?.globalValue===true),vscode.ConfigurationTarget.Global);
       }else if(action==='scan'){
         if(!folder||!fs.statSync(folder).isDirectory())throw new Error();await persist();await review(folder,{mode,selection:'controls'});
       }else if(action==='claims'){if(!folder)throw new Error();await vscode.commands.executeCommand('changeproof.checkClaims',folder);}

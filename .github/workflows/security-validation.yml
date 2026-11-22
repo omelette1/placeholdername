@@ -1,0 +1,99 @@
+name: Patch security validation
+on:
+  push:
+    branches: [main, "feat/**"]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  quick-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - name: Check syntax and focused security tests
+        run: |
+          node --check packages/dependencies/src/scanner.mjs
+          node --check packages/engine/src/additional-rules.mjs
+          node --check extensions/vscode/src/monitor.cjs
+          node --test packages/dependencies/test/scanner.test.mjs packages/engine/test/additional-rules.test.mjs
+          node evaluation/independent-sample-benchmark.mjs
+      - name: Build and smoke installed bundle interfaces
+        run: |
+          npm run package:extension
+          node scripts/ci-package-smoke.mjs
+          unzip -l artifacts/patch-local-0.20.0.vsix | grep -q 'extension/src/monitor.cjs'
+      - name: Upload quick-smoke VSIX for native test
+        uses: actions/upload-artifact@v4
+        with:
+          name: patch-native-candidate
+          path: artifacts/patch-local-0.20.0.vsix
+  native-vsix:
+    needs: quick-smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - uses: actions/download-artifact@v4
+        with:
+          name: patch-native-candidate
+          path: artifacts
+      - name: Download trusted VS Code desktop binary for isolated host test
+        run: |
+          curl --fail --location --retry 2 --silent --show-error https://update.code.visualstudio.com/latest/linux-x64/stable -o /tmp/code.tar.gz
+          mkdir -p /tmp/patch-vscode
+          tar -xzf /tmp/code.tar.gz -C /tmp/patch-vscode
+          test -x /tmp/patch-vscode/VSCode-linux-x64/code
+          # Chromium refuses to start when the extracted SUID sandbox helper
+          # lacks the required root ownership and setuid mode.
+          sudo chown root:root /tmp/patch-vscode/VSCode-linux-x64/chrome-sandbox
+          sudo chmod 4755 /tmp/patch-vscode/VSCode-linux-x64/chrome-sandbox
+          test "$(stat -c '%a' /tmp/patch-vscode/VSCode-linux-x64/chrome-sandbox)" = 4755
+      - name: Install VSIX and run native editor-host checks
+        run: xvfb-run -a node extensions/vscode/test/run-host.mjs /tmp/patch-vscode/VSCode-linux-x64/code artifacts/patch-local-0.20.0.vsix
+  test-package:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install dependencies without lifecycle scripts
+        run: npm ci --ignore-scripts
+      - name: Unit and integration tests (network disabled)
+        run: npm test
+      - name: Validate local evaluation fixtures
+        run: |
+          npm run evaluate:rules
+          node evaluation/claims-benchmark.mjs
+          npm run verify:fixtures
+          node evaluation/independent-sample-benchmark.mjs
+      - name: Build review backend and bundled extension
+        run: |
+          npm run build:review-api
+          npm run package:extension
+      - name: Validate VSIX contents and packaged CLI
+        run: |
+          test -s artifacts/patch-local-0.20.0.vsix
+          unzip -l artifacts/patch-local-0.20.0.vsix | grep -q 'extension/out/cli.cjs'
+          unzip -l artifacts/patch-local-0.20.0.vsix | grep -q 'extension/src/monitor.cjs'
+          unzip -p artifacts/patch-local-0.20.0.vsix extension/package.json | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{const p=JSON.parse(s);if(p.displayName!=='Patch'||!p.contributes.configuration.properties['changeproof.backgroundMonitorEnabled'])process.exit(1)})"
+          node scripts/ci-package-smoke.mjs
+      - name: Upload tested VSIX
+        uses: actions/upload-artifact@v4
+        with:
+          name: patch-extension
+          path: artifacts/patch-local-0.20.0.vsix
