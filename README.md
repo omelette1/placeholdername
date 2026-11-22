@@ -114,6 +114,7 @@ navigation/highlighting also check the saved snapshot directly.
 | CP003 | Explicit Node TLS verification disablement using supported environment assignments or inline HTTPS options. |
 | CP004 | Direct, unshadowed built-in `eval` / `Function` calls; input exploitability is unknown. |
 | Infrastructure | Ten curated Checkov policies for Terraform, Kubernetes YAML, Dockerfiles and GitHub Actions; current saved configuration only. |
+| Container image CVEs (opt-in) | Trivy high/critical CVEs for tagged or digested images available locally in Docker, using a previously cached vulnerability DB. Does not verify deployments or automatically fetch images. |
 | Optional AI | Bounded before/after tracked JS/TS changes: possible logging/response exposure and weakened access checks, with validated reference ranges and stated assumptions. |
 
 Coverage applies specifically to the bounded CP002 analysis, not every security
@@ -160,6 +161,24 @@ node packages/engine/src/cli.mjs /absolute/path/to/project --mode changes
 Report schema is **5.0.0**. Exit 0 / `analysis_complete` describe completion of
 the code-processing path, not clean security or complete infrastructure
 coverage. Inspect `infrastructure.status` / `infrastructure.errors` separately.
+
+## Container image vulnerability checks (opt-in)
+
+Patch now offers a separate, **disabled-by-default** check for known vulnerabilities in packages inside locally available Docker images. This complements Checkov configuration checks; it does not replace them. The feature scans image references in saved Dockerfiles and Kubernetes-style YAML in **Saved project files** mode only. It handles explicit tags and image digests; unsupported, templated or mutable references are marked skipped, not safe.
+
+1. Install a trusted [Trivy](https://trivy.dev/) executable **outside the reviewed project**. Have Docker running, with the referenced images already pulled or built locally. Populate Trivy's vulnerability database separately when online; the Patch scan will not download one.
+2. In VS Code **User settings** (not project settings), enable \`changeproof.scanContainerImages\`. Optionally set \`changeproof.trivyPath\` to the trusted executable's absolute path.
+3. Open Patch, choose **Saved project files**, and run **Scan project**. Review the *Container images* section and high/critical CVEs in the same findings dashboard. The source location identifies the image reference, and the details identify the image, package, installed version, and any listed fixed version.
+
+The CLI equivalent is:
+
+\`\`\`sh
+node packages/engine/src/cli.mjs /absolute/path/to/project --mode current --scan-images --trivy /absolute/path/to/trivy
+\`\`\`
+
+The Trivy invocation restricts image sources to local Docker and requests offline scanning, no database/check updates, and no telemetry. It is a **trusted external executable**, not an OS-level sandbox. At most eight distinct images and 120 high/critical findings are reported per scan. Missing images, a missing or incompatible vulnerability DB, missing Trivy, scanner failures, unsupported references, or changing source snapshots produce visible incomplete/not-assessed results instead of "clean". Database freshness is not verified; cached reports can miss recent CVEs.
+
+This check **does not detect new memory-safety vulnerabilities**, prove that an image is running, prove exploitability or that a deployment is exposed, or inspect an unknown remote image without it being present locally. In particular, detecting the NGINX CVEs in a particular image requires actual package inventory and vulnerability DB coverage; mentioning NGINX in source alone is insufficient. No target project script is run.
 
 ## Optional AI setup
 
