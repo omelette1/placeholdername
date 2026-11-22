@@ -117,6 +117,7 @@ function createFindingsView(vscode, context, {record,rerun,aiAction=()=>{},onCha
       if (state.stale || document.isDirty) {stale('Unsaved source changes.');throw new Error('Saved source changed. Rerun explicitly before navigating.');}
       for (const pos of [step.location.start,step.location.end]) if (pos.line>document.lineCount || pos.column>document.lineAt(pos.line-1).text.length+1) {stale('Evidence range no longer matches source.');throw new Error('Evidence no longer matches this file. Rerun explicitly.');}
       snapshotTarget(step.location);
+      if(!panel){ensurePanel();renderPanel();}
       panel?.reveal(vscode.ViewColumn.Two,true);
       await vscode.window.showTextDocument(document,{viewColumn:vscode.ViewColumn.One,selection:range(step.location),preview:true});
       if(state?.id!==reviewId||state.selectionToken!==selectionToken)throw new Error('Finding selection changed; select the current evidence step.');
@@ -129,9 +130,9 @@ function createFindingsView(vscode, context, {record,rerun,aiAction=()=>{},onCha
   }
   function ensurePanel(){
     if (!panel) {
-      panel=vscode.window.createWebviewPanel('changeproof.findingDetails','Patch Review',vscode.ViewColumn.One,{enableScripts:true,localResourceRoots:[]});
+      panel=vscode.window.createWebviewPanel('changeproof.findingDetails','Patch Review',vscode.ViewColumn.Two,{enableScripts:true,localResourceRoots:[]});
       context.subscriptions.push(panel);
-      panel.onDidDispose(()=>{panel=undefined;clearDecorations();});
+      panel.onDidDispose(()=>{panel=undefined;if(auxiliary||showingAi||showingStatus)clearSelection();else clearDecorations();});
       panel.webview.onDidReceiveMessage(async message=>{
         if(auxiliary){await auxiliary.onMessage(message);return;}
         if(message?.type==='dashboard_select'||message?.type==='dashboard_action'){

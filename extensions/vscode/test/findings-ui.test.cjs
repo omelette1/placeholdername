@@ -125,5 +125,7 @@ test('closing a details webview does not invalidate an otherwise current saved-s
  f.fake.panels[0].dispose();
  assert.equal(f.ui.getState().stale,false);
  assert.equal(await f.ui.navigate(id,1),true,'a disposed details tab must not silently discard current evidence selection');
+ assert.equal(f.fake.panels.length,2,'source navigation reopens a disposed details panel');
+ assert.equal(f.fake.panels.at(-1).viewColumn,f.fake.vscode.ViewColumn.Two,'details remain in a separate editor column');
  assert.equal(f.fake.vscode.window.activeTextEditor.document.uri.fsPath,path.join(f.root,f.file));
 });
