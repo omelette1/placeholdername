@@ -17,7 +17,7 @@ const tick=()=>new Promise(resolve=>setImmediate(resolve));
 
 test('finishing a review automatically opens one dashboard with summary, list and first finding evidence',async t=>{
  const x=await fixture(t),id=x.ui.begin(x.root,{mode:'current'});assert.equal(x.fake.panels.length,0);x.ui.finish(id,x.report);
- assert.equal(x.fake.panels.length,1);assert.equal(x.fake.panels[0].title,'Patch Review');assert.equal(x.fake.panels[0].viewColumn,x.fake.vscode.ViewColumn.One);
+ assert.equal(x.fake.panels.length,1);assert.equal(x.fake.panels[0].title,'Patch Review');assert.equal(x.fake.panels[0].viewColumn,x.fake.vscode.ViewColumn.Two,'review opens beside source rather than moving its tab on first navigation');
  const html=x.fake.panels[0].webview.html;for(const text of ['Code findings','Configuration','CP002 coverage','Infrastructure','Evidence trail','Potential dynamic code execution','Open evidence'])assert.ok(html.includes(text));
  assert.match(html,/data-finding="0"/);assert.match(html,/data-step="0"/);assert.equal(x.fake.editors.length,0,'auto-open does not open target code');
  assert.equal(x.reruns.length,0);await x.fake.commands.get('changeproof.openDashboard')();assert.equal(x.fake.panels.length,1);await x.ui.navigate(id,0);assert.equal(x.fake.panels[0].viewColumn,x.fake.vscode.ViewColumn.Two);

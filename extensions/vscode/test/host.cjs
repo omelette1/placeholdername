@@ -31,7 +31,7 @@ async function run(){
  const editor=vscode.window.activeTextEditor;const applied=await editor.edit(edit=>edit.insert(new vscode.Position(editor.document.lineCount-1,0),'// edited by isolated host test\n'));assert.equal(applied,true,'native edit must apply');
  await waitFor(()=>/STALE/.test(panel.webview.html),'Native editor change did not mark review stale: '+JSON.stringify({events:nativeEditEvents,dirty:editor.document.isDirty}));assert.equal(diagnostics().length,0);assert.equal(await vscode.commands.executeCommand('changeproof.openEvidenceStep',review.review_id,0),false);
  await editor.document.save();await new Promise(resolve=>setTimeout(resolve,200));
- await vscode.commands.executeCommand('changeproof.rerunReview');assert.equal(diagnostics().length,1);assert.match(panel.webview.html,/Previous selections have been cleared/);
+ await vscode.commands.executeCommand('changeproof.rerunReview');assert.equal(diagnostics().length,1);assert.match(panel.webview.html,/Evidence trail/);assert.notEqual(latest('review_presented').review_id,review.review_id,'rerun must issue a new evidence revision');
  assert.equal(await vscode.commands.executeCommand('changeproof.openEvidenceStep',review.review_id,0),false,'old review ID rejected');
  const baseline=process.env.CHANGEPROOF_TEST_BASELINE;fs.writeFileSync(file,baseline);await new Promise(resolve=>setTimeout(resolve,150));await vscode.commands.executeCommand('changeproof.reviewLocalChanges');assert.equal(diagnostics().length,0);assert.ok(provider.getChildren().some(g=>g.label==='Findings (0)'));
  fs.writeFileSync(file,baseline+'\nconsole.warn(password);\n');await vscode.commands.executeCommand('changeproof.reviewLocalChanges');assert.equal(diagnostics()[0].d.code,'CP001');
