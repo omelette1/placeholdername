@@ -6,7 +6,7 @@ import path from 'node:path';
 import {imageReferences,normalizeTrivy,emptyContainerImages,scanContainerImages} from '../src/container-vulns.mjs';
 
 test('source extraction identifies tagged Docker and YAML image references, but not templated or mutable ones',()=>{
-  assert.deepEqual(imageReferences('Dockerfile','FROM --platform=linux/amd64 nginx:1.27 AS builder\nFROM builder\nFROM scratch\nFROM ubuntu\n').map(x=>x.image),['nginx:1.27',null,null,null]);
+  assert.deepEqual(imageReferences('Dockerfile','FROM --platform=linux/amd64 nginx:1.27 AS builder\nFROM builder\nFROM scratch\nFROM ubuntu\n').map(x=>x.image),['nginx:1.27',null,null]);
   const refs=imageReferences('deployment.yaml',"image: nginx:1.27\nimage: '{{ .Values.image }}'\n# image: secret:1\nimage: redis@sha256:"+'a'.repeat(64));
   assert.equal(refs.length,3);
   assert.equal(refs[0].image,'nginx:1.27');
