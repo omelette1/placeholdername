@@ -12,7 +12,7 @@ const local=(root,file)=>{const rel=path.relative(root,file);return rel!==''&&re
 const imageFile=file=>/(?:^|\/)Dockerfile(?:\.[^/]+)?$|\.dockerfile$|\.ya?ml$/i.test(file);
 const truncated=(value,max=160)=>String(value??'').replace(/[\r\n\x00-\x1f]/g,' ').slice(0,max);
 export function emptyContainerImages(mode='current'){
-  return {status:'not_assessed',reason:mode==='current'?'Container image scanning is opt-in; no image CVE assessment was performed.':'Container image comparison against HEAD is not supported; use Saved project files.',scanner:{name:'Trivy',source:'local Docker images',database:'locally cached; freshness not verified'},images:[],findings:[],skipped:[],errors:[],limitations:['Only explicitly enabled scans of locally available Docker images are supported. No remote registries, image pulls or DB updates.','Image references are extracted conservatively from saved Dockerfiles and Kubernetes-style YAML; templates, build arguments and deployment state are not resolved.','CVE matches depend on the locally cached vulnerability database and package inventory. Exposure, exploitability and fixed-version availability are not verified.']};
+  return {status:'not_assessed',reason:mode==='current'?'Container image scanning is opt-in; no image CVE assessment was performed.':'Container image comparison against HEAD is not supported; use Saved project files.',scanner:{name:'Trivy',source:'local Docker images',database:'locally cached; freshness not verified'},files_inspected:[],images:[],findings:[],skipped:[],errors:[],limitations:['Only explicitly enabled scans of locally available Docker images are supported. No remote registries, image pulls or DB updates.','Image references are extracted conservatively from saved Dockerfiles and Kubernetes-style YAML; templates, build arguments and deployment state are not resolved.','CVE matches depend on the locally cached vulnerability database and package inventory. Exposure, exploitability and fixed-version availability are not verified.']};
 }
 export function imageReferences(file,source){
   const found=[],stages=new Set();
@@ -32,7 +32,7 @@ export function imageReferences(file,source){
       image=match?.[1]?.replace(/^['"]|['"]$/g,'');
     }
     if(!image)return;
-    if(image==='scratch'||!IMAGE.test(image)||!image.includes(':')&&!image.includes('@')){
+    if(image==='scratch'||!IMAGE.test(image)||!(/:[^/:]+$/.test(image)||/@sha256:[a-f0-9]{64}$/i.test(image))){
       found.push({file,line:i+1,image:null,reason:'unresolved_or_mutable_reference'});
       return;
     }
@@ -98,7 +98,7 @@ export async function scanContainerImages(project,{mode='current',enabled=false,
   if(inputs.errors.length)output.errors.push({code:'enumeration_incomplete',message:'Configuration enumeration was incomplete.'});
   const candidates=[],snapshots=new Map();
   for(const file of inputs.files){
-    try{const bytes=safeRead(root,file);if(!bytes)continue;const source=text(bytes);snapshots.set(file,bytes.snapshot);candidates.push(...imageReferences(file,source));}
+    try{const bytes=safeRead(root,file);if(!bytes)continue;const source=text(bytes);snapshots.set(file,bytes.snapshot);output.files_inspected.push({file,snapshot:bytes.snapshot});candidates.push(...imageReferences(file,source));}
     catch{output.errors.push({code:'source_unavailable',message:'A configuration file could not be safely read.'});}
   }
   const distinct=new Map();
@@ -115,14 +115,15 @@ export async function scanContainerImages(project,{mode='current',enabled=false,
     if(output.images.length>=IMAGE_LIMIT){output.skipped.push({file:refs[0].file,line:refs[0].line,reason:'image_scan_limit'});continue;}
     const record={image,status:'not_assessed',high_critical_findings:0,references:refs.map(({file,line})=>({file,line}))};
     output.images.push(record);
+    const before=output.findings.length;
     try{
-      const before=output.findings.length;
       const raw=await runImage(exe,image,60000);
       // Scan identical images once; retain a navigable source reference.
       record.high_critical_findings=normalizeTrivy(raw,refs[0],output);
       record.status='assessed';
       if(output.findings.length===before)record.high_critical_findings=0;
     }catch(e){
+      output.findings.splice(before);
       output.errors.push({code:['scanner_timeout','invalid_scanner_output','no_package_inventory','finding_limit'].includes(e.message)?e.message:'image_scan_failed',message:'The local image or cached DB was unavailable, or Trivy returned incomplete output. No clean result was inferred.'});
     }
   }
