@@ -118,3 +118,12 @@ test('review and explicit rerun actions are available directly in the persistent
  assert.ok(f.fake.flatten().some(i=>i.command?.command==='changeproof.rerunReview'));
  assert.equal(f.reruns.length,0);
 });
+
+test('closing a details webview does not invalidate an otherwise current saved-source selection',async t=>{
+ const f=fixture(t),id=f.ui.begin(f.root);f.ui.finish(id,f.report);await f.ui.select(id,0);
+ assert.equal(await f.ui.navigate(id,0),true);
+ f.fake.panels[0].dispose();
+ assert.equal(f.ui.getState().stale,false);
+ assert.equal(await f.ui.navigate(id,1),true,'a disposed details tab must not silently discard current evidence selection');
+ assert.equal(f.fake.vscode.window.activeTextEditor.document.uri.fsPath,path.join(f.root,f.file));
+});

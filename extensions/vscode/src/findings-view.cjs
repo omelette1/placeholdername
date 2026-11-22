@@ -131,7 +131,7 @@ function createFindingsView(vscode, context, {record,rerun,aiAction=()=>{},onCha
     if (!panel) {
       panel=vscode.window.createWebviewPanel('changeproof.findingDetails','Patch Review',vscode.ViewColumn.One,{enableScripts:true,localResourceRoots:[]});
       context.subscriptions.push(panel);
-      panel.onDidDispose(()=>{panel=undefined;clearSelection();});
+      panel.onDidDispose(()=>{panel=undefined;clearDecorations();});
       panel.webview.onDidReceiveMessage(async message=>{
         if(auxiliary){await auxiliary.onMessage(message);return;}
         if(message?.type==='dashboard_select'||message?.type==='dashboard_action'){
