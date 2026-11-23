@@ -20,7 +20,8 @@
     "check:ai": "node evaluation/smoke.mjs",
     "setup:local": "node scripts/configure-local.mjs",
     "test:infra": "node --test packages/infrastructure/test/*.test.mjs",
-    "verify:fixtures": "node evaluation/verify-fixtures.mjs"
+    "verify:fixtures": "node evaluation/verify-fixtures.mjs",
+    "verify:demo": "node scripts/verify-demo.mjs"
   },
   "dependencies": {
     "ajv": "^8.20.0",

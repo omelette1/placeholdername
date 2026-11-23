@@ -32,11 +32,29 @@ replacement, and applies it only when you click **Apply this patch**. It then
 reruns the local static checks. This is not a behavior or security proof and
 does not execute project tests or scripts.
 
-## Dependency advisories and background monitoring (feature branch)
+## Dependency advisories and background monitoring
 
 Patch now includes opt-in npm dependency advisory scanning and background saved-file monitoring. In the shield sidebar, enable **Continuous security monitoring** to scan on changes and about every 30 minutes while VS Code is open; enable **OSV advisory lookup** separately to send npm package names and versions to OSV. No source text is sent to OSV, and no project scripts execute. Dependency findings are advisory matches, not verified exploitability. The current implementation supports npm lockfile v2/v3 only; unsupported formats and failures are explicitly unassessed.
 
 Two additional bounded checks observe credential-shaped hardcoded literals (CP005) and nonliteral direct Node shell commands (CP006). These are hypotheses, not exploit proofs. See [security monitoring and evaluation](docs/monitoring-and-evaluation.md) for scope, limitations, benchmarking provenance, testing and CI.
+
+## Container image vulnerability checks (opt-in)
+
+Patch now offers a separate, **disabled-by-default** check for known vulnerabilities in packages inside locally available Docker images. This complements Checkov configuration checks; it does not replace them. The feature scans image references in saved Dockerfiles and Kubernetes-style YAML in **Saved project files** mode only. It handles explicit tags and image digests; unsupported, templated or mutable references are marked skipped, not safe.
+
+1. Install a trusted [Trivy](https://trivy.dev/) executable **outside the reviewed project**. Have Docker running, with the referenced images already pulled or built locally. Populate Trivy's vulnerability database separately when online; the Patch scan will not download one.
+2. In Patch's Scan sidebar, set **Optional container CVE scan** to **On** (this updates your user-level `changeproof.scanContainerImages` setting). Optionally set `changeproof.trivyPath` to the trusted executable's absolute path in VS Code User settings.
+3. Open Patch, choose **Saved project files**, and run **Scan project**. Review the *Container images* section and high/critical CVEs in the same findings dashboard. The source location identifies the image reference, and the details identify the image, package, installed version, and any listed fixed version.
+
+The CLI equivalent is:
+
+```sh
+node packages/engine/src/cli.mjs /absolute/path/to/project --mode current --scan-images --trivy /absolute/path/to/trivy
+```
+
+The Trivy invocation restricts image sources to local Docker and requests offline scanning, no database/check updates, and no telemetry. It is a **trusted external executable**, not an OS-level sandbox. At most eight distinct images and 120 high/critical findings are reported per scan. Missing images, a missing or incompatible vulnerability DB, missing Trivy, scanner failures, unsupported references, or changing source snapshots produce visible incomplete/not-assessed results instead of "clean". Database freshness is not verified; cached reports can miss recent CVEs.
+
+This check **does not detect new memory-safety vulnerabilities**, prove that an image is running, prove exploitability or that a deployment is exposed, or inspect an unknown remote image without it being present locally. In particular, detecting the NGINX CVEs in a particular image requires actual package inventory and vulnerability DB coverage; mentioning NGINX in source alone is insufficient. No target project script is run.
 
 ## Demo profiles
 

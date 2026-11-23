@@ -6,6 +6,7 @@ import {MAX_FILE,git,safeRead,text,exclusion,DEFAULT_EXCLUSIONS,eligible} from '
 import {currentInputs} from './current-files.mjs';
 import {emptyInfrastructure} from '../../infrastructure/src/scanner.mjs';
 import {emptyDependencies} from '../../dependencies/src/scanner.mjs';
+import {emptyContainerImages} from '../../infrastructure/src/container-vulns.mjs';
 export {exclusion,DEFAULT_EXCLUSIONS} from './io.mjs';
 export function lineRanges(before, after) {
   const changes = diffLines(before, after, {timeout:1000});
@@ -27,7 +28,7 @@ export function lineRanges(before, after) {
   return ranges;
 }
 export function emptyReport() {
-  return {schema_version:'5.0.0', tool:{name:'changeproof',version:'0.20.0'}, infrastructure:emptyInfrastructure('changes'), dependencies:emptyDependencies('changes'), repository:null, git_repository:null, review_mode:'changes', input_limitations:[], compared_revision:null, comparison:'HEAD_to_tracked_working_tree', runtime_verification:false, analysis_complete:false, coverage:{status:'not_analyzed', scope:'CP002 on changed tracked JS/TS files only', analyzed_scopes:0, partial_scopes:0, unsupported_scopes:0, unassessed_files:0}, files_inspected:[], untracked_files:[], skipped_files:[], findings:[], analysis_errors:[], analysis_limitations:[], default_exclusions:DEFAULT_EXCLUSIONS, limitations:['Initial local static-analysis prototype; no AI reasoning or general access-control analysis.', 'Only saved working-tree content is read; untracked and ignored files are not analyzed.', 'Git-ignored untracked files are excluded by Git. Concurrent edits are not an atomic snapshot.', 'Names and file paths are metadata; literal source values and source snippets are omitted.']};
+  return {schema_version:'5.0.0', tool:{name:'changeproof',version:'0.20.0'}, infrastructure:emptyInfrastructure('changes'), dependencies:emptyDependencies('changes'), container_images:emptyContainerImages('changes'), repository:null, git_repository:null, review_mode:'changes', input_limitations:[], compared_revision:null, comparison:'HEAD_to_tracked_working_tree', runtime_verification:false, analysis_complete:false, coverage:{status:'not_analyzed', scope:'CP002 on changed tracked JS/TS files only', analyzed_scopes:0, partial_scopes:0, unsupported_scopes:0, unassessed_files:0}, files_inspected:[], untracked_files:[], skipped_files:[], findings:[], analysis_errors:[], analysis_limitations:[], default_exclusions:DEFAULT_EXCLUSIONS, limitations:['Initial local static-analysis prototype; no AI reasoning or general access-control analysis.', 'Only saved working-tree content is read; untracked and ignored files are not analyzed.', 'Git-ignored untracked files are excluded by Git. Concurrent edits are not an atomic snapshot.', 'Names and file paths are metadata; literal source values and source snippets are omitted.']};
 }
 function analyzeChanges(repository) {
   const report=emptyReport();
@@ -101,7 +102,7 @@ function analyzeChanges(repository) {
 }
 
 function analyzeCurrent(project) {
-  const report=emptyReport();report.review_mode='current';report.comparison='current_files';report.infrastructure=emptyInfrastructure('current');
+  const report=emptyReport();report.review_mode='current';report.comparison='current_files';report.infrastructure=emptyInfrastructure('current');report.container_images=emptyContainerImages('current');
   report.coverage.scope='CP002 on eligible saved JS/TS files in the selected project; exclusions are listed separately';
   report.limitations=['Current files have no compared baseline; finding and path newness is not applicable.', 'Saved files only. No target code, configuration plugins or dependencies are executed.', 'Relative/imported helpers, dynamic dispatch and returned-value propagation are not resolved.', 'Source names/paths are metadata; literal values and source snippets are omitted. Reads are not an atomic snapshot.'];
   let root;

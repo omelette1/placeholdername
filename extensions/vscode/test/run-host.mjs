@@ -21,9 +21,12 @@ const resultPath=path.join(temp,'host-result.json');
 const env=Object.fromEntries(Object.entries(process.env).filter(([key])=>!key.startsWith('VSCODE_')&&!key.startsWith('ELECTRON_')&&!['NODE_OPTIONS','NODE_PATH'].includes(key)));
 let developmentPath=extension;
 if(vsix){
+  // The VS Code desktop executable opens the GUI and can hang when asked to
+  // install extensions. Use the bundled CLI entrypoint for install/list actions.
+  const installer=process.platform==='linux'&&path.basename(code)==='code'&&fs.existsSync(path.join(path.dirname(code),'bin','code'))?path.join(path.dirname(code),'bin','code'):code;
   const artifact=path.resolve(vsix);
-  execFileSync(code,['--user-data-dir',userData,'--extensions-dir',extensions,'--install-extension',artifact,'--force','--do-not-sync'],{env,stdio:'inherit',timeout:60000});
-  const listed=execFileSync(code,['--user-data-dir',userData,'--extensions-dir',extensions,'--list-extensions','--show-versions'],{env,encoding:'utf8',timeout:30000});
+  execFileSync(installer,['--user-data-dir',userData,'--extensions-dir',extensions,'--install-extension',artifact,'--force','--do-not-sync'],{env,stdio:'inherit',timeout:60000});
+  const listed=execFileSync(installer,['--user-data-dir',userData,'--extensions-dir',extensions,'--list-extensions','--show-versions'],{env,encoding:'utf8',timeout:30000});
   if(!listed.includes('changeproof-local.changeproof-local@'+JSON.parse(fs.readFileSync(path.join(extension,'package.json'))).version))throw new Error('Packaged extension missing from clean profile.');
   // Only a separate test driver is a development extension. The target must load from the VSIX installation.
   developmentPath=path.join(temp,'driver');fs.mkdirSync(developmentPath);

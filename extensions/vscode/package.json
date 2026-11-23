@@ -170,6 +170,18 @@
           "default": "demo",
           "scope": "application",
           "description": "Explicit AI context/generation profile. Demo uses smaller contexts and a 3000 completion-token cap; estimates do not guarantee provider quota availability."
+        },
+        "changeproof.scanContainerImages": {
+          "type": "boolean",
+          "default": false,
+          "scope": "application",
+          "description": "Opt-in local image CVE checks in Saved project files. Uses only locally available Docker images and cached Trivy vulnerability data; no image pull or database update is requested."
+        },
+        "changeproof.trivyPath": {
+          "type": "string",
+          "default": "",
+          "scope": "machine",
+          "description": "Optional absolute path to trusted Trivy executable outside the reviewed project. Empty searches PATH. Image scanning is disabled unless scanContainerImages is enabled."
         }
       }
     },

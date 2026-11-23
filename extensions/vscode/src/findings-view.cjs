@@ -117,6 +117,7 @@ function createFindingsView(vscode, context, {record,rerun,aiAction=()=>{},onCha
       if (state.stale || document.isDirty) {stale('Unsaved source changes.');throw new Error('Saved source changed. Rerun explicitly before navigating.');}
       for (const pos of [step.location.start,step.location.end]) if (pos.line>document.lineCount || pos.column>document.lineAt(pos.line-1).text.length+1) {stale('Evidence range no longer matches source.');throw new Error('Evidence no longer matches this file. Rerun explicitly.');}
       snapshotTarget(step.location);
+      if(!panel){ensurePanel();renderPanel();}
       panel?.reveal(vscode.ViewColumn.Two,true);
       await vscode.window.showTextDocument(document,{viewColumn:vscode.ViewColumn.One,selection:range(step.location),preview:true});
       if(state?.id!==reviewId||state.selectionToken!==selectionToken)throw new Error('Finding selection changed; select the current evidence step.');
@@ -129,9 +130,9 @@ function createFindingsView(vscode, context, {record,rerun,aiAction=()=>{},onCha
   }
   function ensurePanel(){
     if (!panel) {
-      panel=vscode.window.createWebviewPanel('changeproof.findingDetails','Patch Review',vscode.ViewColumn.One,{enableScripts:true,localResourceRoots:[]});
+      panel=vscode.window.createWebviewPanel('changeproof.findingDetails','Patch Review',vscode.ViewColumn.Two,{enableScripts:true,localResourceRoots:[]});
       context.subscriptions.push(panel);
-      panel.onDidDispose(()=>{panel=undefined;clearSelection();});
+      panel.onDidDispose(()=>{panel=undefined;if(auxiliary||showingAi||showingStatus)clearSelection();else clearDecorations();});
       panel.webview.onDidReceiveMessage(async message=>{
         if(auxiliary){await auxiliary.onMessage(message);return;}
         if(message?.type==='dashboard_select'||message?.type==='dashboard_action'){
@@ -219,7 +220,7 @@ function createFindingsView(vscode, context, {record,rerun,aiAction=()=>{},onCha
     if (id!==state?.id) return;
     state.report=report;state.mode=report.review_mode||state.mode;state.loading=false;
     if(report.repository){
-      for(const entry of [...report.files_inspected,...(report.infrastructure?.files_inspected||[]),...(report.dependencies?.files_inspected||[]),...report.untracked_files,...report.skipped_files]){
+      for(const entry of [...report.files_inspected,...(report.infrastructure?.files_inspected||[]),...(report.dependencies?.files_inspected||[]),...(report.container_images?.files_inspected||[]),...report.untracked_files,...report.skipped_files]){
         const file=metadataKey(path.join(report.repository,entry.file));
         const captured=entry.snapshot!==undefined?entry.snapshot:fingerprint(file);
         metadata.set(file,captured);
@@ -234,7 +235,7 @@ function createFindingsView(vscode, context, {record,rerun,aiAction=()=>{},onCha
     if (!state.stale) for (const f of report.findings) {
       try {
         const target=validatedTarget(f.location),uri=vscode.Uri.file(target);
-        const diagnostic=new vscode.Diagnostic(range(f.location),f.explanation+'\nHEAD newness: '+String(f.newly_introduced)+'\nRuntime verification: '+String(f.runtime_verification)+'\n'+f.limitations.join('\n'),vscode.DiagnosticSeverity.Warning);
+        const diagnostic=new vscode.Diagnostic(range(f.location),f.explanation+'\nHEAD newness: '+String(f.newly_introduced)+'\nRuntime verification: '+String(f.runtime_verification)+'\n'+f.limitations.join('\n'),f.severity==='critical'?vscode.DiagnosticSeverity.Error:vscode.DiagnosticSeverity.Warning);
         diagnostic.source='Patch (static)';diagnostic.code=f.rule_id;
         if(f.rule_id==='CP002')diagnostic.relatedInformation=stepsFor(f).filter(s=>s.role!=='logging').map(s=>new vscode.DiagnosticRelatedInformation(new vscode.Location(vscode.Uri.file(validatedTarget(s.location)),range(s.location)),s.label));
         const entry=byFile.get(target)||{uri,values:[]};entry.values.push(diagnostic);byFile.set(target,entry);

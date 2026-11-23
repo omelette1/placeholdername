@@ -12,6 +12,7 @@ function controlsHtml(model,nonce,token){
   </style></head><body><div class="eyebrow">Patch</div><h1>Review AI-written code</h1><p class="intro">Look for potential sensitive-data exposure and risky code patterns. Check what the assistant claims against what it delivered.</p>
   <label for="folder">1. Choose your project</label><select id="folder" ${disabled} aria-label="Project folder"><option value="">Choose a project…</option>${model.folders.map((folder,i)=>`<option value="${i}" ${folder.path===model.folder?'selected':''}>${e(folder.label)}</option>`).join('')}</select><p class="path">${e(model.folder||'No project selected')}</p><button data-action="browse" ${disabled}>Choose folder…</button>
   <label for="mode">2. Choose scan scope</label><select id="mode" ${disabled}><option value="current" ${model.mode==='current'?'selected':''}>Saved project files · start here</option><option value="changes" ${model.mode==='changes'?'selected':''}>Changes since last commit</option></select><p class="help">${e(modeHelp)}</p>
+  <label for="images">3. Optional container CVE scan</label><select id="images" ${disabled} aria-label="Container image vulnerability scan"><option value="disabled" ${!model.scanImages?'selected':''}>Off · configuration checks only</option><option value="enabled" ${model.scanImages?'selected':''}>On · scan locally cached Docker images</option></select><p class="help">Saved project files only. Requires trusted Trivy, locally available images and a cached vulnerability database. No image downloads during the scan. Missing coverage is reported, not considered safe.</p>
   <button class="primary" data-action="scan" ${model.busy||!model.folder?'disabled':''}>${model.busy?'Working…':'Scan project'}</button><p class="foot">Local checks · no code uploads · saved files only. Save your edits before scanning.</p>
   <section class="section"><h2>Continuous security monitoring</h2><p class="help">Opt in to saved-file scans on changes and every 30 minutes. No project code executes. Status bar and editor diagnostics show findings.</p><button data-action="monitor" ${disabled}>${model.monitor?'Disable background monitoring':'Enable background monitoring'}</button><p class="help">Separately enable dependency lookups: sends npm package names and versions only to OSV, not source code.</p><button data-action="advisories" ${disabled}>${model.advisories?'Disable OSV advisory lookup':'Enable OSV advisory lookup'}</button></section>
   <details><summary>Try a sample project</summary><p class="help">Choose an authored example with expected findings and a sample assistant answer. Patch creates a separate sample folder and leaves your project files unchanged.</p><button data-action="demo" ${disabled}>Choose a sample profile…</button></details><div class="row"><button data-action="results">View scan results</button><button data-action="settings">Settings</button></div>
@@ -26,7 +27,7 @@ function controlsHtml(model,nonce,token){
   <script nonce="${nonce}">
   const v=acquireVsCodeApi(),token=${JSON.stringify(token)};const saved=v.getState()||{};document.getElementById('ai').open=saved.aiOpen===true;document.getElementById('ai').ontoggle=()=>v.setState({aiOpen:document.getElementById('ai').open});
   function send(action,value){document.querySelectorAll('button,select').forEach(n=>n.disabled=true);v.postMessage({token,action,value});}
-  document.querySelectorAll('[data-action]').forEach(b=>b.onclick=()=>send(b.dataset.action));for(const action of ['folder','mode','profile'])document.getElementById(action).onchange=event=>send(action,event.target.value);
+  document.querySelectorAll('[data-action]').forEach(b=>b.onclick=()=>send(b.dataset.action));for(const action of ['folder','mode','profile','images'])document.getElementById(action).onchange=event=>send(action,event.target.value);
   </script></body></html>`;
 }
 function createScanControls(vscode,context,{review,aiReview,getReview=()=>null,getConnection=()=>({state:'not_checked'}),isBusy=()=>false}){
@@ -41,8 +42,10 @@ function createScanControls(vscode,context,{review,aiReview,getReview=()=>null,g
   function model(){
     const folders=workspaceFolders().map(f=>({path:f.uri.fsPath,label:f.name||path.basename(f.uri.fsPath)}));
     if(folder&&!folders.some(f=>f.path===folder))folders.unshift({path:folder,label:path.basename(folder)+' (selected folder)'});
-    const configured=vscode.workspace.getConfiguration('changeproof').inspect('aiProfile')?.globalValue;
-    return {folder,folders,mode,profile:configured==='full'?'full':'demo',monitor:vscode.workspace.getConfiguration('changeproof').inspect('backgroundMonitorEnabled')?.globalValue===true,advisories:vscode.workspace.getConfiguration('changeproof').inspect('dependencyAdvisoriesEnabled')?.globalValue===true,busy:busy(),error,review:getReview(),connection:getConnection()};
+    const config=vscode.workspace.getConfiguration('changeproof');
+    const configured=config.inspect('aiProfile')?.globalValue;
+    const scanImages=config.inspect('scanContainerImages')?.globalValue===true;
+    return {folder,folders,mode,scanImages,profile:configured==='full'?'full':'demo',monitor:vscode.workspace.getConfiguration('changeproof').inspect('backgroundMonitorEnabled')?.globalValue===true,advisories:vscode.workspace.getConfiguration('changeproof').inspect('dependencyAdvisoriesEnabled')?.globalValue===true,busy:busy(),error,review:getReview(),connection:getConnection()};
   }
   function refresh(){
     if(view){token=crypto.randomBytes(18).toString('hex');view.webview.html=controlsHtml(model(),crypto.randomBytes(18).toString('hex'),token);}
@@ -50,7 +53,7 @@ function createScanControls(vscode,context,{review,aiReview,getReview=()=>null,g
   async function handle(message){
     if(!message||message.token!==token||typeof message.action!=='string'||busy())return;
     const action=message.action;
-    const allowed=['scan','browse','folder','mode','profile','results','settings','ai','health','setup','token','claims','guard','evidence','demo','monitor','advisories'];
+    const allowed=['scan','browse','folder','mode','profile','results','settings','ai','health','setup','token','claims','guard','evidence','demo','monitor','advisories','images'];
     if(!allowed.includes(action))return;
     // Resolve only registered folder indices; never accept a webview-supplied path.
     const folders=model().folders;
@@ -68,6 +71,9 @@ function createScanControls(vscode,context,{review,aiReview,getReview=()=>null,g
       }else if(action==='profile'){
         if(!['demo','full'].includes(message.value))throw new Error();
         await vscode.workspace.getConfiguration('changeproof').update('aiProfile',message.value,vscode.ConfigurationTarget.Global);
+      }else if(action==='images'){
+        if(!['enabled','disabled'].includes(message.value))throw new Error();
+        await vscode.workspace.getConfiguration('changeproof').update('scanContainerImages',message.value==='enabled',vscode.ConfigurationTarget.Global);
       }else if(action==='monitor'||action==='advisories'){
         const key=action==='monitor'?'backgroundMonitorEnabled':'dependencyAdvisoriesEnabled';
         await vscode.workspace.getConfiguration('changeproof').update(key,!(vscode.workspace.getConfiguration('changeproof').inspect(key)?.globalValue===true),vscode.ConfigurationTarget.Global);

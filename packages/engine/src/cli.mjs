@@ -2,15 +2,16 @@
 import {analyze,emptyReport} from './engine.mjs';
 import {scanInfrastructure} from '../../infrastructure/src/scanner.mjs';
 import {scanDependencies} from '../../dependencies/src/scanner.mjs';
+import {scanContainerImages} from '../../infrastructure/src/container-vulns.mjs';
 async function main(){
 const args=process.argv.slice(2);
-const usage='Usage: changeproof <project-path> [--mode current|changes] [--checkov /trusted/path/to/checkov] [--advisories]';
+const usage='Usage: changeproof <project-path> [--mode current|changes] [--checkov /trusted/path/to/checkov] [--advisories] [--scan-images --trivy /trusted/path/to/trivy]';
 if(args.length===1&&['--help','-h'].includes(args[0]))console.log(usage+'\nDefault: changes since HEAD. Current mode needs no Git or baseline. JSON on stdout; exit 0 means processing completed, not security. Exit 2 means processing/usage errors.');
 else {
- let mode='changes',project,checkovPath='checkov',advisories=false,valid=true;
- for(let i=0;i<args.length;i++){if(args[i]==='--advisories'){advisories=true;}else if(args[i]==='--checkov'){if(!args[i+1]){valid=false;break;}checkovPath=args[++i];}else if(args[i]==='--mode'){if(!args[i+1]||!['current','changes'].includes(args[i+1])){valid=false;break;}mode=args[++i];}else if(args[i].startsWith('--')||project!==undefined){valid=false;break;}else project=args[i];}
+ let mode='changes',project,checkovPath='checkov',trivyPath='trivy',scanImages=false,advisories=false,valid=true;
+ for(let i=0;i<args.length;i++){if(args[i]==='--advisories'){advisories=true;}else if(args[i]==='--scan-images'){scanImages=true;}else if(args[i]==='--trivy'){if(!args[i+1]){valid=false;break;}trivyPath=args[++i];}else if(args[i]==='--checkov'){if(!args[i+1]){valid=false;break;}checkovPath=args[++i];}else if(args[i]==='--mode'){if(!args[i+1]||!['current','changes'].includes(args[i+1])){valid=false;break;}mode=args[++i];}else if(args[i].startsWith('--')||project!==undefined){valid=false;break;}else project=args[i];}
  if(!valid||!project){console.log(JSON.stringify({...emptyReport(),analysis_errors:[{code:'usage',file:null,message:usage}]}));process.exitCode=2;}
- else try{const result=analyze(project,{mode});if(result.repository){result.infrastructure=await scanInfrastructure(result.repository,{mode,checkovPath});result.findings.push(...result.infrastructure.findings);result.dependencies=await scanDependencies(result.repository,{mode,enabled:advisories});result.findings.push(...result.dependencies.findings);}console.log(JSON.stringify(result,null,2));process.exitCode=result.analysis_errors.length?2:0;}catch{console.log(JSON.stringify({...emptyReport(),analysis_errors:[{code:'internal_error',file:null,message:'Analysis failed; no source values were emitted.'}]}));process.exitCode=2;}
+ else try{const result=analyze(project,{mode});if(result.repository){result.infrastructure=await scanInfrastructure(result.repository,{mode,checkovPath});result.findings.push(...result.infrastructure.findings);result.dependencies=await scanDependencies(result.repository,{mode,enabled:advisories});result.findings.push(...result.dependencies.findings);result.container_images=await scanContainerImages(result.repository,{mode,enabled:scanImages,trivyPath});result.findings.push(...result.container_images.findings);}console.log(JSON.stringify(result,null,2));process.exitCode=result.analysis_errors.length?2:0;}catch{console.log(JSON.stringify({...emptyReport(),analysis_errors:[{code:'internal_error',file:null,message:'Analysis failed; no source values were emitted.'}]}));process.exitCode=2;}
 }
 
 }

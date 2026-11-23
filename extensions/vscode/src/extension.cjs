@@ -28,7 +28,7 @@ function activate(context) {
     const config=vscode.workspace.getConfiguration('changeproof');
     const node=config.inspect('nodePath')?.globalValue||'node';
     if(node!=='node'&&!path.isAbsolute(node))throw Error('Untrusted Node path.');
-    return runEngine(node,context.asAbsolutePath('out/cli.cjs'),folder,()=>{},{mode:'current',checkovPath:config.inspect('checkovPath')?.globalValue||undefined,advisories:config.inspect('dependencyAdvisoriesEnabled')?.globalValue===true});
+    return runEngine(node,context.asAbsolutePath('out/cli.cjs'),folder,()=>{},{mode:'current',checkovPath:config.inspect('checkovPath')?.globalValue||undefined,advisories:config.inspect('dependencyAdvisoriesEnabled')?.globalValue===true,trivyPath:config.inspect('trivyPath')?.globalValue||undefined,scanImages:config.inspect('scanContainerImages')?.globalValue===true});
   }});
   function showDetails(){output.show(true);}
   async function selectFolder(){
@@ -60,9 +60,12 @@ function activate(context) {
     running=true;
     controls.refresh();
     try{
-      const checkovPath=vscode.workspace.getConfiguration('changeproof').inspect('checkovPath')?.globalValue||undefined;
-      const advisories=vscode.workspace.getConfiguration('changeproof').inspect('dependencyAdvisoriesEnabled')?.globalValue===true;
-      const result=await vscode.window.withProgress({location:vscode.ProgressLocation.Notification,title:'Patch: '+(mode==='current'?'current files':'changes since HEAD')+' — '+selectedFolder,cancellable:false},()=>runEngine(node,context.asAbsolutePath('out/cli.cjs'),selectedFolder,trace,{mode,checkovPath,advisories}));
+      const cfg=vscode.workspace.getConfiguration('changeproof');
+      const checkovPath=cfg.inspect('checkovPath')?.globalValue||undefined;
+      const advisories=cfg.inspect('dependencyAdvisoriesEnabled')?.globalValue===true;
+      const trivyPath=cfg.inspect('trivyPath')?.globalValue||undefined;
+      const scanImages=cfg.inspect('scanContainerImages')?.globalValue===true;
+      const result=await vscode.window.withProgress({location:vscode.ProgressLocation.Notification,title:'Patch: '+(mode==='current'?'current files':'changes since HEAD')+' — '+selectedFolder,cancellable:false},()=>runEngine(node,context.asAbsolutePath('out/cli.cjs'),selectedFolder,trace,{mode,checkovPath,advisories,trivyPath,scanImages}));
       ui.finish(id,result);
       if(result.analysis_errors.length){
         const reason=result.analysis_errors.map(e=>`${e.code}${e.file?' ('+e.file+')':''}: ${e.message}`).join(' ');

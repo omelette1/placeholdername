@@ -23,11 +23,14 @@ jobs:
           node --check packages/engine/src/additional-rules.mjs
           node --check extensions/vscode/src/monitor.cjs
           node --test packages/dependencies/test/scanner.test.mjs packages/engine/test/additional-rules.test.mjs
+          node --test extensions/vscode/test/findings-ui.test.cjs
           node evaluation/independent-sample-benchmark.mjs
       - name: Build and smoke installed bundle interfaces
         run: |
           npm run package:extension
+          node --test extensions/vscode/test/notification.test.cjs
           node scripts/ci-package-smoke.mjs
+          npm run verify:demo
           unzip -l artifacts/patch-local-0.20.0.vsix | grep -q 'extension/src/monitor.cjs'
       - name: Upload quick-smoke VSIX for native test
         uses: actions/upload-artifact@v4
@@ -73,6 +76,8 @@ jobs:
           cache: npm
       - name: Install dependencies without lifecycle scripts
         run: npm ci --ignore-scripts
+      - name: Build bundled CLI required by extension integration tests
+        run: npm run build:extension
       - name: Unit and integration tests (network disabled)
         run: npm test
       - name: Validate local evaluation fixtures

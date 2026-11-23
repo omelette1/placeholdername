@@ -529,6 +529,178 @@
           }
         }
       }
+    },
+    "container_images": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "status": {
+          "enum": [
+            "not_assessed",
+            "assessed",
+            "partial",
+            "not_applicable"
+          ]
+        },
+        "reason": {
+          "type": "string"
+        },
+        "scanner": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "name": {
+              "const": "Trivy"
+            },
+            "source": {
+              "const": "local Docker images"
+            },
+            "database": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "name",
+            "source",
+            "database"
+          ]
+        },
+        "files_inspected": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "file": {
+                "type": "string"
+              },
+              "snapshot": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "file",
+              "snapshot"
+            ]
+          }
+        },
+        "images": {
+          "type": "array",
+          "maxItems": 8,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "image": {
+                "type": "string"
+              },
+              "status": {
+                "enum": [
+                  "not_assessed",
+                  "assessed"
+                ]
+              },
+              "high_critical_findings": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "references": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "file": {
+                      "type": "string"
+                    },
+                    "line": {
+                      "type": "integer",
+                      "minimum": 1
+                    }
+                  },
+                  "required": [
+                    "file",
+                    "line"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "image",
+              "status",
+              "high_critical_findings",
+              "references"
+            ]
+          }
+        },
+        "findings": {
+          "type": "array",
+          "maxItems": 120,
+          "items": {
+            "$ref": "#/$defs/finding"
+          }
+        },
+        "skipped": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "file": {
+                "type": "string"
+              },
+              "line": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "reason": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "file",
+              "line",
+              "reason"
+            ]
+          }
+        },
+        "errors": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "code",
+              "message"
+            ]
+          }
+        },
+        "limitations": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "status",
+        "reason",
+        "scanner",
+        "files_inspected",
+        "images",
+        "findings",
+        "skipped",
+        "errors",
+        "limitations"
+      ]
     }
   },
   "required": [
@@ -551,7 +723,8 @@
     "review_mode",
     "git_repository",
     "input_limitations",
-    "infrastructure"
+    "infrastructure",
+    "container_images"
   ],
   "$defs": {
     "position": {
@@ -1350,6 +1523,115 @@
                 "package_name",
                 "installed_version",
                 "advisory_url"
+              ]
+            }
+          },
+          "required": [
+            "rule_id",
+            "title",
+            "severity",
+            "explanation",
+            "location",
+            "newly_introduced",
+            "runtime_verification",
+            "limitations",
+            "evidence"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "rule_id": {
+              "anyOf": [
+                {
+                  "pattern": "^CVE-[0-9]{4}-[0-9]{4,}$"
+                },
+                {
+                  "pattern": "^GHSA-[A-Z0-9]{4}(?:-[A-Z0-9]{4}){2}$"
+                }
+              ],
+              "type": "string"
+            },
+            "title": {
+              "type": "string"
+            },
+            "severity": {
+              "enum": [
+                "warning",
+                "critical"
+              ]
+            },
+            "explanation": {
+              "type": "string"
+            },
+            "location": {
+              "$ref": "#/$defs/location"
+            },
+            "newly_introduced": {
+              "const": null
+            },
+            "runtime_verification": {
+              "const": false
+            },
+            "limitations": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "evidence": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "kind": {
+                  "const": "container_vulnerability"
+                },
+                "scanner": {
+                  "const": "Trivy"
+                },
+                "vulnerability_id": {
+                  "type": "string"
+                },
+                "image": {
+                  "type": "string"
+                },
+                "package": {
+                  "type": "string"
+                },
+                "installed_version": {
+                  "type": "string"
+                },
+                "fixed_version": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "reported_severity": {
+                  "enum": [
+                    "CRITICAL",
+                    "HIGH"
+                  ]
+                },
+                "source": {
+                  "const": "locally available Docker image"
+                },
+                "database_freshness": {
+                  "const": "unverified"
+                }
+              },
+              "required": [
+                "kind",
+                "scanner",
+                "vulnerability_id",
+                "image",
+                "package",
+                "installed_version",
+                "fixed_version",
+                "reported_severity",
+                "source",
+                "database_freshness"
               ]
             }
           },
