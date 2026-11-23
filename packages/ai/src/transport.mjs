@@ -21,8 +21,29 @@ export async function postReview(url,token,request,{signal,fetchImpl=fetch,profi
   const response=await fetchImpl(backendUrl(url)+'/v1/reviews',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token,...(profile==='demo'?{'X-Changeproof-Profile':'demo'}:{})},body:JSON.stringify(request),redirect:'error',signal:controller.signal});
   if(!response.ok){const known={401:'Authentication failed. Set the backend access token again.',429:'Review quota or provider rate limit reached. Try later.',503:'Review service or provider is unavailable.',504:'Review provider timed out.',502:'Provider output was malformed or had ungrounded references.',413:'Review request exceeds the service limit.'};const retryAfter=response.headers.get('retry-after');
    let code=({401:'unauthorized',429:'throttled',503:'provider_unavailable',504:'provider_timeout',502:'invalid_model_output',413:'request_too_large'})[response.status]||'request_rejected';
-   try{const body=await boundedJson(response,1024);if(['invalid_reference','missing_comparison_references'].includes(body.error))code='invalid_reference';else if(['invalid_evidence_quote','missing_current_quote','missing_comparison_quote'].includes(body.error))code='invalid_evidence_quote';else if(['provider_auth','provider_configuration','provider_quota'].includes(body.error))code=body.error;}catch{}
-   throw new ReviewError(code,({invalid_reference:'Provider output contained invalid code references.',invalid_evidence_quote:'Provider output included a quote that did not match submitted source text.',provider_auth:'Groq authentication failed on the backend. Check the server-side GROQ_API_KEY.',provider_configuration:'Provider rejected the configured model or request schema. Check backend GROQ_MODEL compatibility.',provider_quota:'Provider quota or rate limit reached. No retry or fallback was attempted.'+(retryAfter?' Retry after '+String(retryAfter).replace(/[^0-9.]/g,'').slice(0,10)+' seconds.':'')})[code]||known[response.status]||'Review service rejected the request (HTTP '+response.status+').',response.status);}
+   try{const body=await boundedJson(response,1024);const diagnostics=['invalid_reference','invalid_evidence_quote','provider_auth','provider_configuration','provider_quota','completion_truncated','incomplete_completion','completion_filtered','missing_content','unexpected_tool_call','invalid_json','schema_mismatch','output_size_limit','provider_response_size_limit','provider_response_invalid','invalid_patch_identity','invalid_patch_shape','invalid_patch_reference','invalid_patch_source_mismatch','invalid_patch_overlap'];if(diagnostics.includes(body.error))code=body.error;}catch{}
+   throw new ReviewError(code,({
+    invalid_reference:'Provider output contained invalid code references.',
+    invalid_evidence_quote:'Provider output included a quote that did not match submitted source text.',
+    provider_auth:'Groq authentication failed on the backend. Check the server-side GROQ_API_KEY.',
+    provider_configuration:'Provider rejected the configured model or request schema. Check backend GROQ_MODEL compatibility.',
+    provider_quota:'Provider quota or rate limit reached. No retry or fallback was attempted.'+(retryAfter?' Retry after '+String(retryAfter).replace(/[^0-9.]/g,'').slice(0,10)+' seconds.':''),
+    completion_truncated:'Groq stopped before completing the assessment within its token limit. No partial result was accepted.',
+    incomplete_completion:'Groq did not complete the assessment. No partial result was accepted.',
+    completion_filtered:'Groq filtered the assessment. No result was accepted.',
+    missing_content:'Groq returned no assessment content.',
+    unexpected_tool_call:'Groq returned an unsupported tool call.',
+    invalid_json:'Groq returned content that was not valid JSON.',
+    schema_mismatch:'Groq assessment did not match the required strict schema.',
+    output_size_limit:'Groq assessment exceeded the configured output size limit.',
+    provider_response_size_limit:'Groq response exceeded the configured transport size limit.',
+    provider_response_invalid:'Groq response envelope was invalid.',
+    invalid_patch_identity:'Groq patch did not identify the submitted current-file revision.',
+    invalid_patch_shape:'Groq proposed a patch with invalid structure.',
+    invalid_patch_reference:'Groq proposed a patch outside its cited current source.',
+    invalid_patch_source_mismatch:'Groq patch context did not exactly match submitted source.',
+    invalid_patch_overlap:'Groq proposed overlapping patch edits.'
+   })[code]||known[response.status]||'Review service rejected the request (HTTP '+response.status+').',response.status);}
   return await boundedJson(response,LIMITS.outputBytes);
  }catch(error){if(controller.signal.aborted)throw new Error(signal?.aborted?'AI review cancelled.':'AI review timed out.');if(error instanceof TypeError)throw new Error('AI review service could not be reached. Check the user-level backend URL.');throw error;}
  finally{clearTimeout(timeout);signal?.removeEventListener('abort',abort);}

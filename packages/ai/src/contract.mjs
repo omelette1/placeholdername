@@ -34,16 +34,17 @@ export function validateReferences(assessment,request){
   // A behavioral regression needs evidence in both versions. Otherwise request context.
   if(!revisions.has('before')||!revisions.has('after'))throw new Error('missing_comparison_references');
   const edits=finding.suggested_edits,ordered=[...edits].sort((a,b)=>a.file.localeCompare(b.file)||a.start_line-b.start_line);
-  if(ordered.length&&ordered.some(edit=>edit.file!==ordered[0].file))throw new Error('invalid_patch');
+  if(ordered.length&&ordered.some(edit=>edit.file!==ordered[0].file))throw new Error('invalid_patch_shape');
   for(let i=0;i<ordered.length;i++){
    const edit=ordered[i],file=request.files.find(f=>f.file===edit.file);
-   if(!file||!validFile(edit.file)||edit.revision_id!==file.after_id||edit.end_line<edit.start_line||edit.expected.split('\n').length!==edit.end_line-edit.start_line+1||(!edit.expected&&!edit.replacement)||edit.expected===edit.replacement||/\r/.test(edit.expected+edit.replacement))throw new Error('invalid_patch');
+   if(!file||!validFile(edit.file)||edit.end_line<edit.start_line||edit.expected.split('\n').length!==edit.end_line-edit.start_line+1||(!edit.expected&&!edit.replacement)||edit.expected===edit.replacement||/\r/.test(edit.expected+edit.replacement))throw new Error('invalid_patch_shape');
+   if(edit.revision_id!==file.after_id)throw new Error('invalid_patch_identity');
    const chunk=file.chunks.find(c=>c.revision==='after'&&c.revision_id===edit.revision_id&&edit.start_line>=c.start_line&&edit.end_line<=c.end_line);
-   if(!chunk||!finding.references.some(r=>r.revision==='after'&&r.file===edit.file&&r.start_line<=edit.start_line&&r.end_line>=edit.end_line))throw new Error('invalid_patch');
+   if(!chunk||!finding.references.some(r=>r.revision==='after'&&r.file===edit.file&&r.start_line<=edit.start_line&&r.end_line>=edit.end_line))throw new Error('invalid_patch_reference');
    const actual=chunk.text.split('\n').slice(edit.start_line-chunk.start_line,edit.end_line-chunk.start_line+1).map(line=>line.replace(/\r$/,'')).join('\n');
-   if(actual!==edit.expected)throw new Error('invalid_patch');
+   if(actual!==edit.expected)throw new Error('invalid_patch_source_mismatch');
    const previous=ordered[i-1];
-   if(previous&&previous.file===edit.file&&previous.end_line>=edit.start_line)throw new Error('invalid_patch');
+   if(previous&&previous.file===edit.file&&previous.end_line>=edit.start_line)throw new Error('invalid_patch_overlap');
   }
   const quoteRevisions=new Set();
   for(const quote of finding.evidence_quotes){

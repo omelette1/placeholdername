@@ -6,7 +6,13 @@ import {redact} from '../../../packages/ai/src/redact.mjs';
 import {ProviderError} from './providers.mjs';
 import {profileFor,validateProfileRequest} from '../../../packages/ai/src/profiles.mjs';
 const digest=value=>crypto.createHash('sha256').update(value).digest();
-export function createServer({accessToken,provider,concurrency=2,requestsPerHour=20,bytesPerHour=2000000,timeoutMs=LIMITS.timeoutMs}={}){
+const safeUsage=value=>{
+ if(!value||typeof value!=='object')return null;
+ const usage={};
+ for(const key of ['prompt_tokens','completion_tokens','total_tokens','reasoning_tokens'])if(Number.isSafeInteger(value[key])&&value[key]>=0)usage[key]=value[key];
+ return Object.keys(usage).length?usage:null;
+};
+export function createServer({accessToken,provider,onProviderDiagnostic=()=>{},concurrency=2,requestsPerHour=20,bytesPerHour=2000000,timeoutMs=LIMITS.timeoutMs}={}){
  if(typeof accessToken!=='string'||accessToken.length<32||/[\s]/.test(accessToken))throw new Error('REVIEW_ACCESS_TOKEN must contain at least 32 non-whitespace characters.');
  if(!provider||!['groq','mock'].includes(provider.name))throw new Error('A review provider is required.');
  for(const [key,value,min,max] of [['concurrency',concurrency,1,8],['requestsPerHour',requestsPerHour,1,1000],['bytesPerHour',bytesPerHour,1000,100000000],['timeoutMs',timeoutMs,10,60000]])if(!Number.isSafeInteger(value)||value<min||value>max)throw new Error('Invalid '+key);
@@ -38,14 +44,21 @@ export function createServer({accessToken,provider,concurrency=2,requestsPerHour
   request.raw.on('aborted',disconnected);reply.raw.on('close',disconnected);
   const aborted=new Promise((_,reject)=>controller.signal.addEventListener('abort',()=>reject(new ProviderError(timedOut?'provider_timeout':'cancelled',timedOut?504:499)),{once:true}));
   timer=setTimeout(()=>{timedOut=true;controller.abort();},timeoutMs);
+  let usage=null;
   try{
-   const raw=await Promise.race([provider.review(request.body,{signal:controller.signal,profile}),aborted]);
-   checkAssessment(raw,request.body);if(raw.findings.length>profileFor(profile).findings)throw new ProviderError('invalid_model_output',502);
+   const raw=await Promise.race([provider.review(request.body,{signal:controller.signal,profile,onUsage:value=>{usage=safeUsage(value);}}),aborted]);
+   checkAssessment(raw,request.body);if(raw.findings.length>profileFor(profile).findings)throw new ProviderError('schema_mismatch',502);
    // Redact provider prose too, then revalidate identity/ranges (never silently repair references).
    const clean=value=>typeof value==='string'?redact(value).text:Array.isArray(value)?value.map(clean):value&&typeof value==='object'?Object.fromEntries(Object.entries(value).map(([key,v])=>[key,clean(v)])):value;
    const assessment=clean(raw);checkAssessment(assessment,request.body);
+   onProviderDiagnostic({category:'assessment_validated',usage});
    return {schema_version:AI_VERSION,request_id:request.body.request_id,baseline:request.body.baseline,provider:provider.name,model:provider.model,runtime_verification:false,assessment};
-  }catch(error){const status=error instanceof ProviderError?error.status:502;const code=error instanceof ProviderError?error.code:['invalid_reference','missing_comparison_references'].includes(error.message)?'invalid_reference':['invalid_evidence_quote','missing_current_quote','missing_comparison_quote'].includes(error.message)?'invalid_evidence_quote':'invalid_model_output';return reply.code(status).send({error:code});}
+  }catch(error){
+   const status=error instanceof ProviderError?error.status:502;
+   const category=error instanceof ProviderError?error.category:['invalid_reference','missing_comparison_references'].includes(error.message)?'invalid_reference':['invalid_evidence_quote','missing_current_quote','missing_comparison_quote'].includes(error.message)?'invalid_evidence_quote':['invalid_patch_identity','invalid_patch_shape','invalid_patch_reference','invalid_patch_source_mismatch','invalid_patch_overlap'].includes(error.message)?error.message:error.message==='output_size_limit'?'output_size_limit':error.message==='schema_mismatch'?'schema_mismatch':'provider_internal_failure';
+   onProviderDiagnostic({category,usage:safeUsage(error instanceof ProviderError?error.usage??usage:usage)});
+   return reply.code(status).send({error:category});
+  }
   finally{clearTimeout(timer);controller.abort();active--;request.raw.off('aborted',disconnected);reply.raw.off('close',disconnected);}
  });
  return app;
