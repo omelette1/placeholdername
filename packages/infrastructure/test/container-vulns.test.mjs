@@ -13,6 +13,18 @@ test('source extraction identifies tagged Docker and YAML image references, but 
   assert.equal(refs[1].image,null);
   assert.ok(refs[2].image.startsWith('redis@sha256:'));
 });
+test('outdated-image demo references a tagged old image and leaves scanning opt-in',async()=>{
+ const file=new URL('../../../samples/demo-projects/08-outdated-nginx-image/Dockerfile',import.meta.url);
+ const source=fs.readFileSync(file,'utf8');
+ assert.deepEqual(imageReferences('Dockerfile',source).map(ref=>ref.image),['nginx:1.14.2']);
+ const dir=fs.mkdtempSync(path.join(os.tmpdir(),'patch-image-demo-'));
+ try{
+  fs.copyFileSync(file,path.join(dir,'Dockerfile'));
+  const report=await scanContainerImages(dir);
+  assert.equal(report.status,'not_assessed');
+  assert.deepEqual(report.images,[]);
+ }finally{fs.rmSync(dir,{recursive:true,force:true});}
+});
 test('normalizeTrivy emits only high and critical CVEs without treating evidence as deployed exploit proof',()=>{
  const out=emptyContainerImages();
  const reference={file:'Dockerfile',line:2,image:'nginx:1.27'};

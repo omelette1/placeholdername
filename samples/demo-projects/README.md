@@ -17,6 +17,7 @@ after-change example, ready for the local scanner to read as text.
 | `05-risky-eval` | Direct eval of an input parameter | CP004 syntax finding |
 | `06-empty-function` | An empty function body | Use the answer checker; security rules do not establish implementation correctness |
 | `07-ownership-check-removed-manual-review` | A missing ownership condition under an authored policy assumption | Manual/AI policy review; no supported local rule for this claim |
+| `08-outdated-nginx-image` | An intentionally old `nginx:1.14.2` image reference | Optional Trivy scan of the matching local Docker image and cached vulnerability database; see that folder's README |
 
 To demonstrate the empty-function checker, paste:
 
@@ -40,3 +41,9 @@ All cases are synthetic, contain no actual credentials, and are never executed
 by the scanner. Findings are scoped observations, not proof of an exploitable
 leak. No findings does not establish safety, particularly for the unsupported
 ownership-policy example.
+
+The container-image sample is separate from the JavaScript/TypeScript examples.
+Image scanning is disabled by default and requires Trivy, Docker with the
+referenced image already present, and a cached vulnerability database. The scan
+does not download either the image or database; missing prerequisites produce
+an explicit not-assessed result rather than a clean bill of health.
